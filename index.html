@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexS Master 30K - Powered by GUDDU</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
+        .matrix-container { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; font-size: 13px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        th { background: #f8f9fa; position: sticky; top: 0; }
+        .status-msg { padding: 10px; text-align: center; font-weight: bold; margin-top: 10px; border-radius: 5px; }
+        .footer { text-align: center; padding: 15px; color: #888; font-size: 14px; letter-spacing: 1px; }
+        .footer b { color: var(--secondary); text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div id="loginPage" class="card">
+    <h2 style="text-align:center; color:var(--primary);">NexS Login</h2>
+    <input type="text" id="opName" placeholder="Operator Name (e.g. AMIT)">
+    <input type="number" id="opId" placeholder="Operator ID (e.g. 138663)">
+    <button onclick="login()">START SCANNING</button>
+    <div class="footer">Powered by <b>GUDDU</b></div>
+</div>
+
+<div id="mainApp" style="display:none;">
+    <div class="card">
+        <h3>User: <span id="dispName" style="color:var(--secondary)"></span></h3>
+        <label>Select Location:</label>
+        <select id="entryLoc">
+            <option>ICU Entry</option><option>Mei Entry</option><option>Fitting entry</option>
+            <option>Send to Main Line for FT</option><option>Send To Main Line For Qc</option>
+        </select>
+        <input type="text" id="scanInput" placeholder="READY TO SCAN (Max 7 Digits)" style="border: 2px solid var(--primary); font-size: 24px; text-align: center;">
+        <div id="status" class="status-msg"></div>
+    </div>
+
+    <div class="card">
+        <h3>Hourly Productivity (Real-Time)</h3>
+        <div class="matrix-container">
+            <table>
+                <thead id="mHead"></thead>
+                <tbody id="mBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <button onclick="location.reload()" style="background:#666;">LOGOUT / SWITCH USER</button>
+    <div class="footer">Powered by <b>GUDDU</b></div>
+</div>
+
+<script>
+    // 🛑 STEP: APNA FIREBASE CONFIG YAHAN PASTE KAREIN
+   const firebaseConfig = {
+  apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+  authDomain: "nexs-guddu-30k.firebaseapp.com",
+  databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
+  projectId: "nexs-guddu-30k",
+  storageBucket: "nexs-guddu-30k.firebasestorage.app",
+  messagingSenderId: "634684833271",
+  appId: "1:634684833271:web:31a25a2c5301fa108142f2"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function login() {
+        const name = document.getElementById('opName').value.trim();
+        const id = document.getElementById('opId').value.trim();
+        if(!name || !id) return alert("Bhai, Name aur ID toh daalo!");
+        localStorage.setItem('gName', name); localStorage.setItem('gId', id);
+        document.getElementById('dispName').innerText = name;
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('scanInput').focus();
+    }
+
+    // 🚀 REAL-TIME ENGINE: Sumit ki screen par data apne aap chamkega
+    db.ref('scans').on('value', (snapshot) => {
+        const data = snapshot.val();
+        updateDashboard(data);
+    });
+
+    document.getElementById('scanInput').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') {
+            const bc = e.target.value.trim();
+            const status = document.getElementById('status');
+            if(bc.length > 7 || bc === "") {
+                status.innerText = "🚨 REJECTED: INVALID BARCODE";
+                status.style.background = "#ffcccc";
+                e.target.value = ""; return;
+            }
+
+            const now = new Date();
+            const scanData = {
+                barcode: bc,
+                name: localStorage.getItem('gName'),
+                id: localStorage.getItem('gId'),
+                loc: document.getElementById('entryLoc').value,
+                time: now.toLocaleTimeString('en-GB', {hour12:false}),
+                date: now.toLocaleDateString('en-GB'),
+                hour: now.getHours()
+            };
+
+            // Firebase mein data save ho raha hai
+            db.ref('scans').push(scanData);
+            
+            status.innerText = "✅ ACCEPTED: " + bc;
+            status.style.background = "#e8f5e9";
+            e.target.value = "";
+            setTimeout(() => { status.innerText = ""; status.style.background = "transparent"; }, 2000);
+        }
+    });
+
+    function updateDashboard(allData) {
+        if(!allData) return;
+        const today = new Date().toLocaleDateString('en-GB');
+        const filtered = Object.values(allData).filter(s => s.date === today);
+        const hours = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5];
+        const locations = ["ICU Entry", "Mei Entry", "Fitting entry", "Send to Main Line for FT", "Send To Main Line For Qc"];
+
+        document.getElementById('mHead').innerHTML = "<tr><th>Location</th>" + hours.map(h => `<th>${h}:00</th>`).join('') + "</tr>";
+        
+        document.getElementById('mBody').innerHTML = locations.map(l => {
+            let row = `<td><b>${l}</b></td>`;
+            hours.forEach(h => {
+                let count = filtered.filter(f => f.loc === l && f.hour === h).length;
+                row += `<td style="${count > 0 ? 'background:#e8f5e9; font-weight:bold; color:green;' : 'color:#eee;'}">${count}</td>`;
+            });
+            return `<tr>${row}</tr>`;
+        }).join('');
+    }
+</script>
+</body>
+</html>
