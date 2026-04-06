@@ -3,110 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS Master ERP - 21 Loc</title>
+    <title>NexS Master Pro - 21 Loc ERP</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --p: #1a2a6c; --s: #b21f1f; --g: #27ae60; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; font-size: 14px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; sticky: top; }
-        nav button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: 0.3s; }
-        .active-btn { background: var(--p); color: white; }
-        input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 15px; }
-        button { background: var(--p); color: white; font-weight: bold; border: none; cursor: pointer; }
-        button:hover { opacity: 0.9; }
-        .logout { background: var(--s); }
-        .matrix-wrap { overflow-x: auto; max-height: 600px; border: 1px solid #ddd; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; background: white; }
+        nav { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding: 5px; background: white; border-radius: 8px; position: sticky; top: 0; z-index: 100; }
+        nav button { flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight: bold; }
+        .active-btn { background: var(--p) !important; color: white !important; }
+        input, select, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #eee; color: #333; transition: 0.3s; }
+        .btn-action { background: var(--p); color: white; border: none; }
+        .logout { background: var(--s); color: white; }
+        .matrix-wrap { overflow-x: auto; max-height: 500px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
-        th { background: var(--p); color: white; position: sticky; top: 0; z-index: 10; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .staff-card { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 12px; }
-        .filter-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .status-msg { padding: 10px; border-radius: 5px; text-align: center; margin-top: 10px; font-weight: bold; }
+        th { background: var(--p); color: white; position: sticky; top: 0; }
+        .scan-info { background: #fff3cd; border-left: 5px solid #ffc107; padding: 10px; margin-top: 10px; display: none; }
+        .filter-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div id="authPage" class="card">
-    <h2 style="text-align:center; color:var(--p)">NexS Global System</h2>
+    <h2 style="text-align:center">NexS Pro Login</h2>
     <div id="loginForm">
-        <label>Employee ID (Alpha-Numeric)</label>
-        <input type="text" id="loginId" placeholder="e.g. NEXS001 or 1234">
-        <button onclick="login()">LOGIN</button>
-        <p style="text-align:center; color:var(--p); cursor:pointer; font-weight:bold" onclick="toggleAuth(true)">+ New Employee Registration</p>
+        <input type="text" id="loginId" placeholder="Employee ID (e.g. T0002336)">
+        <button class="btn-action" onclick="login()">LOGIN</button>
+        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth(true)">New Employee? Register Here</p>
     </div>
     <div id="regForm" style="display:none">
-        <label>Full Name</label>
-        <input type="text" id="regName" placeholder="Enter Name">
-        <label>Create Employee ID</label>
-        <input type="text" id="regId" placeholder="e.g. EMP101">
-        <button onclick="registerEmp()" style="background:var(--g)">REGISTER & START</button>
-        <p style="text-align:center; color:var(--s); cursor:pointer" onclick="toggleAuth(false)">Back to Login</p>
+        <input type="text" id="regName" placeholder="Full Name">
+        <input type="text" id="regId" placeholder="Create Employee ID">
+        <button class="btn-action" onclick="registerEmp()" style="background:var(--g)">REGISTER & LOGIN</button>
+        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth(false)">Back to Login</p>
     </div>
 </div>
 
 <div id="mainApp" style="display:none">
     <nav>
-        <button id="btn-scan" class="active-btn" onclick="showTab('scan')">SCANNER</button>
-        <button id="btn-matrix" onclick="showTab('matrix')">MATRIX</button>
-        <button id="btn-staff" onclick="showTab('staff')">STAFF VIEW</button>
-        <button id="btn-history" onclick="showTab('history')">HISTORY</button>
+        <button id="b-scan" onclick="showTab('scan')">ENTRY</button>
+        <button id="b-matrix" onclick="showTab('matrix')">MATRIX</button>
+        <button id="b-staff" onclick="showTab('staff')">STAFF VIEW</button>
+        <button id="b-history" onclick="showTab('history')">HISTORY</button>
         <button class="logout" onclick="logout()">LOGOUT</button>
     </nav>
 
     <div id="tab-scan" class="tab-content">
         <div class="card">
-            <div style="background:#eef2ff; padding:10px; border-radius:8px; margin-bottom:15px">
-                <b>Operator:</b> <span id="uName"></span> | <b>ID:</b> <span id="uId"></span><br>
-                <b>Live Time:</b> <span id="clock"></span>
-            </div>
-            <label><b>Select Working Location:</b></label>
+            <div style="font-size:16px; margin-bottom:10px"><b>User:</b> <span id="uName"></span> (<span id="uId"></span>) | <span id="clock"></span></div>
+            <label>Location:</label>
             <select id="locSelect"></select>
-            <label><b>Scan Barcode:</b></label>
-            <input type="text" id="barcode" placeholder="READY TO SCAN..." style="border: 2px solid var(--p); height:70px; font-size:24px; text-align:center">
-            <div id="msg" class="status-msg"></div>
+            <input type="text" id="barcode" placeholder="SCAN BARCODE HERE" style="height:60px; font-size:20px; border:2px solid var(--p)">
+            
+            <div id="scanInfo" class="scan-info">
+                <strong>Last Scan Details:</strong><br>
+                Name: <span id="lastStaff"></span> | ID: <span id="lastId"></span><br>
+                Barcode: <span id="lastBc"></span><br>
+                Time: <span id="lastTime"></span>
+            </div>
         </div>
     </div>
 
     <div id="tab-matrix" class="tab-content" style="display:none">
         <div class="card">
-            <h3>Hourly Productivity Matrix (6 AM - 5 AM)</h3>
-            <div class="filter-row">
-                <input type="date" id="matDate" onchange="loadMatrix()">
-                <button onclick="downloadExcel('matrixTable', 'Productivity_Matrix')" style="background:var(--g)">Download Excel</button>
+            <div class="filter-group">
+                <input type="date" id="matFrom">
+                <input type="date" id="matTo">
+                <select id="matLocFilter" onchange="loadMatrix()"><option value="All">All Locations</option></select>
+                <button class="btn-action" onclick="loadMatrix()">Filter</button>
+                <button onclick="downloadExcel('matrixTable', 'Productivity_Matrix')" style="background:var(--g); color:white">Export</button>
             </div>
             <div class="matrix-wrap">
-                <table id="matrixTable">
-                    <thead id="matHead"></thead>
-                    <tbody id="matBody"></tbody>
-                </table>
+                <table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table>
             </div>
         </div>
     </div>
 
     <div id="tab-staff" class="tab-content" style="display:none">
         <div class="card">
-            <h3>Staff Wise Performance (Today)</h3>
+            <div class="filter-group">
+                <input type="date" id="staffFrom">
+                <input type="date" id="staffTo">
+                <button class="btn-action" onclick="loadStaff()">Show Productivity</button>
+            </div>
             <div id="staffList"></div>
         </div>
     </div>
 
     <div id="tab-history" class="tab-content" style="display:none">
         <div class="card">
-            <h3>Detailed Scan History</h3>
-            <div class="filter-row" style="flex-wrap:wrap">
-                <input type="date" id="histDate" onchange="loadHistory()" style="flex:1">
-                <input type="text" id="histSearch" placeholder="Search Barcode or ID..." onkeyup="loadHistory()" style="flex:2">
-                <button onclick="downloadExcel('histTable', 'Scan_History')" style="background:var(--g); flex:1">Export</button>
+            <div class="filter-group">
+                <input type="date" id="histFrom">
+                <input type="date" id="histTo">
+                <input type="text" id="histSearch" placeholder="Search Barcode or ID..." onkeyup="loadHistory()">
+                <button class="btn-action" onclick="loadHistory()">Filter</button>
+                <button onclick="downloadExcel('histTable', 'Detailed_History')" style="background:var(--g); color:white">Export</button>
             </div>
             <div class="matrix-wrap">
                 <table id="histTable">
-                    <thead>
-                        <tr><th>Time</th><th>Location</th><th>Barcode</th><th>Employee</th><th>Emp ID</th></tr>
-                    </thead>
+                    <thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>Emp ID</th><th>Name</th></tr></thead>
                     <tbody id="histBody"></tbody>
                 </table>
             </div>
@@ -115,7 +114,7 @@
 </div>
 
 <script>
-    // 🛑 FIREBASE CONFIG
+    // 🛑 FIREBASE CONFIG (UPDATE THIS WITH YOUR ACTUAL KEYS)
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -129,22 +128,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const locs = [
+    const locations = [
         "ICU Entry", "Mei Entry", "Fitting entry", "Send to Main Line for FT", "Send To Main Line For Qc",
         "Packing", "Sorting", "Inventory In", "Inventory Out", "Repairing", "Dispatch",
         "OMT Rack no 00", "OMT Rack no 01", "OMT Rack no 02", "OMT Rack no 03", "OMT Rack no 04",
         "OMT Rack no 05", "OMT Rack no 06", "OMT Rack no 07", "OMT Rack no 08", "OMT Rack no 09"
     ];
 
-    // Shift Logic: 6 AM to 5 AM (Next Day)
-    const shift = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5];
+    const shiftHours = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5];
 
     window.onload = () => {
-        locs.forEach(l => document.getElementById('locSelect').add(new Option(l, l)));
-        document.getElementById('matDate').valueAsDate = new Date();
-        document.getElementById('histDate').valueAsDate = new Date();
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('input[type="date"]').forEach(el => el.value = today);
+        
+        locations.forEach(l => {
+            document.getElementById('locSelect').add(new Option(l, l));
+            document.getElementById('matLocFilter').add(new Option(l, l));
+        });
+        
         checkLogin();
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
     };
 
     function toggleAuth(reg) {
@@ -152,51 +155,43 @@
         document.getElementById('regForm').style.display = reg ? 'block' : 'none';
     }
 
+    function login() {
+        const id = document.getElementById('loginId').value.trim();
+        db.ref('users/' + id).once('value', s => {
+            if(s.exists()) saveSession(s.val().name, id);
+            else alert("ID not found. Please Register.");
+        });
+    }
+
     function registerEmp() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(!n || !i) return alert("Please enter Name and Alpha-numeric ID");
-        db.ref('users/' + i).set({ name: n, id: i }, () => {
-            saveSession(n, i);
-        });
-    }
-
-    function login() {
-        const i = document.getElementById('loginId').value.trim();
-        if(!i) return alert("Enter ID");
-        db.ref('users/' + i).once('value', s => {
-            if(s.exists()) saveSession(s.val().name, i);
-            else alert("ID Not Registered!");
-        });
+        if(!n || !i) return alert("Fill all fields");
+        db.ref('users/' + i).set({ name: n, id: i }, () => saveSession(n, i));
     }
 
     function saveSession(n, i) {
-        localStorage.setItem('nexN', n);
-        localStorage.setItem('nexI', i);
-        checkLogin();
+        localStorage.setItem('uN', n); localStorage.setItem('uI', i);
+        location.reload();
     }
 
     function checkLogin() {
-        const n = localStorage.getItem('nexN');
-        if(n) {
+        if(localStorage.getItem('uI')) {
             document.getElementById('authPage').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('uName').innerText = n;
-            document.getElementById('uId').innerText = localStorage.getItem('nexI');
+            document.getElementById('uName').innerText = localStorage.getItem('uN');
+            document.getElementById('uId').innerText = localStorage.getItem('uI');
             showTab('scan');
         }
     }
 
-    function logout() {
-        localStorage.clear();
-        location.reload();
-    }
+    function logout() { localStorage.clear(); location.reload(); }
 
     function showTab(t) {
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn'));
         document.getElementById('tab-' + t).style.display = 'block';
-        document.getElementById('btn-' + t).classList.add('active-btn');
+        document.getElementById('b-' + t).classList.add('active-btn');
         if(t === 'matrix') loadMatrix();
         if(t === 'staff') loadStaff();
         if(t === 'history') loadHistory();
@@ -208,70 +203,89 @@
             if(!bc) return;
             const now = new Date();
             const log = {
-                bc: bc,
-                name: localStorage.getItem('nexN'),
-                id: localStorage.getItem('nexI'),
+                bc: bc, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'),
                 loc: document.getElementById('locSelect').value,
-                time: now.toLocaleTimeString(),
-                date: now.toISOString().split('T')[0],
-                h: now.getHours()
+                time: now.toLocaleTimeString(), date: now.toISOString().split('T')[0],
+                h: now.getHours(), ts: Date.now()
             };
             db.ref('logs').push(log);
-            const m = document.getElementById('msg');
-            m.innerText = "SUCCESS: " + bc;
-            m.style.color = "green";
-            e.target.value = "";
-            e.target.focus();
+            
+            // Show details on screen
+            document.getElementById('scanInfo').style.display = 'block';
+            document.getElementById('lastStaff').innerText = log.name;
+            document.getElementById('lastId').innerText = log.id;
+            document.getElementById('lastBc').innerText = log.bc;
+            document.getElementById('lastTime').innerText = log.time;
+            
+            e.target.value = ""; e.target.focus();
         }
     });
 
     function loadMatrix() {
-        const selDate = document.getElementById('matDate').value;
-        db.ref('logs').orderByChild('date').equalTo(selDate).on('value', s => {
+        const from = document.getElementById('matFrom').value;
+        const to = document.getElementById('matTo').value;
+        const locF = document.getElementById('matLocFilter').value;
+        
+        db.ref('logs').on('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
-            let head = `<tr><th>Location</th>${shift.map(h => `<th>${h}:00</th>`).join('')}<th>TOTAL</th></tr>`;
-            document.getElementById('matHead').innerHTML = head;
+            const filtered = data.filter(x => x.date >= from && x.date <= to && (locF === 'All' || x.loc === locF));
             
-            let body = locs.map(l => {
+            let h = `<tr><th>Location</th>${shiftHours.map(hr => `<th>${hr}:00</th>`).join('')}<th>Total</th></tr>`;
+            document.getElementById('matHead').innerHTML = h;
+            
+            const activeLocs = locF === 'All' ? locations : [locF];
+            let b = activeLocs.map(l => {
                 let rowTotal = 0;
-                let cells = shift.map(h => {
-                    let count = data.filter(x => x.loc === l && x.h === h).length;
+                let cells = shiftHours.map(hr => {
+                    let count = filtered.filter(x => x.loc === l && x.h === hr).length;
                     rowTotal += count;
                     return `<td>${count || ''}</td>`;
                 }).join('');
-                return `<tr><td style="text-align:left"><b>${l}</b></td>${cells}<td style="background:#eee"><b>${rowTotal}</b></td></tr>`;
+                return `<tr><td><b>${l}</b></td>${cells}<td><b>${rowTotal}</b></td></tr>`;
             }).join('');
-            document.getElementById('matBody').innerHTML = body;
+            document.getElementById('matBody').innerHTML = b;
         });
     }
 
     function loadStaff() {
-        const today = new Date().toISOString().split('T')[0];
-        db.ref('logs').orderByChild('date').equalTo(today).on('value', s => {
+        const from = document.getElementById('staffFrom').value;
+        const to = document.getElementById('staffTo').value;
+        
+        db.ref('logs').on('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
+            const filtered = data.filter(x => x.date >= from && x.date <= to);
             const staff = {};
-            data.forEach(x => { staff[x.name] = (staff[x.name] || 0) + 1; });
-            document.getElementById('staffList').innerHTML = Object.entries(staff).map(([n, c]) => 
-                `<div class="staff-card"><span>👤 ${n}</span><span style="color:var(--g)"><b>${c} Scans</b></span></div>`
-            ).join('') || "No Scans Recorded Today";
+            filtered.forEach(x => {
+                const key = `${x.id} - ${x.name}`;
+                staff[key] = (staff[key] || 0) + 1;
+            });
+            document.getElementById('staffList').innerHTML = Object.entries(staff).map(([idName, count]) => 
+                `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee">
+                    <span><b>ID:</b> ${idName}</span>
+                    <span style="color:var(--g)"><b>${count} Scans</b></span>
+                </div>`
+            ).join('') || "No data for selected range";
         });
     }
 
     function loadHistory() {
-        const d = document.getElementById('histDate').value;
+        const from = document.getElementById('histFrom').value;
+        const to = document.getElementById('histTo').value;
         const q = document.getElementById('histSearch').value.toLowerCase();
-        db.ref('logs').orderByChild('date').equalTo(d).on('value', s => {
+        
+        db.ref('logs').on('value', s => {
             const data = s.val() ? Object.values(s.val()).reverse() : [];
-            document.getElementById('histBody').innerHTML = data
-                .filter(x => x.bc.toLowerCase().includes(q) || x.id.toLowerCase().includes(q))
-                .map(x => `<tr><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.name}</td><td>${x.id}</td></tr>`)
-                .join('');
+            const filtered = data.filter(x => x.date >= from && x.date <= to && (x.bc.toLowerCase().includes(q) || x.id.toLowerCase().includes(q)));
+            document.getElementById('histBody').innerHTML = filtered.map(x => 
+                `<tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.id}</td><td>${x.name}</td></tr>`
+            ).join('');
         });
     }
 
-    function downloadExcel(id, filename) {
-        const wb = XLSX.utils.table_to_book(document.getElementById(id));
-        XLSX.writeFile(wb, `${filename}_${new Date().toLocaleDateString()}.xlsx`);
+    function downloadExcel(id, name) {
+        const table = document.getElementById(id);
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `${name}_${new Date().toLocaleDateString()}.xlsx`);
     }
 </script>
 </body>
