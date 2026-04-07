@@ -30,21 +30,15 @@
         nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; z-index: 1000; }
         nav button { flex: 1; padding: 12px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; font-size: 13px; }
         .active-btn { background: var(--primary) !important; color: white !important; }
-        
-        .checkbox-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-            gap: 10px; background: #fff; padding: 15px; border-radius: 8px; 
-            border: 1px solid #ddd; max-height: 200px; overflow-y: auto; margin: 10px 0;
-        }
-        .checkbox-item { display: flex; align-items: center; font-size: 13px; cursor: pointer; }
-        .checkbox-item input { width: auto; margin-right: 8px; }
 
         input, select, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         .btn-search { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .table-wrap { overflow-x: auto; border-radius: 10px; max-height: 500px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 13px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        
+        .table-wrap { overflow-x: auto; border-radius: 10px; max-height: 600px; background: white; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 12px; }
+        th, td { border: 1px solid #eee; padding: 8px; text-align: center; }
         th { background: var(--primary); color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background: #fafafa; }
     </style>
 </head>
 <body>
@@ -55,23 +49,24 @@
 </div>
 
 <div id="topBanner" class="top-performer-card" style="display:none">
-    <span style="font-size: 14px; text-transform: uppercase;">🏆 Today's Top Performer 🏆</span><br>
-    <b id="topName" style="font-size: 22px;">---</b> 
-    <span id="topCount" style="background: var(--gold); color: black; padding: 2px 10px; border-radius: 10px; margin-left: 10px; font-weight: bold;">0 Scans</span>
+    <span style="font-size: 14px; text-transform: uppercase;">🏆 TODAY'S TOP PERFORMER 🏆</span><br>
+    <b id="topName" style="font-size: 26px;">---</b> 
+    <span id="topCount" style="background: var(--gold); color: black; padding: 2px 12px; border-radius: 20px; margin-left: 10px; font-weight: bold;">0 Scans</span>
 </div>
 
-<div id="authPage" class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
+<div id="authPage" class="card" style="max-width: 400px; margin: 40px auto; text-align: center;">
     <div id="loginSection">
         <h3>STAFF LOGIN</h3>
-        <input type="text" id="loginId" placeholder="Employee ID">
+        <input type="text" id="loginId" placeholder="Enter Employee ID">
         <button class="btn-search" onclick="login()">LOGIN</button>
         <p>New? <a href="#" onclick="toggleAuth(true)">Register Here</a></p>
     </div>
     <div id="registerSection" style="display:none;">
         <h3>NEW REGISTRATION</h3>
-        <input type="text" id="regId" placeholder="ID (T101)">
-        <input type="text" id="regName" placeholder="Full Name">
-        <button class="btn-search" style="background:var(--success);" onclick="register()">SAVE</button>
+        <input type="text" id="regId" placeholder="ID (e.g. T101)">
+        <input type="text" id="regName" placeholder="Worker Full Name">
+        <button class="btn-search" style="background:var(--success);" onclick="register()">SAVE & REGISTER</button>
+        <p><a href="#" onclick="toggleAuth(false)">Back to Login</a></p>
     </div>
 </div>
 
@@ -88,34 +83,55 @@
         <div class="card" style="text-align:center">
             <h3>📥 SCAN ENTRY</h3>
             <select id="locSelect"></select>
-            <input type="text" id="barcodeInput" placeholder="SCAN BARCODE..." style="height:70px; font-size:26px; text-align:center; border: 3px dashed var(--primary); margin-top: 20px;">
+            <input type="text" id="barcodeInput" placeholder="SCAN BARCODE..." style="height:70px; font-size:28px; text-align:center; border: 3px dashed var(--primary); margin-top: 20px;">
         </div>
     </div>
 
     <div id="tab-matrix" class="tab-content" style="display:none">
         <div class="card">
-            <h3>📊 Production Matrix (Select Locations)</h3>
+            <h3>📊 Production Matrix</h3>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="date" id="matFrom"> <input type="date" id="matTo">
-                <select id="matType" onchange="renderCheckboxes()"><option value="logs">Tray</option><option value="shipments">Shipment</option></select>
+                <input type="date" id="matFrom"> 
+                <input type="date" id="matTo">
+                <select id="matType"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select>
             </div>
-            
-            <div class="checkbox-grid" id="locCheckboxes"></div>
             
             <div style="display: flex; gap: 10px;">
                 <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
-                <button onclick="downloadExcel('matrixTable', 'Matrix')" style="background:var(--success); color:white">EXPORT</button>
+                <button onclick="downloadExcel('matrixTable', 'Matrix_Report')" style="background:var(--success); color:white; border:none; border-radius:8px; cursor:pointer">EXPORT EXCEL</button>
             </div>
-            <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
+
+            <div class="table-wrap">
+                <table id="matrixTable">
+                    <thead id="matHead"></thead>
+                    <tbody id="matBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div id="tab-staff" class="tab-content" style="display:none"><div class="card"><h3>Staff View</h3><div id="staffList"></div></div></div>
-    <div id="tab-history" class="tab-content" style="display:none"><div class="card"><h3>History</h3><div class="table-wrap"><table id="histTable"><thead><tr><th>Date</th><th>Time</th><th>Loc</th><th>BC</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div></div></div>
+    <div id="tab-staff" class="tab-content" style="display:none">
+        <div class="card">
+            <h3>👥 Staff Performance</h3>
+            <div id="staffList"></div>
+        </div>
+    </div>
+
+    <div id="tab-history" class="tab-content" style="display:none">
+        <div class="card">
+            <h3>🔍 Search History</h3>
+            <div class="table-wrap">
+                <table id="histTable">
+                    <thead><tr><th>Date</th><th>Time</th><th>Loc</th><th>BC</th><th>ID</th><th>Name</th></tr></thead>
+                    <tbody id="histBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    const firebaseConfig = { /* Aapki Config */ 
+    const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
         databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
@@ -134,17 +150,23 @@
         const today = new Date().toISOString().split('T')[0];
         document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
         trayLocs.forEach(l => document.getElementById('locSelect').add(new Option(l, l)));
-        renderCheckboxes();
         checkLogin();
         updateTopPerformer();
     };
 
-    function renderCheckboxes() {
-        const type = document.getElementById('matType').value;
-        const list = type === 'logs' ? trayLocs : shipLocs;
-        document.getElementById('locCheckboxes').innerHTML = list.map(l => `
-            <label class="checkbox-item"><input type="checkbox" class="loc-cb" value="${l}" checked> ${l}</label>
-        `).join('');
+    function loadMatrix() {
+        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value;
+        const locs = type === 'logs' ? trayLocs : shipLocs;
+
+        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
+            const data = s.val() ? Object.values(s.val()) : [], hrs = Array.from({length: 24}, (_, i) => i);
+            document.getElementById('matHead').innerHTML = `<tr><th>Location</th>${hrs.map(h=>`<th>H${h}</th>`).join('')}<th>Total</th></tr>`;
+            document.getElementById('matBody').innerHTML = locs.map(l => {
+                let rowSum = 0;
+                let cells = hrs.map(h => { let c = data.filter(x=>x.loc===l && x.h===h).length; rowSum+=c; return `<td>${c||''}</td>`; }).join('');
+                return `<tr><td><b>${l}</b></td>${cells}<td style="font-weight:bold; background:#eef">${rowSum}</td></tr>`;
+            }).join('');
+        });
     }
 
     function updateTopPerformer() {
@@ -157,36 +179,30 @@
             if(top) {
                 document.getElementById('topBanner').style.display = 'block';
                 document.getElementById('topName').innerText = top[0];
-                document.getElementById('topCount').innerText = top[1] + " Scans";
+                document.getElementById('topCount').innerText = top[1] + " Scans Today";
             }
         });
     }
 
-    function loadMatrix() {
-        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value;
-        const selectedLocs = Array.from(document.querySelectorAll('.loc-cb:checked')).map(cb => cb.value);
-        
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [], hrs = Array.from({length: 24}, (_, i) => i);
-            document.getElementById('matHead').innerHTML = `<tr><th>Loc</th>${hrs.map(h=>`<th>H${h}</th>`).join('')}<th>Total</th></tr>`;
-            document.getElementById('matBody').innerHTML = selectedLocs.map(l => {
-                let rowSum = 0;
-                let cells = hrs.map(h => { let c = data.filter(x=>x.loc===l && x.h===h).length; rowSum+=c; return `<td>${c||''}</td>`; }).join('');
-                return `<tr><td><b>${l}</b></td>${cells}<td><b>${rowSum}</b></td></tr>`;
-            }).join('');
-        });
+    function handleScan(bc, min, max, path, locId) {
+        if(bc.length < min || bc.length > max) return alert("Wrong Digits!");
+        const now = new Date();
+        db.ref(path).push({ bc, loc: document.getElementById(locId).value, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'), date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours() }).then(()=>updateTopPerformer());
     }
+    document.getElementById('barcodeInput').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'logs', 'locSelect'); e.target.value=""; }});
 
-    // Baki login/logout/tab functions (purane code wale) yahan same rahenge...
-    function showTab(t) { document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none'); document.getElementById('tab-' + t).style.display = 'block'; }
+    function showTab(t) { 
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none'); 
+        document.getElementById('tab-' + t).style.display = 'block'; 
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn'));
+        document.getElementById('b-' + t).classList.add('active-btn');
+    }
     function toggleAuth(showReg) { document.getElementById('loginSection').style.display = showReg ? 'none' : 'block'; document.getElementById('registerSection').style.display = showReg ? 'block' : 'none'; }
-    function login() { const id = document.getElementById('loginId').value.toUpperCase(); db.ref('users/'+id).once('value', s => { if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } }); }
+    function login() { const id = document.getElementById('loginId').value.toUpperCase(); db.ref('users/'+id).once('value', s => { if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } else alert("Not Found!"); }); }
     function register() { const id = document.getElementById('regId').value.toUpperCase(), name = document.getElementById('regName').value; db.ref('users/'+id).set({id, name}).then(()=>location.reload()); }
-    function checkLogin() { if(localStorage.getItem('uI')){ document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; }}
+    function checkLogin() { if(localStorage.getItem('uI')){ document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; showTab('scan'); }}
     function logout() { localStorage.clear(); location.reload(); }
-    function downloadExcel(tableId, name) { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById(tableId)), name+".xlsx"); }
-    
-    // Entry scanning logic (HandleScan) bhi add kar lena purane code se...
+    function downloadExcel(tId, n) { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById(tId)), n+".xlsx"); }
 </script>
 </body>
 </html>
