@@ -3,49 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAY AND SHIP RECORD - GUDDU</title>
+    <title>TRAY AND SHIP RECORD - FINAL FIX</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; --bg: #f4f7f6; --ship: #8e44ad; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        
-        .header-container { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 20px; background: white; border-radius: 15px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
-            border-bottom: 4px solid var(--primary);
-        }
+        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-bottom: 4px solid var(--primary); }
         .header-title { color: var(--primary); font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; }
         .guddu-signature { font-family: 'Brush Script MT', cursive; font-size: 45px; color: var(--primary); font-weight: bold; }
-
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
         nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; z-index: 1000; }
-        nav button { flex: 1; padding: 12px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; font-size: 13px; transition: 0.3s; }
+        nav button { flex: 1; padding: 12px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; font-size: 13px; transition: 0.3s; background: #eee; }
         .active-btn { background: var(--primary) !important; color: white !important; }
-        .ship-btn-active { background: var(--ship) !important; color: white !important; }
-        .logout-btn { background: var(--secondary); color: white; }
-        
         input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; box-sizing: border-box; }
         .btn-search { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; }
-        
         .scan-box { border: 3px dashed #ccc; padding: 35px; border-radius: 20px; background: #fdfdfd; margin: 20px 0; text-align: center; }
         .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; max-height: 550px; background: white; }
-        
         table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1800px; }
         th, td { border: 1px solid #f1f1f1; padding: 8px; text-align: center; white-space: nowrap; }
         th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 10; }
-        tr:nth-child(even) { background: #fafafa; }
-
-        /* Multi-select Dropdown */
         .dropdown-check { position: relative; width: 100%; margin-bottom: 10px; }
-        .dropdown-display { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .dropdown-display { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; text-align: left; }
         .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; z-index: 2000; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .dropdown-list label { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        .dropdown-list input { width: auto; margin: 0; }
-
-        .staff-row { background: white; padding: 15px; margin-bottom: 8px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -57,104 +39,81 @@
 
 <div id="authPage" class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
     <div id="loginSection">
-        <h3>STAFF LOGIN</h3>
-        <input type="text" id="loginId" placeholder="Enter Employee ID">
-        <button class="btn-search" onclick="login()">ENTER DASHBOARD</button>
-        <p onclick="toggleAuth(true)" style="cursor:pointer; color:var(--primary)">New worker? Register Here</p>
+        <h2 style="color:var(--primary)">STAFF LOGIN</h2>
+        <input type="text" id="loginId" placeholder="Enter Employee ID (e.g. G01)">
+        <button class="btn-search" style="padding:15px;" onclick="login()">ENTER DASHBOARD</button>
+        <p style="margin-top:15px; font-size:14px;">Naye hain? <span onclick="toggleAuth(true)" style="color:var(--primary); cursor:pointer; font-weight:bold;">Register Here</span></p>
     </div>
     <div id="registerSection" style="display:none;">
-        <h3>NEW REGISTRATION</h3>
-        <input type="text" id="regId" placeholder="Create ID">
-        <input type="text" id="regName" placeholder="Full Name">
-        <button class="btn-search" style="background:var(--success)" onclick="register()">REGISTER</button>
-        <p onclick="toggleAuth(false)" style="cursor:pointer; color:var(--primary)">Have ID? Login Here</p>
+        <h2 style="color:var(--success)">NEW REGISTRATION</h2>
+        <input type="text" id="regId" placeholder="Create Unique ID">
+        <input type="text" id="regName" placeholder="Your Full Name">
+        <button class="btn-search" style="background:var(--success); padding:15px;" onclick="register()">SAVE & REGISTER</button>
+        <p style="margin-top:15px; font-size:14px;">ID hai? <span onclick="toggleAuth(false)" style="color:var(--primary); cursor:pointer; font-weight:bold;">Login Here</span></p>
     </div>
 </div>
 
 <div id="mainApp" style="display:none">
     <nav>
         <button id="b-scan" onclick="showTab('scan')">TRAY ENTRY</button>
-        <button id="b-ship" onclick="showTab('ship')">SHIPMENT</button>
-        <button id="b-matrix" onclick="showTab('matrix')">MATRIX</button>
+        <button id="b-matrix" onclick="showTab('matrix')">MATRIX (12AM-11PM)</button>
         <button id="b-staff" onclick="showTab('staff')">STAFF VIEW</button>
         <button id="b-history" onclick="showTab('history')">HISTORY</button>
-        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+        <button style="background:var(--secondary); color:white;" onclick="logout()">LOGOUT</button>
     </nav>
 
     <div id="tab-scan" class="tab-content">
         <div class="card" style="text-align:center">
             <h3>📥 TRAY WORKER ENTRY</h3>
             <select id="locSelect"></select>
-            <div class="scan-box"><input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:60px; font-size:24px; text-align:center;"></div>
-        </div>
-    </div>
-
-    <div id="tab-ship" class="tab-content" style="display:none">
-        <div class="card" style="text-align:center; border-top: 5px solid var(--ship)">
-            <h3>📦 SHIPMENT SCANNER</h3>
-            <select id="shipLocSelect">
-                <option value="DHL SHIPMENT">1. DHL SHIPMENT</option>
-                <option value="GP SUPPLY & SREERAJ">2. GP SUPPLY & SREERAJ</option>
-                <option value="OTHER SHIPMENT">3. OTHER SHIPMENT</option>
-            </select>
-            <div class="scan-box" style="background:#fdf2ff"><input type="text" id="ship23Input" placeholder="SCAN SHIPMENT..." style="height:60px; font-size:24px; text-align:center;"></div>
+            <div class="scan-box"><input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:60px; font-size:24px; text-align:center; border:none; background:transparent; width:100%"></div>
         </div>
     </div>
 
     <div id="tab-matrix" class="tab-content" style="display:none">
         <div class="card">
-            <h3>📊 Production Matrix</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <h3>📊 Production Matrix (Fixed Hours)</h3>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <input type="date" id="matFrom">
                 <input type="date" id="matTo">
             </div>
             <select id="matType" onchange="updateMatrixLocs()"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select>
-            
             <div class="dropdown-check">
                 <div class="dropdown-display" id="matLocText" onclick="toggleDrop('matLocList')">SELECT LOCATIONS...</div>
                 <div class="dropdown-list" id="matLocList"></div>
             </div>
-
             <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
-            <button onclick="downloadExcel('matrixTable', 'Matrix')" style="background:var(--success); color:white;">EXCEL</button>
-            
-            <div class="table-wrap">
-                <table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table>
-            </div>
+            <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
         </div>
     </div>
 
     <div id="tab-staff" class="tab-content" style="display:none">
         <div class="card">
             <h3>👥 Staff Performance</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <input type="date" id="staffFrom">
                 <input type="date" id="staffTo">
             </div>
-            <select id="staffType" onchange="updateStaffLocs()"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select>
-            
+            <select id="staffType" onchange="updateStaffLocs()"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
             <div class="dropdown-check">
                 <div class="dropdown-display" id="staffLocText" onclick="toggleDrop('staffLocList')">SELECT LOCATIONS...</div>
                 <div class="dropdown-list" id="staffLocList"></div>
             </div>
-
-            <button class="btn-search" onclick="loadStaff()">LOAD STAFF</button>
-            <div id="staffOutput"></div>
+            <button class="btn-search" onclick="loadStaff()">LOAD STAFF DATA</button>
+            <div id="staffOutput" style="margin-top:20px;"></div>
         </div>
     </div>
 
     <div id="tab-history" class="tab-content" style="display:none">
         <div class="card">
-            <h3>🔍 History</h3>
-            <input type="text" id="histSearch" placeholder="Search Barcode...">
-            <button class="btn-search" onclick="loadHistory()">SEARCH</button>
-            <div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Loc</th><th>BC</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div>
+            <h3>🔍 Last 50 Scans</h3>
+            <div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Firebase Config (Keep your existing config)
+    // Firebase Setup
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -168,7 +127,6 @@
     const db = firebase.database();
 
     const trayLocs = ["ICU ENTRY", "MEI ENTRY", "QC FAIL ORDER SEND TO MEI", "FRAME ORDER SEND TO FT", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI", "SEND TO MAIN LINE FOR FT", "SEND TO MAIN LINE FOR QC", "SEND TO MAIN LINE FOR PACKING", "TLP SEND TO MEI", "OMT RACK NO 00", "OMT RACK NO 01", "OMT RACK NO 02", "OMT RACK NO 03", "OMT RACK NO 04", "OMT RACK NO 05", "OMT RACK NO 06", "OMT RACK NO 07", "OMT RACK NO 08", "OMT RACK NO 09"];
-    const shipLocs = ["DHL SHIPMENT", "GP SUPPLY & SREERAJ", "OTHER SHIPMENT"];
 
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
@@ -179,132 +137,133 @@
         checkLogin();
     };
 
-    // UI Helpers
-    function toggleDrop(id) { 
-        let el = document.getElementById(id);
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    function toggleAuth(showReg) {
+        document.getElementById('loginSection').style.display = showReg ? 'none' : 'block';
+        document.getElementById('registerSection').style.display = showReg ? 'block' : 'none';
     }
 
-    function generateLocList(id, list, textId) {
-        let html = `<label><b>ALL</b> <input type="checkbox" onchange="selectAll('${id}', this, '${textId}')"></label>`;
-        list.forEach(l => {
-            html += `<label>${l} <input type="checkbox" class="${id}-item" value="${l}" onchange="updateText('${id}', '${textId}')"></label>`;
-        });
-        document.getElementById(id).innerHTML = html;
-    }
-
-    function selectAll(className, master, textId) {
-        document.querySelectorAll('.'+className+'-item').forEach(c => c.checked = master.checked);
-        updateText(className, textId);
-    }
-
-    function updateText(className, textId) {
-        let count = document.querySelectorAll('.'+className+'-item:checked').length;
-        document.getElementById(textId).innerText = count + " Selected";
-    }
-
-    function updateMatrixLocs() { generateLocList('matLoc', document.getElementById('matType').value === 'logs' ? trayLocs : shipLocs, 'matLocText'); }
-    function updateStaffLocs() { generateLocList('staffLoc', document.getElementById('staffType').value === 'logs' ? trayLocs : shipLocs, 'staffLocText'); }
-
-    // Auth
-    function toggleAuth(reg) { document.getElementById('loginSection').style.display = reg ? 'none' : 'block'; document.getElementById('registerSection').style.display = reg ? 'block' : 'none'; }
     function register() {
-        const id = document.getElementById('regId').value.toUpperCase(), name = document.getElementById('regName').value;
-        if(id && name) db.ref('users/'+id).set({id, name}).then(() => alert("Saved!"));
+        const id = document.getElementById('regId').value.trim().toUpperCase();
+        const name = document.getElementById('regName').value.trim();
+        if(!id || !name) return alert("Dono box bhariye!");
+        db.ref('users/' + id).set({ id, name }).then(() => {
+            alert("Registration Success! Ab login karein.");
+            toggleAuth(false);
+        }).catch(err => alert("Error: " + err.message));
     }
+
     function login() {
-        const id = document.getElementById('loginId').value.toUpperCase();
-        db.ref('users/'+id).once('value', s => {
-            if(s.exists()) { localStorage.setItem('uI', id); localStorage.setItem('uN', s.val().name); location.reload(); }
-            else alert("ID Not Found");
+        const id = document.getElementById('loginId').value.trim().toUpperCase();
+        if(!id) return alert("ID daliye!");
+        db.ref('users/' + id).once('value', s => {
+            if(s.exists()) {
+                localStorage.setItem('uI', id);
+                localStorage.setItem('uN', s.val().name);
+                checkLogin();
+            } else {
+                alert("ID nahi mili! Pehle Register karein.");
+            }
         });
     }
-    function checkLogin() { if(localStorage.getItem('uI')) { document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; } }
+
+    function checkLogin() {
+        if(localStorage.getItem('uI')) {
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            showTab('scan');
+        }
+    }
+
     function logout() { localStorage.clear(); location.reload(); }
 
-    // Scanning
-    function doScan(val, path, locId, min, max) {
-        if(val.length < min || val.length > max) return alert("Wrong Digits");
-        const now = new Date();
-        db.ref(path).push({
-            bc: val, loc: document.getElementById(locId).value,
-            id: localStorage.getItem('uI'), name: localStorage.getItem('uN'),
-            date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours()
-        });
+    function showTab(t) {
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn'));
+        document.getElementById('tab-' + t).style.display = 'block';
+        document.getElementById('b-' + t).classList.add('active-btn');
+        if(t === 'history') loadHistory();
     }
-    document.getElementById('barcodeInput').onkeypress = (e) => { if(e.key==='Enter') { doScan(e.target.value, 'logs', 'locSelect', 7, 7); e.target.value=''; } };
-    document.getElementById('ship23Input').onkeypress = (e) => { if(e.key==='Enter') { doScan(e.target.value, 'shipments', 'shipLocSelect', 1, 23); e.target.value=''; } };
 
-    // Matrix Logic (12 AM - 11 PM)
-    function formatH(h) { return h === 0 ? "12 AM" : h === 12 ? "12 PM" : h > 12 ? (h-12)+" PM" : h+" AM"; }
+    // Matrix & Staff Helpers
+    function toggleDrop(id) { let e = document.getElementById(id); e.style.display = e.style.display === 'block' ? 'none' : 'block'; }
+    function generateList(targetId, list, textId) {
+        let h = `<label><b>SELECT ALL</b> <input type="checkbox" onchange="selectAll('${targetId}', this, '${textId}')"></label>`;
+        list.forEach(l => h += `<label>${l} <input type="checkbox" class="${targetId}-item" value="${l}" onchange="updateCount('${targetId}', '${textId}')"></label>`);
+        document.getElementById(targetId).innerHTML = h;
+    }
+    function selectAll(cls, master, txt) { document.querySelectorAll('.'+cls+'-item').forEach(c => c.checked = master.checked); updateCount(cls, txt); }
+    function updateCount(cls, txt) { let c = document.querySelectorAll('.'+cls+'-item:checked').length; document.getElementById(txt).innerText = c + " Selected"; }
 
+    function updateMatrixLocs() { generateList('matLocList', trayLocs, 'matLocText'); }
+    function updateStaffLocs() { generateList('staffLocList', trayLocs, 'staffLocText'); }
+
+    // Logic for Matrix
+    function formatHour(h) { return h === 0 ? "12 AM" : h === 12 ? "12 PM" : h > 12 ? (h-12)+" PM" : h+" AM"; }
     function loadMatrix() {
-        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value;
-        const selLocs = Array.from(document.querySelectorAll('.matLoc-item:checked')).map(c => c.value);
-        if(selLocs.length === 0) return alert("Select Location!");
-        
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
+        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value;
+        const sel = Array.from(document.querySelectorAll('.matLoc-item:checked')).map(c => c.value);
+        if(sel.length === 0) return alert("Location select karein!");
+
+        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
-            let head = "<tr><th>Location</th>";
-            for(let i=0; i<24; i++) head += `<th>${formatH(i)}</th>`;
+            let head = "<tr><th>Location Name</th>";
+            for(let i=0; i<24; i++) head += `<th>${formatHour(i)}</th>`;
             head += "<th>Total</th></tr>";
             document.getElementById('matHead').innerHTML = head;
 
             let body = "";
-            selLocs.forEach(l => {
+            sel.forEach(l => {
                 let row = data.filter(x => x.loc === l);
-                body += `<tr><td>${l}</td>`;
-                for(let i=0; i<24; i++) {
-                    let c = row.filter(x => x.h === i).length;
-                    body += `<td>${c || '-'}</td>`;
-                }
-                body += `<td><b>${row.length}</b></td></tr>`;
+                body += `<tr><td style="text-align:left;"><b>${l}</b></td>`;
+                for(let i=0; i<24; i++) body += `<td>${row.filter(x => x.h === i).length || '-'}</td>`;
+                body += `<td style="background:#eee"><b>${row.length}</b></td></tr>`;
             });
             document.getElementById('matBody').innerHTML = body;
             document.getElementById('matLocList').style.display = 'none';
         });
     }
 
-    // Staff View Logic
+    // Logic for Staff View
     function loadStaff() {
-        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value, type = document.getElementById('staffType').value;
-        const selLocs = Array.from(document.querySelectorAll('.staffLoc-item:checked')).map(c => c.value);
-        
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
+        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value;
+        const sel = Array.from(document.querySelectorAll('.staffLoc-item:checked')).map(c => c.value);
+        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
-            const staff = {};
-            data.filter(x => selLocs.includes(x.loc)).forEach(x => {
-                staff[x.id] = staff[x.id] || {name: x.name, count: 0};
-                staff[x.id].count++;
+            const res = {};
+            data.filter(x => sel.includes(x.loc)).forEach(x => {
+                res[x.id] = res[x.id] || {n: x.name, c: 0};
+                res[x.id].c++;
             });
-            let out = Object.values(staff).sort((a,b) => b.count - a.count).map(st => `
-                <div class="staff-row">
-                    <span><b>${st.name}</b></span>
-                    <span style="color:var(--primary); font-weight:bold;">${st.count} Scans</span>
+            let out = Object.values(res).sort((a,b) => b.c - a.c).map(i => `
+                <div style="background:white; padding:15px; margin:5px 0; border-radius:8px; display:flex; justify-content:space-between; border-left:5px solid var(--primary); box-shadow:0 2px 5px rgba(0,0,0,0.1)">
+                    <span><b>${i.n}</b></span>
+                    <span style="color:var(--primary); font-weight:bold;">${i.c} Scans</span>
                 </div>
             `).join('');
-            document.getElementById('staffOutput').innerHTML = out || "No Data Found";
+            document.getElementById('staffOutput').innerHTML = out || "Data nahi mila!";
             document.getElementById('staffLocList').style.display = 'none';
         });
     }
 
+    // Scan Execution
+    document.getElementById('barcodeInput').onkeypress = (e) => {
+        if(e.key === 'Enter') {
+            let val = e.target.value.trim();
+            if(val.length !== 7) return alert("Sirf 7 Digit allow hai!");
+            const now = new Date();
+            db.ref('logs').push({
+                bc: val, loc: document.getElementById('locSelect').value,
+                id: localStorage.getItem('uI'), name: localStorage.getItem('uN'),
+                date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours()
+            }).then(() => { e.target.value = ''; });
+        }
+    };
+
     function loadHistory() {
-        const bc = document.getElementById('histSearch').value;
-        db.ref('logs').once('value', s => {
-            let data = s.val() ? Object.values(s.val()) : [];
-            if(bc) data = data.filter(x => x.bc.includes(bc));
-            document.getElementById('histBody').innerHTML = data.reverse().slice(0,50).map(x => `<tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.name}</td></tr>`).join('');
+        db.ref('logs').limitToLast(50).once('value', s => {
+            let d = s.val() ? Object.values(s.val()).reverse() : [];
+            document.getElementById('histBody').innerHTML = d.map(x => `<tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.name}</td></tr>`).join('');
         });
-    }
-
-    function showTab(t) {
-        document.querySelectorAll('.tab-content').forEach(c => c.style.display='none');
-        document.getElementById('tab-'+t).style.display='block';
-    }
-
-    function downloadExcel(id, name) {
-        const wb = XLSX.utils.table_to_book(document.getElementById(id));
-        XLSX.writeFile(wb, name + ".xlsx");
     }
 </script>
 </body>
