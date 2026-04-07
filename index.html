@@ -11,7 +11,6 @@
         :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; --bg: #f4f7f6; --ship: #8e44ad; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* HEADER STYLE */
         .header-container { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 20px; background: white; border-radius: 15px; 
@@ -37,10 +36,12 @@
         
         .scan-box { border: 3px dashed #ccc; padding: 35px; border-radius: 20px; background: #fdfdfd; margin: 20px 0; text-align: center; }
         .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; max-height: 550px; background: white; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 14px; }
-        th, td { border: 1px solid #f1f1f1; padding: 12px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 13px; }
+        th, td { border: 1px solid #f1f1f1; padding: 10px; text-align: center; }
         th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 10; }
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; background: #eef1f7; padding: 18px; border-radius: 12px; margin-bottom: 20px; align-items: end; }
+        tr:nth-child(even) { background: #fafafa; }
+
+        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; background: #eef1f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: end; }
     </style>
 </head>
 <body>
@@ -55,15 +56,14 @@
         <h3 style="color:var(--primary)">STAFF LOGIN</h3>
         <input type="text" id="loginId" placeholder="Enter Employee ID">
         <button class="btn-search" style="padding:15px;" onclick="login()">ENTER DASHBOARD</button>
-        <p style="font-size:13px; margin-top:15px;">Naya account chahiye? <a href="#" onclick="toggleAuth(true)" style="color:var(--primary); font-weight:bold;">Register Karein</a></p>
+        <p style="font-size:13px; margin-top:15px;">New worker? <a href="#" onclick="toggleAuth(true)" style="color:var(--primary); font-weight:bold;">Register Here</a></p>
     </div>
-
     <div id="registerSection" style="display:none;">
         <h3 style="color:var(--success)">NEW REGISTRATION</h3>
-        <input type="text" id="regId" placeholder="Create Employee ID (e.g. T101)">
-        <input type="text" id="regName" placeholder="Worker Full Name">
+        <input type="text" id="regId" placeholder="Create ID (e.g. T101)">
+        <input type="text" id="regName" placeholder="Full Name">
         <button class="btn-search" style="padding:15px; background:var(--success);" onclick="register()">SAVE & REGISTER</button>
-        <p style="font-size:13px; margin-top:15px;">Pehle se ID hai? <a href="#" onclick="toggleAuth(false)" style="color:var(--primary); font-weight:bold;">Login Karein</a></p>
+        <p style="font-size:13px; margin-top:15px;">Have ID? <a href="#" onclick="toggleAuth(false)" style="color:var(--primary); font-weight:bold;">Login Here</a></p>
     </div>
 </div>
 
@@ -79,37 +79,34 @@
 
     <div id="tab-scan" class="tab-content">
         <div class="card" style="text-align:center">
-            <h3 style="color:var(--primary)">📥 TRAY WORKER ENTRY (7 DIGIT)</h3>
+            <h3>📥 TRAY WORKER ENTRY (7 DIGIT)</h3>
             <select id="locSelect"></select>
-            <div class="scan-box">
-                <input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:70px; font-size:26px; text-align:center; border:none; background:transparent;">
-            </div>
+            <div class="scan-box"><input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:60px; font-size:24px; text-align:center; border:none; background:transparent; width:100%"></div>
         </div>
     </div>
 
     <div id="tab-ship" class="tab-content" style="display:none">
         <div class="card" style="border-top: 5px solid var(--ship); text-align:center">
-            <h3 style="color:var(--ship)">📦 SHIPMENT SCANNER (MAX 23 DIGIT)</h3>
+            <h3>📦 SHIPMENT SCANNER (MAX 23 DIGIT)</h3>
             <select id="shipLocSelect">
                 <option value="DHL SHIPMENT">1. DHL SHIPMENT</option>
                 <option value="GP SUPPLY & SREERAJ">2. GP SUPPLY & SREERAJ</option>
                 <option value="OTHER SHIPMENT">3. OTHER SHIPMENT</option>
             </select>
-            <div class="scan-box" style="border-color:var(--ship); background:#fdf2ff">
-                <input type="text" id="ship23Input" placeholder="SCAN SHIPMENT..." style="height:70px; font-size:26px; text-align:center; border:none; background:transparent;">
-            </div>
+            <div class="scan-box" style="border-color:var(--ship); background:#fdf2ff"><input type="text" id="ship23Input" placeholder="SCAN SHIPMENT..." style="height:60px; font-size:24px; text-align:center; border:none; background:transparent; width:100%"></div>
         </div>
     </div>
 
     <div id="tab-matrix" class="tab-content" style="display:none">
         <div class="card">
-            <h3>📊 Production Matrix</h3>
+            <h3>📊 Production Matrix (Hourly)</h3>
             <div class="filter-section">
                 <div>From: <input type="date" id="matFrom"></div>
                 <div>To: <input type="date" id="matTo"></div>
                 <div>Type: <select id="matType"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select></div>
                 <div>Loc: <select id="matLocFilter"><option value="ALL">ALL LOCATIONS</option></select></div>
-                <button class="btn-search" onclick="loadMatrix()">VIEW</button>
+                <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
+                <button onclick="downloadExcel('matrixTable', 'Matrix_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT MATRIX</button>
             </div>
             <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
         </div>
@@ -117,12 +114,12 @@
 
     <div id="tab-staff" class="tab-content" style="display:none">
         <div class="card">
-            <h3>👥 Staff Productivity</h3>
+            <h3>👥 Staff Performance</h3>
             <div class="filter-section">
                 <input type="date" id="staffFrom">
                 <input type="date" id="staffTo">
                 <select id="staffType"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
-                <button class="btn-search" onclick="loadStaff()">LOAD DATA</button>
+                <button class="btn-search" onclick="loadStaff()">LOAD STAFF</button>
             </div>
             <div id="staffList"></div>
         </div>
@@ -130,14 +127,14 @@
 
     <div id="tab-history" class="tab-content" style="display:none">
         <div class="card">
-            <h3>🔍 History & Barcode Search</h3>
+            <h3>🔍 History & Search</h3>
             <div class="filter-section">
                 <input type="date" id="histFrom">
                 <input type="date" id="histTo">
                 <select id="histType"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
-                <input type="text" id="histBcSearch" placeholder="🔍 Search Barcode..." style="margin:0">
+                <input type="text" id="histBcSearch" placeholder="🔍 Search Barcode...">
                 <button class="btn-search" onclick="loadHistory()">SEARCH</button>
-                <button onclick="downloadExcel()" style="background:var(--success); color:white">EXPORT EXCEL</button>
+                <button onclick="downloadExcel('histTable', 'History_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT EXCEL</button>
             </div>
             <div class="table-wrap"><table id="histTable"><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>ID</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div>
         </div>
@@ -145,7 +142,6 @@
 </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -164,57 +160,31 @@
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
-        trayLocs.forEach(l => {
-            document.getElementById('locSelect').add(new Option(l, l));
-            document.getElementById('matLocFilter').add(new Option(l, l));
-        });
+        trayLocs.forEach(l => { document.getElementById('locSelect').add(new Option(l, l)); document.getElementById('matLocFilter').add(new Option(l, l)); });
         shipLocs.forEach(l => document.getElementById('matLocFilter').add(new Option(l, l)));
         checkLogin();
     };
 
-    // --- AUTH LOGIC ---
-    function toggleAuth(showReg) {
-        document.getElementById('loginSection').style.display = showReg ? 'none' : 'block';
-        document.getElementById('registerSection').style.display = showReg ? 'block' : 'none';
-    }
-
-    function register() {
-        const id = document.getElementById('regId').value.trim().toUpperCase();
-        const name = document.getElementById('regName').value.trim();
-        if(!id || !name) return alert("Fill all details!");
-        db.ref('users/' + id).once('value', s => {
-            if(s.exists()) alert("ID already exists!");
-            else db.ref('users/' + id).set({ id, name }).then(() => { alert("Registered! Now Login."); toggleAuth(false); });
-        });
-    }
-
-    function login() { 
-        const id = document.getElementById('loginId').value.trim().toUpperCase(); 
-        db.ref('users/'+id).once('value', s => { 
-            if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } 
-            else alert("ID NOT FOUND! Please Register."); 
-        }); 
-    }
-
+    function toggleAuth(showReg) { document.getElementById('loginSection').style.display = showReg ? 'none' : 'block'; document.getElementById('registerSection').style.display = showReg ? 'block' : 'none'; }
+    function register() { const id = document.getElementById('regId').value.trim().toUpperCase(), name = document.getElementById('regName').value.trim(); if(!id || !name) return alert("Fill all!"); db.ref('users/'+id).set({id, name}).then(()=>{alert("Registered!"); toggleAuth(false);}); }
+    function login() { const id = document.getElementById('loginId').value.trim().toUpperCase(); db.ref('users/'+id).once('value', s => { if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } else alert("Not Found!"); }); }
     function checkLogin() { if(localStorage.getItem('uI')){ document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; showTab('scan'); } }
     function logout() { localStorage.clear(); location.reload(); }
 
-    // --- SCANNING ---
     function handleScan(bc, min, max, path, locId) {
-        if(bc.length < min || bc.length > max) return alert("Invalid Digits!");
+        if(bc.length < min || bc.length > max) return alert("Invalid Digit!");
         const now = new Date();
         db.ref(path).push({ bc, loc: document.getElementById(locId).value, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'), date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours() });
     }
     document.getElementById('barcodeInput').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 7, 7, 'logs', 'locSelect'); e.target.value=""; }});
     document.getElementById('ship23Input').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }});
 
-    // --- LOGIC ---
     function loadMatrix() {
         const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value, filterLoc = document.getElementById('matLocFilter').value;
         const locs = type === 'logs' ? trayLocs : shipLocs;
         db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [], hrs = Array.from({length: 24}, (_, i) => i);
-            document.getElementById('matHead').innerHTML = `<tr><th>Loc</th>${hrs.map(h=>`<th>${h}</th>`).join('')}<th>Total</th></tr>`;
+            document.getElementById('matHead').innerHTML = `<tr><th>Location</th>${hrs.map(h=>`<th>H${h}</th>`).join('')}<th>Total</th></tr>`;
             document.getElementById('matBody').innerHTML = locs.filter(l => filterLoc === 'ALL' || l === filterLoc).map(l => {
                 let rowSum = 0;
                 let cells = hrs.map(h => { let c = data.filter(x=>x.loc===l && x.h===h).length; rowSum+=c; return `<td>${c||''}</td>`; }).join('');
@@ -247,7 +217,12 @@
         document.getElementById('tab-' + t).style.display = 'block';
         document.getElementById('b-' + t).classList.add(t==='ship'?'ship-btn-active':'active-btn');
     }
-    function downloadExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('histTable')), 'Record.xlsx'); }
+
+    function downloadExcel(tableId, fileName) { 
+        const table = document.getElementById(tableId);
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `${fileName}_${new Date().toLocaleDateString()}.xlsx`); 
+    }
 </script>
 </body>
 </html>
