@@ -3,127 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS Master 30K - Exact 7 Digit</title>
+    <title>NexS Master 30K - Shipment Search</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; --bg: #f0f2f5; }
+        :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; --bg: #f0f2f5; --ship: #8e44ad; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; z-index: 1000; }
+        nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; }
         nav button { flex: 1; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.3s; }
         .active-btn { background: var(--primary) !important; color: white !important; }
+        .ship-btn-active { background: var(--ship) !important; color: white !important; }
         input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
         .btn-action { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-search { background: #2980b9; color: white; border: none; font-weight: bold; }
-        .logout-btn { background: var(--secondary); color: white; }
-        .scan-container { text-align: center; }
-        .scan-box { border: 3px dashed var(--primary); padding: 30px; border-radius: 15px; margin: 20px 0; background: #f8f9ff; }
-        .scan-details-box { background: #fff3cd; border-left: 8px solid #ffc107; padding: 20px; border-radius: 10px; text-align: left; margin-top: 20px; display: none; }
-        .error-box { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; font-weight: bold; font-size: 18px; }
-        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 16px; }
-        .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 8px; max-height: 600px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
-        th { background: var(--primary); color: white; position: sticky; top: 0; }
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; background: #eef1f7; padding: 15px; border-radius: 10px; align-items: end; }
+        
+        .scan-box { border: 3px dashed var(--ship); padding: 20px; border-radius: 15px; background: #fdf2ff; margin: 15px 0; text-align: center; }
+        
+        /* Search Result Styling */
+        .search-result-card { background: #e3f2fd; border-left: 10px solid #2196f3; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; }
+        .result-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        
+        .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 8px; max-height: 300px; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 13px; }
+        th, td { border: 1px solid #eee; padding: 8px; text-align: center; }
+        th { background: #f4f4f4; position: sticky; top: 0; }
+        .error-box { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; display: none; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="authPage" class="card" style="max-width: 400px; margin: 50px auto;">
     <h2 style="text-align:center; color: var(--primary);">NexS-Guddu-30k</h2>
-    <div id="loginForm">
-        <input type="text" id="loginId" placeholder="Employee ID (T000...)">
-        <button class="btn-action" onclick="login()">LOGIN</button>
-        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth(true)">New Registration</p>
-    </div>
-    <div id="regForm" style="display:none">
-        <input type="text" id="regName" placeholder="Full Name">
-        <input type="text" id="regId" placeholder="Set Employee ID">
-        <button class="btn-action" onclick="registerEmp()" style="background:var(--success)">REGISTER</button>
-        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth(false)">Back to Login</p>
-    </div>
+    <input type="text" id="loginId" placeholder="Employee ID">
+    <button class="btn-action" onclick="login()">LOGIN</button>
 </div>
 
 <div id="mainApp" style="display:none">
     <nav>
         <button id="b-scan" onclick="showTab('scan')">ENTRY</button>
+        <button id="b-ship" onclick="showTab('ship')">SHIPMENT ENTRY</button>
         <button id="b-matrix" onclick="showTab('matrix')">MATRIX</button>
-        <button id="b-staff" onclick="showTab('staff')">STAFF VIEW</button>
         <button id="b-history" onclick="showTab('history')">HISTORY</button>
-        <button class="logout-btn" onclick="logout()">LOGOUT</button>
     </nav>
 
     <div id="tab-scan" class="tab-content">
-        <div class="card scan-container">
-            <h3>WORKER ENTRY PANEL</h3>
-            <div style="margin-bottom:15px; color:#555">Operator: <b id="uName"></b> | ID: <span id="uId"></span></div>
-            <select id="locSelect" style="border: 2px solid var(--primary); font-weight: bold;"></select>
-            <div class="scan-box">
-                <input type="text" id="barcodeInput" placeholder="SCAN EXACT 7 DIGIT..." autofocus style="height:70px; font-size:24px; text-align:center; border:none; background:transparent;">
+        <div class="card" style="text-align:center">
+            <h3>MAIN ENTRY (7 DIGIT)</h3>
+            <select id="locSelect"></select>
+            <div class="scan-box" style="border-color:var(--primary); background:#f8f9ff">
+                <input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:50px; font-size:20px; text-align:center; border:none; background:transparent;">
             </div>
-            
             <div id="scanError" class="error-box"></div>
-
-            <div id="lastScanDetails" class="scan-details-box">
-                <div class="detail-row"><span>Status:</span> <b style="color:var(--success)">SAVED ✅</b></div>
-                <div class="detail-row"><span>Barcode:</span> <b id="dBc"></b></div>
-                <div class="detail-row"><span>Date:</span> <b id="dDate"></b></div>
-                <div class="detail-row"><span>Time:</span> <b id="dTime"></b></div>
-            </div>
         </div>
     </div>
 
-    <div id="tab-matrix" class="tab-content" style="display:none">
-        <div class="card">
-            <h3>Matrix (12 AM - 11 PM)</h3>
-            <div class="filter-section">
-                <div>From: <input type="date" id="matFrom"></div>
-                <div>To: <input type="date" id="matTo"></div>
-                <div>Loc: <select id="matLocFilter"><option value="All">All Locations</option></select></div>
-                <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
-                <button onclick="downloadExcel('matrixTable', 'Matrix')" style="background:var(--success); color:white">EXPORT</button>
+    <div id="tab-ship" class="tab-content" style="display:none">
+        <div class="card" style="border-top: 5px solid var(--ship);">
+            <h3 style="color:var(--ship); text-align:center; margin-bottom:5px;">📦 SHIPMENT PANEL</h3>
+            
+            <div style="background:#fff3e0; padding:10px; border-radius:10px; border:1px solid #ffb74d;">
+                <b style="color:#e65100; font-size:12px;">🔍 QUICK SEARCH / VERIFY ANY SHIPMENT</b>
+                <input type="text" id="masterSearchInput" placeholder="Scan Barcode to Check Record..." 
+                       onkeypress="if(e.key==='Enter') masterSearch(this.value)" 
+                       style="background:white; border:2px solid #ffb74d; height:45px;">
+                
+                <div id="searchResult" class="search-result-card">
+                    <div style="font-weight:bold; color:#1565c0; margin-bottom:8px;">✅ RECORD FOUND:</div>
+                    <div class="result-row"><span>Barcode:</span> <b id="resBc"></b></div>
+                    <div class="result-row"><span>Location:</span> <b id="resLoc"></b></div>
+                    <div class="result-row"><span>Scan Date:</span> <b id="resDate"></b></div>
+                    <div class="result-row"><span>Scan Time:</span> <b id="resTime"></b></div>
+                    <div class="result-row"><span>Scanned By:</span> <b id="resBy"></b></div>
+                    <button onclick="closeSearch()" style="background:#999; color:white; padding:5px; margin-top:10px; height:35px; font-size:12px;">CLOSE</button>
+                </div>
+                <div id="searchError" class="error-box" style="margin-top:10px;">❌ Record Not Found!</div>
             </div>
-            <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
-        </div>
-    </div>
 
-    <div id="tab-staff" class="tab-content" style="display:none">
-        <div class="card">
-            <h3>Staff Productivity</h3>
-            <div class="filter-section">
-                <div>From: <input type="date" id="staffFrom"></div>
-                <div>To: <input type="date" id="staffTo"></div>
-                <button class="btn-search" onclick="loadStaff()">SEARCH STAFF</button>
-            </div>
-            <div id="staffTableBody"></div>
-        </div>
-    </div>
+            <hr style="margin:20px 0; opacity:0.2;">
 
-    <div id="tab-history" class="tab-content" style="display:none">
-        <div class="card">
-            <h3>Search History</h3>
-            <div class="filter-section">
-                <div>From: <input type="date" id="histFrom"></div>
-                <div>To: <input type="date" id="histTo"></div>
-                <div>Search: <input type="text" id="histSearch" placeholder="Barcode / ID"></div>
-                <button class="btn-search" onclick="loadHistory()">SEARCH NOW</button>
-                <button onclick="downloadExcel('histTable', 'History')" style="background:var(--success); color:white">EXPORT</button>
+            <select id="shipLocSelect" style="border: 2px solid var(--ship); font-weight:bold;">
+                <option value="DHL SHIPMENT">1. DHL SHIPMENT</option>
+                <option value="GP SUPPLY & SREERAJ">2. GP SUPPLY & SREERAJ</option>
+                <option value="OTHER SHIPMENT">3. OTHER SHIPMENT</option>
+            </select>
+
+            <div class="scan-box">
+                <div style="font-weight:bold; color:#8e44ad; font-size:12px;">NEW ENTRY (MAX 23 DIGIT)</div>
+                <input type="text" id="ship23Input" placeholder="SCAN TO SAVE..." style="height:60px; font-size:24px; text-align:center; border:none; background:transparent;">
             </div>
+
+            <h4 style="margin-bottom:5px; color:#555;">Recent Today</h4>
             <div class="table-wrap">
-                <table id="histTable">
-                    <thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>Emp ID</th><th>Name</th></tr></thead>
-                    <tbody id="histBody"></tbody>
+                <table>
+                    <thead><tr><th>Time</th><th>Loc</th><th>Barcode</th></tr></thead>
+                    <tbody id="shipMiniBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
-</div>
+
+    </div>
 
 <script>
-    // FIREBASE CONFIG
+    // --- Firebase Config ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -136,124 +118,78 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const locList = ["ICU ENTRY", "MEI ENTRY", "QC FAIL ORDER SEND TO MEI", "FRAME ORDER SEND TO FT", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI", "SEND TO MAIN LINE FOR FT", "SEND TO MAIN LINE FOR QC", "SEND TO MAIN LINE FOR PACKING", "TLP SEND TO MEI", "OMT RACK NO 00", "OMT RACK NO 01", "OMT RACK NO 02", "OMT RACK NO 03", "OMT RACK NO 04", "OMT RACK NO 05", "OMT RACK NO 06", "OMT RACK NO 07", "OMT RACK NO 08", "OMT RACK NO 09"];
-    const matrixHrs = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+    // --- Master Search Function ---
+    function masterSearch(bc) {
+        const query = bc.trim();
+        if(!query) return;
+        
+        document.getElementById('searchResult').style.display = 'none';
+        document.getElementById('searchError').style.display = 'none';
 
-    window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
-        locList.forEach(l => {
-            document.getElementById('locSelect').add(new Option(l, l));
-            document.getElementById('matLocFilter').add(new Option(l, l));
+        // Search in shipments
+        db.ref('shipments').orderByChild('bc').equalTo(query).once('value', s => {
+            if(s.exists()) {
+                const data = Object.values(s.val())[0]; // Get the most recent if multiple
+                document.getElementById('resBc').innerText = data.bc;
+                document.getElementById('resLoc').innerText = data.loc;
+                document.getElementById('resDate').innerText = data.date;
+                document.getElementById('resTime').innerText = data.time;
+                document.getElementById('resBy').innerText = data.name + " (" + data.id + ")";
+                
+                document.getElementById('searchResult').style.display = 'block';
+                document.getElementById('masterSearchInput').value = "";
+            } else {
+                document.getElementById('searchError').style.display = 'block';
+                setTimeout(() => document.getElementById('searchError').style.display='none', 3000);
+            }
         });
-        checkLogin();
-    };
+    }
 
-    // 🟢 VALIDATION: EXACTLY 7 DIGITS
-    document.getElementById('barcodeInput').addEventListener('keypress', e => {
+    function closeSearch() { document.getElementById('searchResult').style.display = 'none'; }
+
+    // --- Regular Scanning Logic ---
+    document.getElementById('ship23Input').addEventListener('keypress', e => {
         if(e.key === 'Enter') {
             const bc = e.target.value.trim();
-            const errBox = document.getElementById('scanError');
-            const detBox = document.getElementById('lastScanDetails');
-            
-            // Logic: Must be exactly 7 digits
-            if(bc.length !== 7) {
-                errBox.innerHTML = `⚠️ INVALID: Barcode <b>${bc.length}</b> digit ka hai. Exact <b>7</b> chahiye!`;
-                errBox.style.display = 'block';
-                detBox.style.display = 'none';
-                e.target.value = ""; e.target.focus();
-                setTimeout(() => { errBox.style.display = 'none'; }, 4000);
-                return;
+            if(bc.length > 0 && bc.length <= 23) {
+                const now = new Date();
+                const data = {
+                    bc, loc: document.getElementById('shipLocSelect').value,
+                    name: localStorage.getItem('uN'), id: localStorage.getItem('uI'),
+                    date: now.toISOString().split('T')[0], time: now.toLocaleTimeString()
+                };
+                db.ref('shipments').push(data);
+                e.target.value = "";
+                loadMini();
             }
-
-            // Success Logic
-            errBox.style.display = 'none';
-            const now = new Date();
-            const log = {
-                bc: bc, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'),
-                loc: document.getElementById('locSelect').value,
-                date: now.toISOString().split('T')[0],
-                time: now.toLocaleTimeString(),
-                h: now.getHours(),
-                ts: Date.now()
-            };
-            db.ref('logs').push(log);
-            
-            detBox.style.display = 'block';
-            document.getElementById('dBc').innerText = log.bc;
-            document.getElementById('dDate').innerText = log.date;
-            document.getElementById('dTime').innerText = log.time;
-            
-            e.target.value = ""; e.target.focus();
         }
     });
 
-    // ALL OTHER FUNCTIONS
-    function loadMatrix() {
-        const from = document.getElementById('matFrom').value;
-        const to = document.getElementById('matTo').value;
-        const locF = document.getElementById('matLocFilter').value;
-        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [];
-            const filtered = locF === 'All' ? data : data.filter(x => x.loc === locF);
-            let h = `<tr><th>Location</th>${matrixHrs.map(hr => `<th>${hr}:00</th>`).join('')}<th>Total</th></tr>`;
-            document.getElementById('matHead').innerHTML = h;
-            let b = (locF === 'All' ? locList : [locF]).map(l => {
-                let rowSum = 0;
-                let cells = matrixHrs.map(hr => {
-                    let count = filtered.filter(x => x.loc === l && x.h === hr).length;
-                    rowSum += count; return `<td>${count || ''}</td>`;
-                }).join('');
-                return `<tr><td><b>${l}</b></td>${cells}<td><b>${rowSum}</b></td></tr>`;
-            }).join('');
-            document.getElementById('matBody').innerHTML = b;
-        });
-    }
+    // Handle Master Search Enter Key
+    document.getElementById('masterSearchInput').addEventListener('keypress', e => {
+        if(e.key === 'Enter') masterSearch(e.target.value);
+    });
 
-    function loadStaff() {
-        const from = document.getElementById('staffFrom').value;
-        const to = document.getElementById('staffTo').value;
-        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [];
-            const staffMap = {};
-            data.forEach(x => { const key = `${x.id} | ${x.name}`; staffMap[key] = (staffMap[key] || 0) + 1; });
-            document.getElementById('staffTableBody').innerHTML = Object.entries(staffMap).map(([info, count]) => `
-                <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #eee">
-                    <span><b>Emp:</b> ${info}</span><span style="color:var(--success); font-weight:bold">${count} Scans</span>
-                </div>`).join('') || "No data";
-        });
-    }
-
-    function loadHistory() {
-        const from = document.getElementById('histFrom').value;
-        const to = document.getElementById('histTo').value;
-        const q = document.getElementById('histSearch').value.toLowerCase();
-        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
+    function loadMini() {
+        const today = new Date().toISOString().split('T')[0];
+        db.ref('shipments').orderByChild('date').equalTo(today).limitToLast(10).on('value', s => {
             const data = s.val() ? Object.values(s.val()).reverse() : [];
-            const filtered = data.filter(x => x.bc.toLowerCase().includes(q) || x.id.toLowerCase().includes(q));
-            document.getElementById('histBody').innerHTML = filtered.map(x => `
-                <tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.id}</td><td>${x.name}</td></tr>`).join('');
+            document.getElementById('shipMiniBody').innerHTML = data.map(x => `
+                <tr><td>${x.time}</td><td>${x.loc}</td><td><b>${x.bc}</b></td></tr>
+            `).join('');
         });
     }
 
-    function login() {
-        const id = document.getElementById('loginId').value.trim();
-        db.ref('users/' + id).once('value', s => {
-            if(s.exists()) { localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); }
-            else alert("Invalid ID!");
-        });
+    // --- Basic App Functions ---
+    function showTab(t) {
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn', 'ship-btn-active'));
+        document.getElementById('tab-' + t).style.display = 'block';
+        document.getElementById('b-' + t).classList.add(t === 'ship' ? 'ship-btn-active' : 'active-btn');
+        if(t === 'ship') loadMini();
     }
-    function registerEmp() {
-        const n = document.getElementById('regName').value.trim();
-        const i = document.getElementById('regId').value.trim();
-        if(!n || !i) return alert("Enter details");
-        db.ref('users/' + i).set({ name: n, id: i }, () => { localStorage.setItem('uN', n); localStorage.setItem('uI', i); location.reload(); });
-    }
-    function checkLogin() { if(localStorage.getItem('uI')) { document.getElementById('authPage').style.display = 'none'; document.getElementById('mainApp').style.display = 'block'; document.getElementById('uName').innerText = localStorage.getItem('uN'); document.getElementById('uId').innerText = localStorage.getItem('uI'); showTab('scan'); } }
-    function logout() { localStorage.clear(); location.reload(); }
-    function showTab(t) { document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none'); document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn')); document.getElementById('tab-' + t).style.display = 'block'; document.getElementById('b-' + t).classList.add('active-btn'); }
-    function toggleAuth(reg) { document.getElementById('loginForm').style.display = reg ? 'none' : 'block'; document.getElementById('regForm').style.display = reg ? 'block' : 'none'; }
-    function downloadExcel(tableId, fileName) { const table = document.getElementById(tableId); const wb = XLSX.utils.table_to_book(table); XLSX.writeFile(wb, `${fileName}_${new Date().toLocaleDateString()}.xlsx`); }
+    function login() { const id = document.getElementById('loginId').value.trim(); db.ref('users/'+id).once('value', s => { if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } else alert("Invalid ID"); }); }
+    window.onload = () => { if(localStorage.getItem('uI')){ document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; showTab('scan'); } };
 </script>
 </body>
 </html>
