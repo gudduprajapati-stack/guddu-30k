@@ -36,23 +36,16 @@
         
         .scan-box { border: 3px dashed #ccc; padding: 35px; border-radius: 20px; background: #fdfdfd; margin: 20px 0; text-align: center; }
         .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; max-height: 550px; background: white; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 13px; }
-        th, td { border: 1px solid #f1f1f1; padding: 10px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        th, td { border: 1px solid #f1f1f1; padding: 10px; text-align: center; white-space: nowrap; }
         th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 10; }
         tr:nth-child(even) { background: #fafafa; }
 
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #eef1f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: end; }
-
-        /* Dropdown styling: Name First, then Checkbox */
+        /* Dropdown styling */
         .dropdown-check { position: relative; width: 100%; }
         .dropdown-display { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
         .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 5px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        
-        .dropdown-list label { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 15px; font-size: 13px; cursor: pointer; 
-            border-bottom: 1px solid #f0f0f0; box-sizing: border-box; 
-        }
+        .dropdown-list label { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0; box-sizing: border-box; }
         .dropdown-list label:hover { background: #f9f9f9; }
         .dropdown-list input[type="checkbox"] { margin: 0; transform: scale(1.2); cursor: pointer; }
 
@@ -119,11 +112,15 @@
                 <div>From: <input type="date" id="matFrom"></div>
                 <div>To: <input type="date" id="matTo"></div>
                 <div>Type: <select id="matType"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select></div>
-                <div>Loc: <select id="matLocFilter"><option value="ALL">ALL LOCATIONS</option></select></div>
                 <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
-                <button onclick="downloadExcel('matrixTable', 'Matrix_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT MATRIX</button>
+                <button onclick="downloadExcel('matrixTable', 'Matrix_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT EXCEL</button>
             </div>
-            <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
+            <div class="table-wrap">
+                <table id="matrixTable">
+                    <thead id="matHead"></thead>
+                    <tbody id="matBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -183,8 +180,7 @@
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
-        trayLocs.forEach(l => { document.getElementById('locSelect').add(new Option(l, l)); document.getElementById('matLocFilter').add(new Option(l, l)); });
-        shipLocs.forEach(l => document.getElementById('matLocFilter').add(new Option(l, l)));
+        trayLocs.forEach(l => document.getElementById('locSelect').add(new Option(l, l)));
         updateStaffLocList();
         checkLogin();
     };
@@ -203,74 +199,74 @@
     document.getElementById('barcodeInput').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 7, 7, 'logs', 'locSelect'); e.target.value=""; }});
     document.getElementById('ship23Input').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }});
 
-    function toggleStaffLocs() { 
-        let list = document.getElementById('staffLocDropdown');
-        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    // --- MATRIX LOGIC: AM/PM Format ---
+    function formatHour(h) {
+        if (h === 0) return "12 AM";
+        if (h === 12) return "12 PM";
+        return h > 12 ? (h - 12) + " PM" : h + " AM";
     }
-    
+
+    function loadMatrix() {
+        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value;
+        const locsList = type === 'logs' ? trayLocs : shipLocs;
+        
+        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
+            const data = s.val() ? Object.values(s.val()) : [];
+            
+            // Step 1: Get unique active hours from data
+            let activeHours = [...new Set(data.map(x => x.h))].sort((a,b) => a - b);
+            
+            // Step 2: Build Header with AM/PM
+            let headHTML = `<tr><th>Location Name</th>`;
+            activeHours.forEach(h => {
+                headHTML += `<th>${formatHour(h)}</th>`;
+            });
+            headHTML += `<th>Total</th></tr>`;
+            document.getElementById('matHead').innerHTML = headHTML;
+
+            // Step 3: Build Body
+            let bodyHTML = "";
+            locsList.forEach(l => {
+                let rowData = data.filter(x => x.loc === l);
+                if(rowData.length > 0) {
+                    bodyHTML += `<tr><td style="text-align:left;"><b>${l}</b></td>`;
+                    activeHours.forEach(h => {
+                        let count = rowData.filter(x => x.h === h).length;
+                        bodyHTML += `<td>${count || '-'}</td>`;
+                    });
+                    bodyHTML += `<td style="font-weight:bold; background:#eef1f7;">${rowData.length}</td></tr>`;
+                }
+            });
+            document.getElementById('matBody').innerHTML = bodyHTML || "<tr><td colspan='100%'>No data found.</td></tr>";
+        });
+    }
+
+    // --- Staff View ---
+    function toggleStaffLocs() { let list = document.getElementById('staffLocDropdown'); list.style.display = list.style.display === 'block' ? 'none' : 'block'; }
     function updateStaffLocList() {
         const type = document.getElementById('staffType').value;
         const locs = type === 'logs' ? trayLocs : shipLocs;
-        document.getElementById('staffLocCheckboxes').innerHTML = locs.map(l => `
-            <label>
-                <span>${l}</span>
-                <input type="checkbox" class="sLocItem" value="${l}" onchange="updateStaffText()"> 
-            </label>`).join('');
+        document.getElementById('staffLocCheckboxes').innerHTML = locs.map(l => `<label><span>${l}</span><input type="checkbox" class="sLocItem" value="${l}" onchange="updateStaffText()"></label>`).join('');
         document.getElementById('staffAllCheck').checked = false;
         updateStaffText();
     }
-
-    function staffSelectAll(master) {
-        document.querySelectorAll('.sLocItem').forEach(c => c.checked = master.checked);
-        updateStaffText();
-    }
-
+    function staffSelectAll(master) { document.querySelectorAll('.sLocItem').forEach(c => c.checked = master.checked); updateStaffText(); }
     function updateStaffText() {
         let selected = Array.from(document.querySelectorAll('.sLocItem:checked')).length;
-        document.getElementById('staffLocText').innerText = selected > 0 ? `${selected} Locations Selected` : 'SELECT LOCATIONS...';
+        document.getElementById('staffLocText').innerText = selected > 0 ? `${selected} Loc Selected` : 'SELECT LOCATIONS...';
     }
 
     function loadStaff() {
-        const from = document.getElementById('staffFrom').value, 
-              to = document.getElementById('staffTo').value, 
-              type = document.getElementById('staffType').value;
-        
+        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value, type = document.getElementById('staffType').value;
         const selLocs = Array.from(document.querySelectorAll('.sLocItem:checked')).map(c => c.value);
         if(selLocs.length === 0) return alert("Pehle location select karo!");
-
         document.getElementById('staffLocDropdown').style.display = 'none';
 
         db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [], staff = {};
-            data.forEach(x => { 
-                if(selLocs.includes(x.loc)) {
-                    staff[x.id] = staff[x.id] || {n:x.name, c:0}; 
-                    staff[x.id].c++; 
-                }
-            });
-            
-            let sortedStaff = Object.entries(staff).sort((a,b) => b[1].c - a[1].c);
-            document.getElementById('staffList').innerHTML = sortedStaff.map(([id, info]) => `
-                <div class="staff-row">
-                    <span><b>${info.n}</b> (${id})</span>
-                    <span style="font-size:16px; font-weight:900; color:var(--primary)">${info.c} Scans</span>
-                </div>`).join('');
-            
-            if(sortedStaff.length === 0) document.getElementById('staffList').innerHTML = '<p style="text-align:center;color:gray">No record found.</p>';
-        });
-    }
-
-    function loadMatrix() {
-        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value, filterLoc = document.getElementById('matLocFilter').value;
-        const locs = type === 'logs' ? trayLocs : shipLocs;
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [], hrs = Array.from({length: 24}, (_, i) => i);
-            document.getElementById('matHead').innerHTML = `<tr><th>Location</th>${hrs.map(h=>`<th>H${h}</th>`).join('')}<th>Total</th></tr>`;
-            document.getElementById('matBody').innerHTML = locs.filter(l => filterLoc === 'ALL' || l === filterLoc).map(l => {
-                let rowSum = 0;
-                let cells = hrs.map(h => { let c = data.filter(x=>x.loc===l && x.h===h).length; rowSum+=c; return `<td>${c||''}</td>`; }).join('');
-                return `<tr><td><b>${l}</b></td>${cells}<td><b>${rowSum}</b></td></tr>`;
-            }).join('');
+            data.forEach(x => { if(selLocs.includes(x.loc)) { staff[x.id] = staff[x.id] || {n:x.name, c:0}; staff[x.id].c++; } });
+            let sorted = Object.entries(staff).sort((a,b) => b[1].c - a[1].c);
+            document.getElementById('staffList').innerHTML = sorted.map(([id, info]) => `<div class="staff-row"><span><b>${info.n}</b> (${id})</span><span style="font-weight:900; color:var(--primary)">${info.c} Scans</span></div>`).join('');
         });
     }
 
