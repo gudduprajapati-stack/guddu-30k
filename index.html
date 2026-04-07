@@ -1,279 +1,194 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAY AND SHIP RECORD</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; --bg: #f4f7f6; --ship: #8e44ad; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        
-        .header-container { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 20px; background: white; border-radius: 15px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 10px;
-            border-bottom: 4px solid var(--primary);
-        }
-        .header-title { color: var(--primary); font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; }
-        .guddu-signature { font-family: 'Brush Script MT', cursive; font-size: 45px; color: var(--primary); font-weight: bold; }
+<meta charset="UTF-8">
+<title>TRAY AUTO NEXS SYSTEM</title>
 
-        /* Welcome User Style */
-        .user-banner { 
-            background: #e1e8f0; padding: 8px 15px; border-radius: 8px; 
-            margin-bottom: 15px; font-weight: bold; color: var(--primary);
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            border: 1px solid #cbd5e0;
-        }
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; z-index: 1000; }
-        nav button { flex: 1; padding: 12px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; font-size: 13px; transition: 0.3s; }
-        .active-btn { background: var(--primary) !important; color: white !important; }
-        .ship-btn-active { background: var(--ship) !important; color: white !important; }
-        .logout-btn { background: var(--secondary); color: white; }
-        
-        input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
-        .btn-search { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; }
-        
-        .scan-box { border: 3px dashed #ccc; padding: 35px; border-radius: 20px; background: #fdfdfd; margin: 20px 0; text-align: center; }
-        .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; max-height: 550px; background: white; }
-        table { width: 100%; border-collapse: collapse; min-width: 1800px; font-size: 12px; }
-        th, td { border: 1px solid #f1f1f1; padding: 10px; text-align: center; white-space: nowrap; }
-        th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 10; }
-        tr:nth-child(even) { background: #fafafa; }
+<style>
+body{
+font-family:Segoe UI;
+background:#f4f7f6;
+padding:20px;
+}
 
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; background: #eef1f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: end; }
-    </style>
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+max-width:600px;
+margin:auto;
+box-shadow:0 4px 10px rgba(0,0,0,.1);
+}
+
+input,select{
+width:100%;
+padding:15px;
+font-size:20px;
+margin-top:10px;
+}
+
+h2{text-align:center;}
+
+#status{
+margin-top:15px;
+font-weight:bold;
+text-align:center;
+}
+</style>
 </head>
+
 <body>
 
-<div class="header-container">
-    <div class="header-title">TRAY AND SHIP RECORD</div>
-    <div class="guddu-signature">Guddu</div>
-</div>
+<div class="card">
 
-<div id="authPage" class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
-    <div id="loginSection">
-        <h3 style="color:var(--primary)">STAFF LOGIN</h3>
-        <input type="text" id="loginId" placeholder="Enter Employee ID">
-        <button class="btn-search" style="padding:15px;" onclick="login()">ENTER DASHBOARD</button>
-        <p style="font-size:13px; margin-top:15px;">New worker? <a href="#" onclick="toggleAuth(true)" style="color:var(--primary); font-weight:bold;">Register Here</a></p>
-    </div>
-    <div id="registerSection" style="display:none;">
-        <h3 style="color:var(--success)">NEW REGISTRATION</h3>
-        <input type="text" id="regId" placeholder="Create ID (e.g. T101)">
-        <input type="text" id="regName" placeholder="Full Name">
-        <button class="btn-search" style="padding:15px; background:var(--success);" onclick="register()">SAVE & REGISTER</button>
-        <p style="font-size:13px; margin-top:15px;">Have ID? <a href="#" onclick="toggleAuth(false)" style="color:var(--primary); font-weight:bold;">Login Here</a></p>
-    </div>
-</div>
+<h2>📦 TRAY AUTO SCANNER</h2>
 
-<div id="mainApp" style="display:none">
-    <nav>
-        <button id="b-scan" onclick="showTab('scan')">TRAY ENTRY</button>
-        <button id="b-ship" onclick="showTab('ship')">SHIPMENT</button>
-        <button id="b-matrix" onclick="showTab('matrix')">MATRIX</button>
-        <button id="b-staff" onclick="showTab('staff')">STAFF VIEW</button>
-        <button id="b-history" onclick="showTab('history')">HISTORY & SEARCH</button>
-        <button class="logout-btn" onclick="logout()">LOGOUT</button>
-    </nav>
+<select id="loc">
+<option>ICU ENTRY</option>
+<option>MEI ENTRY</option>
+<option>OMT ENTRY</option>
+<option>SEND TO PACKING</option>
+</select>
 
-    <div class="user-banner">
-        👤 Worker: <span id="displayUserName">---</span> (<span id="displayUserId">---</span>)
-    </div>
+<input id="scanBox" placeholder="SCAN 7 DIGIT TRAY..." autofocus>
 
-    <div id="tab-scan" class="tab-content">
-        <div class="card" style="text-align:center">
-            <h3>📥 TRAY WORKER ENTRY (7 DIGIT)</h3>
-            <select id="locSelect"></select>
-            <div class="scan-box"><input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:60px; font-size:24px; text-align:center; border:none; background:transparent; width:100%"></div>
-        </div>
-    </div>
+<div id="status"></div>
 
-    <div id="tab-ship" class="tab-content" style="display:none">
-        <div class="card" style="border-top: 5px solid var(--ship); text-align:center">
-            <h3>📦 SHIPMENT SCANNER</h3>
-            <select id="shipLocSelect">
-                <option value="DHL SHIPMENT">1. DHL SHIPMENT</option>
-                <option value="GP SUPPLY & SREERAJ">2. GP SUPPLY & SREERAJ</option>
-                <option value="OTHER SHIPMENT">3. OTHER SHIPMENT</option>
-            </select>
-            <div class="scan-box" style="border-color:var(--ship); background:#fdf2ff"><input type="text" id="ship23Input" placeholder="SCAN SHIPMENT..." style="height:60px; font-size:24px; text-align:center; border:none; background:transparent; width:100%"></div>
-        </div>
-    </div>
-
-    <div id="tab-matrix" class="tab-content" style="display:none">
-        <div class="card">
-            <h3>📊 Production Matrix (12 AM - 11 PM)</h3>
-            <div class="filter-section">
-                <div>From: <input type="date" id="matFrom"></div>
-                <div>To: <input type="date" id="matTo"></div>
-                <div>Type: <select id="matType" onchange="updateMatrixLocs()"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select></div>
-                <div>Location: <select id="matLocFilter"><option value="ALL">ALL LOCATIONS</option></select></div>
-                <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
-                <button onclick="downloadExcel('matrixTable', 'Matrix_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT</button>
-            </div>
-            <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
-        </div>
-    </div>
-
-    <div id="tab-staff" class="tab-content" style="display:none">
-        <div class="card">
-            <h3>👥 Staff Performance</h3>
-            <div class="filter-section">
-                <input type="date" id="staffFrom">
-                <input type="date" id="staffTo">
-                <select id="staffType"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
-                <button class="btn-search" onclick="loadStaff()">LOAD STAFF</button>
-            </div>
-            <div id="staffList"></div>
-        </div>
-    </div>
-
-    <div id="tab-history" class="tab-content" style="display:none">
-        <div class="card">
-            <h3>🔍 History & Search</h3>
-            <div class="filter-section">
-                <input type="date" id="histFrom">
-                <input type="date" id="histTo">
-                <select id="histType"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
-                <input type="text" id="histBcSearch" placeholder="🔍 Search Barcode...">
-                <button class="btn-search" onclick="loadHistory()">SEARCH</button>
-            </div>
-            <div class="table-wrap"><table id="histTable"><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>ID</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div>
-        </div>
-    </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
-        authDomain: "nexs-guddu-30k.firebaseapp.com",
-        databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
-        projectId: "nexs-guddu-30k",
-        storageBucket: "nexs-guddu-30k.firebasestorage.app",
-        messagingSenderId: "634684833271",
-        appId: "1:634684833271:web:31a25a2c5301fa108142f2"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    const trayLocs = ["ICU ENTRY", "MEI ENTRY", "QC FAIL ORDER SEND TO MEI", "FRAME ORDER SEND TO FT", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI", "SEND TO MAIN LINE FOR FT", "SEND TO MAIN LINE FOR QC", "SEND TO MAIN LINE FOR PACKING", "TLP SEND TO MEI", "OMT RACK NO 00", "OMT RACK NO 01", "OMT RACK NO 02", "OMT RACK NO 03", "OMT RACK NO 04", "OMT RACK NO 05", "OMT RACK NO 06", "OMT RACK NO 07", "OMT RACK NO 08", "OMT RACK NO 09"];
-    const shipLocs = ["DHL SHIPMENT", "GP SUPPLY & SREERAJ", "OTHER SHIPMENT"];
+// ================= FIREBASE =================
 
-    window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
-        trayLocs.forEach(l => { document.getElementById('locSelect').add(new Option(l, l)); });
-        updateMatrixLocs();
-        checkLogin();
-    };
+const firebaseConfig = {
+apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+authDomain:"nexs-guddu-30k.firebaseapp.com",
+databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com",
+projectId:"nexs-guddu-30k"
+};
 
-    function updateMatrixLocs() {
-        const sel = document.getElementById('matLocFilter');
-        sel.innerHTML = '<option value="ALL">ALL LOCATIONS</option>';
-        const list = document.getElementById('matType').value === 'logs' ? trayLocs : shipLocs;
-        list.forEach(l => sel.add(new Option(l, l)));
-    }
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 
-    function formatTimeLabel(h) {
-        if (h === 0) return "12 AM";
-        if (h === 12) return "12 PM";
-        return h > 12 ? (h - 12) + " PM" : h + " AM";
-    }
 
-    function toggleAuth(showReg) { document.getElementById('loginSection').style.display = showReg ? 'none' : 'block'; document.getElementById('registerSection').style.display = showReg ? 'block' : 'none'; }
-    function register() { const id = document.getElementById('regId').value.trim().toUpperCase(), name = document.getElementById('regName').value.trim(); if(!id || !name) return alert("Fill all!"); db.ref('users/'+id).set({id, name}).then(()=>{alert("Registered!"); toggleAuth(false);}); }
-    
-    function login() { 
-        const id = document.getElementById('loginId').value.trim().toUpperCase(); 
-        db.ref('users/'+id).once('value', s => { 
-            if(s.exists()){ 
-                localStorage.setItem('uN', s.val().name); 
-                localStorage.setItem('uI', s.val().id); 
-                location.reload(); 
-            } else alert("Not Found!"); 
-        }); 
-    }
+// ================= SOUND =================
+const beep=new Audio(
+"https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+);
 
-    function checkLogin() { 
-        const uI = localStorage.getItem('uI');
-        const uN = localStorage.getItem('uN');
-        if(uI){ 
-            document.getElementById('authPage').style.display='none'; 
-            document.getElementById('mainApp').style.display='block'; 
-            document.getElementById('displayUserName').innerText = uN;
-            document.getElementById('displayUserId').innerText = uI;
-            showTab('scan'); 
-        } 
-    }
+// ================= NEXS API =================
+const NEXS_API=
+"https://app.nexs.lenskart.com/nexs/wms/api/v1/fittingDetails/";
 
-    function logout() { localStorage.clear(); location.reload(); }
+async function fetchNexs(tray){
 
-    function handleScan(bc, min, max, path, locId) {
-        if(bc.length < min || bc.length > max) return alert("Invalid Digit!");
-        const now = new Date();
-        db.ref(path).push({ bc, loc: document.getElementById(locId).value, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'), date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours() });
-    }
-    
-    document.getElementById('barcodeInput').onkeypress = e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 7, 7, 'logs', 'locSelect'); e.target.value=""; }};
-    document.getElementById('ship23Input').onkeypress = e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }};
+try{
 
-    function loadMatrix() {
-        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value, filterLoc = document.getElementById('matLocFilter').value;
-        const locs = type === 'logs' ? trayLocs : shipLocs;
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [];
-            let head = "<tr><th>Location</th>";
-            for(let i=0; i<24; i++) head += `<th>${formatTimeLabel(i)}</th>`;
-            head += "<th>Total</th></tr>";
-            document.getElementById('matHead').innerHTML = head;
-            document.getElementById('matBody').innerHTML = locs.filter(l => filterLoc === 'ALL' || l === filterLoc).map(l => {
-                let rowSum = 0;
-                let cells = "";
-                for(let i=0; i<24; i++) {
-                    let count = data.filter(x => x.loc === l && x.h === i).length;
-                    rowSum += count;
-                    cells += `<td>${count || '-'}</td>`;
-                }
-                return `<tr><td style="text-align:left"><b>${l}</b></td>${cells}<td><b>${rowSum}</b></td></tr>`;
-            }).join('');
-        });
-    }
+const res=await fetch(NEXS_API+tray,{
+credentials:"include"
+});
 
-    function loadStaff() {
-        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value, type = document.getElementById('staffType').value;
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [], staff = {};
-            data.forEach(x => { staff[x.id] = staff[x.id] || {n:x.name, c:0}; staff[x.id].c++; });
-            document.getElementById('staffList').innerHTML = Object.entries(staff).sort((a,b)=>b[1].c - a[1].c).map(([id, info]) => `<div style="background:white; padding:15px; margin-bottom:5px; border-radius:10px; display:flex; justify-content:space-between"><span><b>${info.n}</b> (${id})</span><b>${info.c} Scans</b></div>`).join('');
-        });
-    }
+if(!res.ok) throw "error";
 
-    function loadHistory() {
-        const from = document.getElementById('histFrom').value, to = document.getElementById('histTo').value, type = document.getElementById('histType').value, bc = document.getElementById('histBcSearch').value.trim().toLowerCase();
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            let data = s.val() ? Object.values(s.val()).reverse() : [];
-            if(bc) data = data.filter(x => x.bc.toLowerCase().includes(bc));
-            document.getElementById('histBody').innerHTML = data.map(x => `<tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.id}</td><td>${x.name}</td></tr>`).join('');
-        });
-    }
+const json=await res.json();
+return json.data;
 
-    function showTab(t) {
-        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-btn', 'ship-btn-active'));
-        document.getElementById('tab-' + t).style.display = 'block';
-        document.getElementById('b-' + t).classList.add(t==='ship'?'ship-btn-active':'active-btn');
-    }
+}catch(e){
+return null;
+}
 
-    function downloadExcel(tableId, fileName) { 
-        const table = document.getElementById(tableId);
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `${fileName}_${new Date().toLocaleDateString()}.xlsx`); 
-    }
+}
+
+// ================= STATUS =================
+function showStatus(msg,color){
+const s=document.getElementById("status");
+s.innerText=msg;
+s.style.color=color;
+}
+
+// ================= MAIN SCAN =================
+
+async function handleScan(tray){
+
+beep.play();
+
+showStatus("Saving Scan...","orange");
+
+const now=new Date();
+
+const ref=db.ref("logs").push();
+
+await ref.set({
+tray_id:tray,
+location:document.getElementById("loc").value,
+date:now.toISOString().split('T')[0],
+time:now.toLocaleTimeString(),
+status:"fetching"
+});
+
+showStatus("Fetching NexS Data...","blue");
+
+// ===== FETCH NEXS =====
+const data=await fetchNexs(tray);
+
+if(data){
+
+let items={};
+
+data.item_details.forEach((it,i)=>{
+items["item"+(i+1)]={
+type:it.type,
+barcode:it.barcode,
+status:it.status,
+product_id:it.product_id,
+tray_id:it.tray_id,
+updated_at:it.updated_at
+};
+});
+
+await ref.update({
+shipment_id:data.shipment_id,
+fitting_id:data.fitting_id,
+items:items,
+status:"completed"
+});
+
+showStatus("✅ NexS Data Loaded","green");
+
+}else{
+
+await ref.update({status:"not_found"});
+showStatus("❌ Not Found in NexS","red");
+
+}
+
+}
+
+// ================= SCANNER INPUT =================
+
+document.getElementById("scanBox")
+.addEventListener("keypress",e=>{
+
+if(e.key==="Enter"){
+
+const val=e.target.value.trim();
+
+if(val.length!==7){
+showStatus("Invalid Tray ID","red");
+return;
+}
+
+handleScan(val);
+e.target.value="";
+
+}
+
+});
+
 </script>
+
 </body>
 </html>
