@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS Master 30K - Search Fixed</title>
+    <title>NexS Master 30K - 7 Digit Limit</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -21,12 +21,13 @@
         .scan-container { text-align: center; }
         .scan-box { border: 3px dashed var(--primary); padding: 30px; border-radius: 15px; margin: 20px 0; background: #f8f9ff; }
         .scan-details-box { background: #fff3cd; border-left: 8px solid #ffc107; padding: 20px; border-radius: 10px; text-align: left; margin-top: 20px; display: none; }
+        .error-box { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; border-radius: 8px; margin-top: 10px; display: none; font-weight: bold; }
         .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 16px; }
         .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 8px; max-height: 600px; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
         th { background: var(--primary); color: white; position: sticky; top: 0; }
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; background: #eef1f7; padding: 15px; border-radius: 10px; align-items: end; }
+        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; background: #eef1f7; padding: 15px; border-radius: 10px; align-items: end; }
     </style>
 </head>
 <body>
@@ -61,8 +62,11 @@
             <div style="margin-bottom:15px; color:#555">Operator: <b id="uName"></b> | ID: <span id="uId"></span></div>
             <select id="locSelect" style="border: 2px solid var(--primary); font-weight: bold;"></select>
             <div class="scan-box">
-                <input type="text" id="barcodeInput" placeholder="READY TO SCAN..." autofocus style="height:70px; font-size:24px; text-align:center; border:none; background:transparent;">
+                <input type="text" id="barcodeInput" placeholder="READY TO SCAN (Max 7 Digit)..." autofocus style="height:70px; font-size:24px; text-align:center; border:none; background:transparent;">
             </div>
+            
+            <div id="scanError" class="error-box">⚠️ Error: Barcode 7 digit se zyada nahi hona chahiye!</div>
+
             <div id="lastScanDetails" class="scan-details-box">
                 <div class="detail-row"><span>Emp ID:</span> <b id="dId"></b></div>
                 <div class="detail-row"><span>Barcode:</span> <b id="dBc"></b></div>
@@ -119,6 +123,7 @@
 </div>
 
 <script>
+    // 🛑 CONFIG (Check your API Keys)
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -144,10 +149,24 @@
         checkLogin();
     };
 
+    // 🟢 SCAN LOGIC WITH 7 DIGIT LIMIT
     document.getElementById('barcodeInput').addEventListener('keypress', e => {
         if(e.key === 'Enter') {
             const bc = e.target.value.trim();
-            if(!bc) return;
+            const errBox = document.getElementById('scanError');
+            const detBox = document.getElementById('lastScanDetails');
+            
+            // Validation: Max 7 Digits
+            if(!bc || bc.length > 7) {
+                errBox.style.display = 'block';
+                detBox.style.display = 'none';
+                e.target.value = ""; e.target.focus();
+                setTimeout(() => { errBox.style.display = 'none'; }, 3000); // Hide error after 3s
+                return;
+            }
+
+            // If Valid
+            errBox.style.display = 'none';
             const now = new Date();
             const log = {
                 bc: bc, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'),
@@ -158,15 +177,18 @@
                 ts: Date.now()
             };
             db.ref('logs').push(log);
-            document.getElementById('lastScanDetails').style.display = 'block';
+            
+            detBox.style.display = 'block';
             document.getElementById('dId').innerText = log.id;
             document.getElementById('dBc').innerText = log.bc;
             document.getElementById('dDate').innerText = log.date;
             document.getElementById('dTime').innerText = log.time;
+            
             e.target.value = ""; e.target.focus();
         }
     });
 
+    // FUNCTIONS (Matrix, Staff, History, Auth)
     function loadMatrix() {
         const from = document.getElementById('matFrom').value;
         const to = document.getElementById('matTo').value;
