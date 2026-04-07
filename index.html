@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAY AND SHIP RECORD - FINAL FIX</title>
+    <title>TRAY AND SHIP RECORD - GUDDU</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -40,7 +40,7 @@
 <div id="authPage" class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
     <div id="loginSection">
         <h2 style="color:var(--primary)">STAFF LOGIN</h2>
-        <input type="text" id="loginId" placeholder="Enter Employee ID (e.g. G01)">
+        <input type="text" id="loginId" placeholder="Enter Employee ID">
         <button class="btn-search" style="padding:15px;" onclick="login()">ENTER DASHBOARD</button>
         <p style="margin-top:15px; font-size:14px;">Naye hain? <span onclick="toggleAuth(true)" style="color:var(--primary); cursor:pointer; font-weight:bold;">Register Here</span></p>
     </div>
@@ -72,7 +72,7 @@
 
     <div id="tab-matrix" class="tab-content" style="display:none">
         <div class="card">
-            <h3>📊 Production Matrix (Fixed Hours)</h3>
+            <h3>📊 Production Matrix</h3>
             <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <input type="date" id="matFrom">
                 <input type="date" id="matTo">
@@ -83,6 +83,7 @@
                 <div class="dropdown-list" id="matLocList"></div>
             </div>
             <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
+            <button onclick="downloadExcel('matrixTable', 'Matrix_Export')" style="background:var(--success); color:white;">EXPORT EXCEL</button>
             <div class="table-wrap"><table id="matrixTable"><thead id="matHead"></thead><tbody id="matBody"></tbody></table></div>
         </div>
     </div>
@@ -106,7 +107,7 @@
 
     <div id="tab-history" class="tab-content" style="display:none">
         <div class="card">
-            <h3>🔍 Last 50 Scans</h3>
+            <h3>🔍 History (Last 50 Scans)</h3>
             <div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div>
         </div>
     </div>
@@ -127,6 +128,7 @@
     const db = firebase.database();
 
     const trayLocs = ["ICU ENTRY", "MEI ENTRY", "QC FAIL ORDER SEND TO MEI", "FRAME ORDER SEND TO FT", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI", "SEND TO MAIN LINE FOR FT", "SEND TO MAIN LINE FOR QC", "SEND TO MAIN LINE FOR PACKING", "TLP SEND TO MEI", "OMT RACK NO 00", "OMT RACK NO 01", "OMT RACK NO 02", "OMT RACK NO 03", "OMT RACK NO 04", "OMT RACK NO 05", "OMT RACK NO 06", "OMT RACK NO 07", "OMT RACK NO 08", "OMT RACK NO 09"];
+    const shipLocs = ["DHL SHIPMENT", "GP SUPPLY & SREERAJ", "OTHER SHIPMENT"];
 
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
@@ -145,24 +147,22 @@
     function register() {
         const id = document.getElementById('regId').value.trim().toUpperCase();
         const name = document.getElementById('regName').value.trim();
-        if(!id || !name) return alert("Dono box bhariye!");
+        if(!id || !name) return alert("Bhai, dono box bhariye!");
         db.ref('users/' + id).set({ id, name }).then(() => {
             alert("Registration Success! Ab login karein.");
             toggleAuth(false);
-        }).catch(err => alert("Error: " + err.message));
+        });
     }
 
     function login() {
         const id = document.getElementById('loginId').value.trim().toUpperCase();
-        if(!id) return alert("ID daliye!");
+        if(!id) return alert("ID toh daliye!");
         db.ref('users/' + id).once('value', s => {
             if(s.exists()) {
                 localStorage.setItem('uI', id);
                 localStorage.setItem('uN', s.val().name);
                 checkLogin();
-            } else {
-                alert("ID nahi mili! Pehle Register karein.");
-            }
+            } else alert("ID nahi mili! Pehle Register karein.");
         });
     }
 
@@ -184,27 +184,28 @@
         if(t === 'history') loadHistory();
     }
 
-    // Matrix & Staff Helpers
     function toggleDrop(id) { let e = document.getElementById(id); e.style.display = e.style.display === 'block' ? 'none' : 'block'; }
+    
     function generateList(targetId, list, textId) {
         let h = `<label><b>SELECT ALL</b> <input type="checkbox" onchange="selectAll('${targetId}', this, '${textId}')"></label>`;
         list.forEach(l => h += `<label>${l} <input type="checkbox" class="${targetId}-item" value="${l}" onchange="updateCount('${targetId}', '${textId}')"></label>`);
         document.getElementById(targetId).innerHTML = h;
     }
+
     function selectAll(cls, master, txt) { document.querySelectorAll('.'+cls+'-item').forEach(c => c.checked = master.checked); updateCount(cls, txt); }
     function updateCount(cls, txt) { let c = document.querySelectorAll('.'+cls+'-item:checked').length; document.getElementById(txt).innerText = c + " Selected"; }
 
-    function updateMatrixLocs() { generateList('matLocList', trayLocs, 'matLocText'); }
-    function updateStaffLocs() { generateList('staffLocList', trayLocs, 'staffLocText'); }
+    function updateMatrixLocs() { generateList('matLocList', document.getElementById('matType').value === 'logs' ? trayLocs : shipLocs, 'matLocText'); }
+    function updateStaffLocs() { generateList('staffLocList', document.getElementById('staffType').value === 'logs' ? trayLocs : shipLocs, 'staffLocText'); }
 
-    // Logic for Matrix
     function formatHour(h) { return h === 0 ? "12 AM" : h === 12 ? "12 PM" : h > 12 ? (h-12)+" PM" : h+" AM"; }
+
     function loadMatrix() {
-        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value;
+        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value;
         const sel = Array.from(document.querySelectorAll('.matLoc-item:checked')).map(c => c.value);
         if(sel.length === 0) return alert("Location select karein!");
 
-        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
+        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
             let head = "<tr><th>Location Name</th>";
             for(let i=0; i<24; i++) head += `<th>${formatHour(i)}</th>`;
@@ -223,11 +224,10 @@
         });
     }
 
-    // Logic for Staff View
     function loadStaff() {
-        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value;
+        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value, type = document.getElementById('staffType').value;
         const sel = Array.from(document.querySelectorAll('.staffLoc-item:checked')).map(c => c.value);
-        db.ref('logs').orderByChild('date').startAt(from).endAt(to).once('value', s => {
+        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
             const res = {};
             data.filter(x => sel.includes(x.loc)).forEach(x => {
@@ -245,7 +245,6 @@
         });
     }
 
-    // Scan Execution
     document.getElementById('barcodeInput').onkeypress = (e) => {
         if(e.key === 'Enter') {
             let val = e.target.value.trim();
@@ -264,6 +263,11 @@
             let d = s.val() ? Object.values(s.val()).reverse() : [];
             document.getElementById('histBody').innerHTML = d.map(x => `<tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.name}</td></tr>`).join('');
         });
+    }
+
+    function downloadExcel(id, name) {
+        const wb = XLSX.utils.table_to_book(document.getElementById(id));
+        XLSX.writeFile(wb, name + ".xlsx");
     }
 </script>
 </body>
