@@ -31,7 +31,7 @@
         .ship-btn-active { background: var(--ship) !important; color: white !important; }
         .logout-btn { background: var(--secondary); color: white; }
         
-        input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; box-sizing: border-box; }
         .btn-search { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; }
         
         .scan-box { border: 3px dashed #ccc; padding: 35px; border-radius: 20px; background: #fdfdfd; margin: 20px 0; text-align: center; }
@@ -41,7 +41,16 @@
         th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 10; }
         tr:nth-child(even) { background: #fafafa; }
 
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; background: #eef1f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: end; }
+        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: #eef1f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; align-items: end; }
+
+        /* Multi-select styling */
+        .dropdown-check { position: relative; width: 100%; }
+        .dropdown-display { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .dropdown-list label { display: block; padding: 6px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .dropdown-list label:hover { background: #f9f9f9; }
+
+        .staff-row { background: white; padding: 15px; margin-bottom: 8px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -116,9 +125,17 @@
         <div class="card">
             <h3>👥 Staff Performance</h3>
             <div class="filter-section">
-                <input type="date" id="staffFrom">
-                <input type="date" id="staffTo">
-                <select id="staffType"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
+                <div>From: <input type="date" id="staffFrom"></div>
+                <div>To: <input type="date" id="staffTo"></div>
+                <div>Type: <select id="staffType" onchange="updateStaffLocList()"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select></div>
+                <div class="dropdown-check">
+                    Loc: 
+                    <div class="dropdown-display" id="staffLocText" onclick="toggleStaffLocs()">SELECT LOCATIONS...</div>
+                    <div class="dropdown-list" id="staffLocDropdown">
+                        <label><input type="checkbox" id="staffAllCheck" onchange="staffSelectAll(this)"> <b>SELECT ALL</b></label>
+                        <div id="staffLocCheckboxes"></div>
+                    </div>
+                </div>
                 <button class="btn-search" onclick="loadStaff()">LOAD STAFF</button>
             </div>
             <div id="staffList"></div>
@@ -162,6 +179,7 @@
         document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
         trayLocs.forEach(l => { document.getElementById('locSelect').add(new Option(l, l)); document.getElementById('matLocFilter').add(new Option(l, l)); });
         shipLocs.forEach(l => document.getElementById('matLocFilter').add(new Option(l, l)));
+        updateStaffLocList();
         checkLogin();
     };
 
@@ -179,6 +197,61 @@
     document.getElementById('barcodeInput').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 7, 7, 'logs', 'locSelect'); e.target.value=""; }});
     document.getElementById('ship23Input').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }});
 
+    // --- STAFF VIEW FUNCTIONS ---
+    function toggleStaffLocs() { 
+        let list = document.getElementById('staffLocDropdown');
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    }
+    
+    function updateStaffLocList() {
+        const type = document.getElementById('staffType').value;
+        const locs = type === 'logs' ? trayLocs : shipLocs;
+        document.getElementById('staffLocCheckboxes').innerHTML = locs.map(l => `<label><input type="checkbox" class="sLocItem" value="${l}" onchange="updateStaffText()"> ${l}</label>`).join('');
+        document.getElementById('staffAllCheck').checked = false;
+        updateStaffText();
+    }
+
+    function staffSelectAll(master) {
+        document.querySelectorAll('.sLocItem').forEach(c => c.checked = master.checked);
+        updateStaffText();
+    }
+
+    function updateStaffText() {
+        let selected = Array.from(document.querySelectorAll('.sLocItem:checked')).length;
+        document.getElementById('staffLocText').innerText = selected > 0 ? `${selected} Locations Selected` : 'SELECT LOCATIONS...';
+    }
+
+    function loadStaff() {
+        const from = document.getElementById('staffFrom').value, 
+              to = document.getElementById('staffTo').value, 
+              type = document.getElementById('staffType').value;
+        
+        const selLocs = Array.from(document.querySelectorAll('.sLocItem:checked')).map(c => c.value);
+        if(selLocs.length === 0) return alert("Pehle location select karo!");
+
+        document.getElementById('staffLocDropdown').style.display = 'none';
+
+        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
+            const data = s.val() ? Object.values(s.val()) : [], staff = {};
+            data.forEach(x => { 
+                if(selLocs.includes(x.loc)) {
+                    staff[x.id] = staff[x.id] || {n:x.name, c:0}; 
+                    staff[x.id].c++; 
+                }
+            });
+            
+            let sortedStaff = Object.entries(staff).sort((a,b) => b[1].c - a[1].c);
+            document.getElementById('staffList').innerHTML = sortedStaff.map(([id, info]) => `
+                <div class="staff-row">
+                    <span><b>${info.n}</b> (${id})</span>
+                    <span style="font-size:16px; font-weight:900; color:var(--primary)">${info.c} Scans</span>
+                </div>`).join('');
+            
+            if(sortedStaff.length === 0) document.getElementById('staffList').innerHTML = '<p style="text-align:center;color:gray">No record found.</p>';
+        });
+    }
+
+    // --- OTHER TABS ---
     function loadMatrix() {
         const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value, filterLoc = document.getElementById('matLocFilter').value;
         const locs = type === 'logs' ? trayLocs : shipLocs;
@@ -190,15 +263,6 @@
                 let cells = hrs.map(h => { let c = data.filter(x=>x.loc===l && x.h===h).length; rowSum+=c; return `<td>${c||''}</td>`; }).join('');
                 return `<tr><td><b>${l}</b></td>${cells}<td><b>${rowSum}</b></td></tr>`;
             }).join('');
-        });
-    }
-
-    function loadStaff() {
-        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value, type = document.getElementById('staffType').value;
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [], staff = {};
-            data.forEach(x => { staff[x.id] = staff[x.id] || {n:x.name, c:0}; staff[x.id].c++; });
-            document.getElementById('staffList').innerHTML = Object.entries(staff).map(([id, info]) => `<div style="background:white; padding:15px; margin-bottom:5px; border-radius:10px; display:flex; justify-content:space-between"><span><b>${info.n}</b> (${id})</span><b>${info.c} Scans</b></div>`).join('');
         });
     }
 
