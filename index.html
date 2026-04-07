@@ -3,22 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS-GUDDU-30K</title>
+    <title>TRAY AND SHIP RECORD</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #1a2a6c; --secondary: #b21f1f; --success: #27ae60; --bg: #f0f2f5; --ship: #8e44ad; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        
+        /* Header & Guddu Style */
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; }
+        .header-title { color: var(--primary); font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        .guddu-signature { font-family: 'cursive', 'Brush Script MT', cursive; font-size: 16px; color: #555; font-style: italic; }
+
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .header-title { text-align: center; color: var(--primary); font-size: 24px; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; }
         nav { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; z-index: 1000; }
         nav button { flex: 1; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; font-size: 12px; }
         .active-btn { background: var(--primary) !important; color: white !important; }
         .ship-btn-active { background: var(--ship) !important; color: white !important; }
         .logout-btn { background: var(--secondary); color: white; }
+        
         input, select, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; box-sizing: border-box; }
         .btn-search { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; }
+        
+        .scan-box { border: 3px dashed #ddd; padding: 30px; border-radius: 15px; background: #f8f9ff; margin: 15px 0; text-align: center; }
         .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 8px; max-height: 500px; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 13px; }
         th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
@@ -28,7 +36,10 @@
 </head>
 <body>
 
-<div class="header-title">NexS-GUDDU-30K</div>
+<div class="header-container">
+    <div class="header-title">TRAY AND SHIP RECORD</div>
+    <div class="guddu-signature">Guddu</div>
+</div>
 
 <div id="authPage" class="card" style="max-width: 400px; margin: 20px auto; text-align: center;">
     <input type="text" id="loginId" placeholder="Enter Employee ID">
@@ -47,21 +58,25 @@
 
     <div id="tab-scan" class="tab-content">
         <div class="card" style="text-align:center">
-            <h3>WORKER ENTRY</h3>
+            <h3>WORKER ENTRY (7 DIGIT)</h3>
             <select id="locSelect"></select>
-            <input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:60px; font-size:22px; text-align:center; border: 3px dashed var(--primary);">
+            <div class="scan-box" style="border-color:var(--primary)">
+                <input type="text" id="barcodeInput" placeholder="SCAN 7 DIGIT..." style="height:60px; font-size:22px; text-align:center; border:none; background:transparent;">
+            </div>
         </div>
     </div>
 
     <div id="tab-ship" class="tab-content" style="display:none">
         <div class="card" style="border-top: 5px solid var(--ship);">
-            <h3 style="color:var(--ship); text-align:center">📦 SHIPMENT PANEL</h3>
+            <h3 style="color:var(--ship); text-align:center">📦 SHIPMENT ENTRY (23 DIGIT)</h3>
             <select id="shipLocSelect">
                 <option value="DHL SHIPMENT">1. DHL SHIPMENT</option>
                 <option value="GP SUPPLY & SREERAJ">2. GP SUPPLY & SREERAJ</option>
                 <option value="OTHER SHIPMENT">3. OTHER SHIPMENT</option>
             </select>
-            <input type="text" id="ship23Input" placeholder="SCAN SHIPMENT (MAX 23)..." style="height:60px; font-size:22px; text-align:center; border: 3px dashed var(--ship);">
+            <div class="scan-box" style="border-color:var(--ship); background:#fdf2ff">
+                <input type="text" id="ship23Input" placeholder="SCAN SHIPMENT..." style="height:60px; font-size:22px; text-align:center; border:none; background:transparent;">
+            </div>
         </div>
     </div>
 
@@ -94,7 +109,7 @@
 
     <div id="tab-history" class="tab-content" style="display:none">
         <div class="card">
-            <h3>Search History</h3>
+            <h3>History & Barcode Search</h3>
             <div class="filter-section">
                 <input type="date" id="histFrom">
                 <input type="date" id="histTo">
@@ -109,6 +124,7 @@
 </div>
 
 <script>
+    // Firebase Config (Keep your existing one)
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -145,15 +161,10 @@
     document.getElementById('ship23Input').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }});
 
     function loadMatrix() {
-        const from = document.getElementById('matFrom').value;
-        const to = document.getElementById('matTo').value;
-        const type = document.getElementById('matType').value;
-        const filterLoc = document.getElementById('matLocFilter').value;
+        const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value, filterLoc = document.getElementById('matLocFilter').value;
         const locs = type === 'logs' ? normalLocs : shipLocs;
-        
         db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [];
-            const hrs = Array.from({length: 24}, (_, i) => i);
+            const data = s.val() ? Object.values(s.val()) : [], hrs = Array.from({length: 24}, (_, i) => i);
             document.getElementById('matHead').innerHTML = `<tr><th>Loc</th>${hrs.map(h=>`<th>${h}</th>`).join('')}<th>Total</th></tr>`;
             document.getElementById('matBody').innerHTML = locs.filter(l => filterLoc === 'ALL' || l === filterLoc).map(l => {
                 let rowSum = 0;
@@ -168,7 +179,7 @@
         db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [], staff = {};
             data.forEach(x => { staff[x.id] = staff[x.id] || {n:x.name, c:0}; staff[x.id].c++; });
-            document.getElementById('staffList').innerHTML = Object.entries(staff).map(([id, info]) => `<div class="card" style="display:flex; justify-content:space-between"><span><b>${info.n}</b> (${id})</span><b style="color:var(--success)">${info.c}</b></div>`).join('');
+            document.getElementById('staffList').innerHTML = Object.entries(staff).map(([id, info]) => `<div class="card" style="display:flex; justify-content:space-between; margin-bottom:5px"><span><b>${info.n}</b> (${id})</span><b style="color:var(--success)">${info.c} Scans</b></div>`).join('');
         });
     }
 
@@ -190,7 +201,7 @@
     function login() { const id = document.getElementById('loginId').value.trim(); db.ref('users/'+id).once('value', s => { if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } else alert("Invalid ID"); }); }
     function checkLogin() { if(localStorage.getItem('uI')){ document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; showTab('scan'); } }
     function logout() { localStorage.clear(); location.reload(); }
-    function downloadExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('histTable')), 'Guddu_Report.xlsx'); }
+    function downloadExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('histTable')), 'Record_Export.xlsx'); }
 </script>
 </body>
 </html>
