@@ -14,11 +14,19 @@
         .header-container { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 20px; background: white; border-radius: 15px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 10px;
             border-bottom: 4px solid var(--primary);
         }
         .header-title { color: var(--primary); font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; }
         .guddu-signature { font-family: 'Brush Script MT', cursive; font-size: 45px; color: var(--primary); font-weight: bold; }
+
+        /* Welcome User Style */
+        .user-banner { 
+            background: #e1e8f0; padding: 8px 15px; border-radius: 8px; 
+            margin-bottom: 15px; font-weight: bold; color: var(--primary);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            border: 1px solid #cbd5e0;
+        }
 
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
         nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding: 5px; background: white; border-radius: 10px; position: sticky; top: 0; z-index: 1000; }
@@ -72,6 +80,10 @@
         <button id="b-history" onclick="showTab('history')">HISTORY & SEARCH</button>
         <button class="logout-btn" onclick="logout()">LOGOUT</button>
     </nav>
+
+    <div class="user-banner">
+        👤 Worker: <span id="displayUserName">---</span> (<span id="displayUserId">---</span>)
+    </div>
 
     <div id="tab-scan" class="tab-content">
         <div class="card" style="text-align:center">
@@ -175,8 +187,30 @@
 
     function toggleAuth(showReg) { document.getElementById('loginSection').style.display = showReg ? 'none' : 'block'; document.getElementById('registerSection').style.display = showReg ? 'block' : 'none'; }
     function register() { const id = document.getElementById('regId').value.trim().toUpperCase(), name = document.getElementById('regName').value.trim(); if(!id || !name) return alert("Fill all!"); db.ref('users/'+id).set({id, name}).then(()=>{alert("Registered!"); toggleAuth(false);}); }
-    function login() { const id = document.getElementById('loginId').value.trim().toUpperCase(); db.ref('users/'+id).once('value', s => { if(s.exists()){ localStorage.setItem('uN', s.val().name); localStorage.setItem('uI', s.val().id); location.reload(); } else alert("Not Found!"); }); }
-    function checkLogin() { if(localStorage.getItem('uI')){ document.getElementById('authPage').style.display='none'; document.getElementById('mainApp').style.display='block'; showTab('scan'); } }
+    
+    function login() { 
+        const id = document.getElementById('loginId').value.trim().toUpperCase(); 
+        db.ref('users/'+id).once('value', s => { 
+            if(s.exists()){ 
+                localStorage.setItem('uN', s.val().name); 
+                localStorage.setItem('uI', s.val().id); 
+                location.reload(); 
+            } else alert("Not Found!"); 
+        }); 
+    }
+
+    function checkLogin() { 
+        const uI = localStorage.getItem('uI');
+        const uN = localStorage.getItem('uN');
+        if(uI){ 
+            document.getElementById('authPage').style.display='none'; 
+            document.getElementById('mainApp').style.display='block'; 
+            document.getElementById('displayUserName').innerText = uN;
+            document.getElementById('displayUserId').innerText = uI;
+            showTab('scan'); 
+        } 
+    }
+
     function logout() { localStorage.clear(); location.reload(); }
 
     function handleScan(bc, min, max, path, locId) {
@@ -184,20 +218,19 @@
         const now = new Date();
         db.ref(path).push({ bc, loc: document.getElementById(locId).value, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'), date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours() });
     }
+    
     document.getElementById('barcodeInput').onkeypress = e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 7, 7, 'logs', 'locSelect'); e.target.value=""; }};
     document.getElementById('ship23Input').onkeypress = e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }};
 
     function loadMatrix() {
         const from = document.getElementById('matFrom').value, to = document.getElementById('matTo').value, type = document.getElementById('matType').value, filterLoc = document.getElementById('matLocFilter').value;
         const locs = type === 'logs' ? trayLocs : shipLocs;
-        
         db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
             let head = "<tr><th>Location</th>";
             for(let i=0; i<24; i++) head += `<th>${formatTimeLabel(i)}</th>`;
             head += "<th>Total</th></tr>";
             document.getElementById('matHead').innerHTML = head;
-
             document.getElementById('matBody').innerHTML = locs.filter(l => filterLoc === 'ALL' || l === filterLoc).map(l => {
                 let rowSum = 0;
                 let cells = "";
