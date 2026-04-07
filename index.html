@@ -36,12 +36,13 @@
         
         .scan-box { border: 3px dashed #ccc; padding: 35px; border-radius: 20px; background: #fdfdfd; margin: 20px 0; text-align: center; }
         .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 10px; max-height: 550px; background: white; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
-        th, td { border: 1px solid #f1f1f1; padding: 10px; text-align: center; white-space: nowrap; }
+        
+        /* Fixed Table Settings for 24 Columns */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1800px; }
+        th, td { border: 1px solid #f1f1f1; padding: 8px; text-align: center; white-space: nowrap; }
         th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 10; }
         tr:nth-child(even) { background: #fafafa; }
 
-        /* Dropdown styling */
         .dropdown-check { position: relative; width: 100%; }
         .dropdown-display { background: white; border: 1px solid #ddd; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
         .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; z-index: 2000; max-height: 250px; overflow-y: auto; padding: 5px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
@@ -107,13 +108,15 @@
 
     <div id="tab-matrix" class="tab-content" style="display:none">
         <div class="card">
-            <h3>📊 Production Matrix (Hourly)</h3>
+            <h3>📊 Production Matrix (Full Day View)</h3>
             <div class="filter-section">
-                <div>From: <input type="date" id="matFrom"></div>
-                <div>To: <input type="date" id="matTo"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div>From: <input type="date" id="matFrom"></div>
+                    <div>To: <input type="date" id="matTo"></div>
+                </div>
                 <div>Type: <select id="matType"><option value="logs">Tray Entry</option><option value="shipments">Shipment</option></select></div>
                 <button class="btn-search" onclick="loadMatrix()">VIEW MATRIX</button>
-                <button onclick="downloadExcel('matrixTable', 'Matrix_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT EXCEL</button>
+                <button onclick="downloadExcel('matrixTable', 'Matrix_Full_Day')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT EXCEL</button>
             </div>
             <div class="table-wrap">
                 <table id="matrixTable">
@@ -127,20 +130,7 @@
     <div id="tab-staff" class="tab-content" style="display:none">
         <div class="card">
             <h3>👥 Staff Performance</h3>
-            <div class="filter-section">
-                <div>From: <input type="date" id="staffFrom"></div>
-                <div>To: <input type="date" id="staffTo"></div>
-                <div>Type: <select id="staffType" onchange="updateStaffLocList()"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select></div>
-                <div class="dropdown-check">
-                    Loc: 
-                    <div class="dropdown-display" id="staffLocText" onclick="toggleStaffLocs()">SELECT LOCATIONS...</div>
-                    <div class="dropdown-list" id="staffLocDropdown">
-                        <label><b>SELECT ALL</b> <input type="checkbox" id="staffAllCheck" onchange="staffSelectAll(this)"></label>
-                        <div id="staffLocCheckboxes"></div>
-                    </div>
-                </div>
-                <button class="btn-search" onclick="loadStaff()">LOAD STAFF</button>
-            </div>
+            <div class="filter-section" id="staff-filters"></div>
             <div id="staffList"></div>
         </div>
     </div>
@@ -148,14 +138,6 @@
     <div id="tab-history" class="tab-content" style="display:none">
         <div class="card">
             <h3>🔍 History & Search</h3>
-            <div class="filter-section">
-                <input type="date" id="histFrom">
-                <input type="date" id="histTo">
-                <select id="histType"><option value="logs">Tray Records</option><option value="shipments">Shipment Records</option></select>
-                <input type="text" id="histBcSearch" placeholder="🔍 Search Barcode...">
-                <button class="btn-search" onclick="loadHistory()">SEARCH</button>
-                <button onclick="downloadExcel('histTable', 'History_Report')" style="background:var(--success); color:white; border:none; font-weight:bold; cursor:pointer">EXPORT EXCEL</button>
-            </div>
             <div class="table-wrap"><table id="histTable"><thead><tr><th>Date</th><th>Time</th><th>Location</th><th>Barcode</th><th>ID</th><th>Name</th></tr></thead><tbody id="histBody"></tbody></table></div>
         </div>
     </div>
@@ -181,7 +163,6 @@
         const today = new Date().toISOString().split('T')[0];
         document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
         trayLocs.forEach(l => document.getElementById('locSelect').add(new Option(l, l)));
-        updateStaffLocList();
         checkLogin();
     };
 
@@ -196,10 +177,11 @@
         const now = new Date();
         db.ref(path).push({ bc, loc: document.getElementById(locId).value, name: localStorage.getItem('uN'), id: localStorage.getItem('uI'), date: now.toISOString().split('T')[0], time: now.toLocaleTimeString(), h: now.getHours() });
     }
+
     document.getElementById('barcodeInput').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 7, 7, 'logs', 'locSelect'); e.target.value=""; }});
     document.getElementById('ship23Input').addEventListener('keypress', e => { if(e.key==='Enter'){ handleScan(e.target.value.trim(), 1, 23, 'shipments', 'shipLocSelect'); e.target.value=""; }});
 
-    // --- MATRIX LOGIC: AM/PM Format ---
+    // --- FIXED 24 HOUR MATRIX LOGIC ---
     function formatHour(h) {
         if (h === 0) return "12 AM";
         if (h === 12) return "12 PM";
@@ -213,69 +195,28 @@
         db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
             const data = s.val() ? Object.values(s.val()) : [];
             
-            // Step 1: Get unique active hours from data
-            let activeHours = [...new Set(data.map(x => x.h))].sort((a,b) => a - b);
-            
-            // Step 2: Build Header with AM/PM
-            let headHTML = `<tr><th>Location Name</th>`;
-            activeHours.forEach(h => {
+            // Header with 12 AM to 11 PM
+            let headHTML = `<tr><th>Location</th>`;
+            for(let h=0; h<24; h++) {
                 headHTML += `<th>${formatHour(h)}</th>`;
-            });
+            }
             headHTML += `<th>Total</th></tr>`;
             document.getElementById('matHead').innerHTML = headHTML;
 
-            // Step 3: Build Body
+            // Row for each location
             let bodyHTML = "";
             locsList.forEach(l => {
                 let rowData = data.filter(x => x.loc === l);
-                if(rowData.length > 0) {
-                    bodyHTML += `<tr><td style="text-align:left;"><b>${l}</b></td>`;
-                    activeHours.forEach(h => {
-                        let count = rowData.filter(x => x.h === h).length;
-                        bodyHTML += `<td>${count || '-'}</td>`;
-                    });
-                    bodyHTML += `<td style="font-weight:bold; background:#eef1f7;">${rowData.length}</td></tr>`;
+                bodyHTML += `<tr><td style="text-align:left;"><b>${l}</b></td>`;
+                let rowTotal = 0;
+                for(let h=0; h<24; h++) {
+                    let count = rowData.filter(x => x.h === h).length;
+                    bodyHTML += `<td>${count || '-'}</td>`;
+                    rowTotal += count;
                 }
+                bodyHTML += `<td style="font-weight:bold; background:#eef1f7;">${rowTotal}</td></tr>`;
             });
-            document.getElementById('matBody').innerHTML = bodyHTML || "<tr><td colspan='100%'>No data found.</td></tr>";
-        });
-    }
-
-    // --- Staff View ---
-    function toggleStaffLocs() { let list = document.getElementById('staffLocDropdown'); list.style.display = list.style.display === 'block' ? 'none' : 'block'; }
-    function updateStaffLocList() {
-        const type = document.getElementById('staffType').value;
-        const locs = type === 'logs' ? trayLocs : shipLocs;
-        document.getElementById('staffLocCheckboxes').innerHTML = locs.map(l => `<label><span>${l}</span><input type="checkbox" class="sLocItem" value="${l}" onchange="updateStaffText()"></label>`).join('');
-        document.getElementById('staffAllCheck').checked = false;
-        updateStaffText();
-    }
-    function staffSelectAll(master) { document.querySelectorAll('.sLocItem').forEach(c => c.checked = master.checked); updateStaffText(); }
-    function updateStaffText() {
-        let selected = Array.from(document.querySelectorAll('.sLocItem:checked')).length;
-        document.getElementById('staffLocText').innerText = selected > 0 ? `${selected} Loc Selected` : 'SELECT LOCATIONS...';
-    }
-
-    function loadStaff() {
-        const from = document.getElementById('staffFrom').value, to = document.getElementById('staffTo').value, type = document.getElementById('staffType').value;
-        const selLocs = Array.from(document.querySelectorAll('.sLocItem:checked')).map(c => c.value);
-        if(selLocs.length === 0) return alert("Pehle location select karo!");
-        document.getElementById('staffLocDropdown').style.display = 'none';
-
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            const data = s.val() ? Object.values(s.val()) : [], staff = {};
-            data.forEach(x => { if(selLocs.includes(x.loc)) { staff[x.id] = staff[x.id] || {n:x.name, c:0}; staff[x.id].c++; } });
-            let sorted = Object.entries(staff).sort((a,b) => b[1].c - a[1].c);
-            document.getElementById('staffList').innerHTML = sorted.map(([id, info]) => `<div class="staff-row"><span><b>${info.n}</b> (${id})</span><span style="font-weight:900; color:var(--primary)">${info.c} Scans</span></div>`).join('');
-        });
-    }
-
-    function loadHistory() {
-        const from = document.getElementById('histFrom').value, to = document.getElementById('histTo').value, type = document.getElementById('histType').value, bc = document.getElementById('histBcSearch').value.trim().toLowerCase();
-        db.ref(type).orderByChild('date').startAt(from).endAt(to).once('value', s => {
-            let data = s.val() ? Object.values(s.val()).reverse() : [];
-            if(bc) data = data.filter(x => x.bc.toLowerCase().includes(bc));
-            document.getElementById('histBody').innerHTML = data.map(x => `<tr><td>${x.date}</td><td>${x.time}</td><td>${x.loc}</td><td>${x.bc}</td><td>${x.id}</td><td>${x.name}</td></tr>`).join('');
+            document.getElementById('matBody').innerHTML = bodyHTML;
         });
     }
 
