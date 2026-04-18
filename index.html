@@ -1,193 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>TRAY AUTO NEXS SYSTEM</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>21 Location Operational Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; margin: 0; padding: 20px; }
+        .header { text-align: center; padding: 20px; background: #1f1f1f; border-radius: 10px; margin-bottom: 20px; border-bottom: 4px solid #007bff; }
+        
+        /* Grid for 21 Locations */
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 15px; 
+            padding: 10px; 
+        }
 
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+        .location-card { 
+            background: #2a2a2a; 
+            padding: 15px; 
+            border-radius: 8px; 
+            text-align: center; 
+            border-left: 5px solid #ffc107; 
+            transition: 0.3s;
+        }
 
-<style>
-body{
-font-family:Segoe UI;
-background:#f4f7f6;
-padding:20px;
-}
+        .location-card:hover { transform: translateY(-5px); background: #333; }
+        
+        .loc-name { font-weight: bold; font-size: 1.1em; display: block; margin-bottom: 10px; }
+        
+        .status-select { 
+            width: 100%; 
+            padding: 5px; 
+            background: #444; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+        }
 
-.card{
-background:white;
-padding:20px;
-border-radius:12px;
-max-width:600px;
-margin:auto;
-box-shadow:0 4px 10px rgba(0,0,0,.1);
-}
+        .save-btn { 
+            display: block; 
+            width: 200px; 
+            margin: 30px auto; 
+            padding: 15px; 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
 
-input,select{
-width:100%;
-padding:15px;
-font-size:20px;
-margin-top:10px;
-}
-
-h2{text-align:center;}
-
-#status{
-margin-top:15px;
-font-weight:bold;
-text-align:center;
-}
-</style>
+        .save-btn:hover { background: #218838; }
+    </style>
 </head>
-
 <body>
 
-<div class="card">
-
-<h2>📦 TRAY AUTO SCANNER</h2>
-
-<select id="loc">
-<option>ICU ENTRY</option>
-<option>MEI ENTRY</option>
-<option>OMT ENTRY</option>
-<option>SEND TO PACKING</option>
-</select>
-
-<input id="scanBox" placeholder="SCAN 7 DIGIT TRAY..." autofocus>
-
-<div id="status"></div>
-
+<div class="header">
+    <h1>21 LOCATION LIVE TRACKER</h1>
+    <p>Real-time Status Management</p>
 </div>
 
+<div class="grid-container" id="grid">
+    </div>
+
+<button class="save-btn" onclick="saveData()">SAVE CURRENT STATUS</button>
+
 <script>
+    // Generating 21 Location Cards
+    const grid = document.getElementById('grid');
+    for (let i = 1; i <= 21; i++) {
+        const card = document.createElement('div');
+        card.className = 'location-card';
+        card.innerHTML = `
+            <span class="loc-name">LOCATION ${i}</span>
+            <select class="status-select" id="status-${i}">
+                <option value="pending">Pending</option>
+                <option value="running">Running</option>
+                <option value="completed">Completed</option>
+                <option value="issue">Issue</option>
+            </select>
+            <p style="font-size: 12px; margin-top: 10px; color: #888;">ID: LOC-0${i}</p>
+        `;
+        grid.appendChild(card);
+    }
 
-// ================= FIREBASE =================
-
-const firebaseConfig = {
-apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
-authDomain:"nexs-guddu-30k.firebaseapp.com",
-databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com",
-projectId:"nexs-guddu-30k"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-
-
-// ================= SOUND =================
-const beep=new Audio(
-"https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-);
-
-// ================= NEXS API =================
-const NEXS_API=
-"https://app.nexs.lenskart.com/nexs/wms/api/v1/fittingDetails/";
-
-async function fetchNexs(tray){
-
-try{
-
-const res=await fetch(NEXS_API+tray,{
-credentials:"include"
-});
-
-if(!res.ok) throw "error";
-
-const json=await res.json();
-return json.data;
-
-}catch(e){
-return null;
-}
-
-}
-
-// ================= STATUS =================
-function showStatus(msg,color){
-const s=document.getElementById("status");
-s.innerText=msg;
-s.style.color=color;
-}
-
-// ================= MAIN SCAN =================
-
-async function handleScan(tray){
-
-beep.play();
-
-showStatus("Saving Scan...","orange");
-
-const now=new Date();
-
-const ref=db.ref("logs").push();
-
-await ref.set({
-tray_id:tray,
-location:document.getElementById("loc").value,
-date:now.toISOString().split('T')[0],
-time:now.toLocaleTimeString(),
-status:"fetching"
-});
-
-showStatus("Fetching NexS Data...","blue");
-
-// ===== FETCH NEXS =====
-const data=await fetchNexs(tray);
-
-if(data){
-
-let items={};
-
-data.item_details.forEach((it,i)=>{
-items["item"+(i+1)]={
-type:it.type,
-barcode:it.barcode,
-status:it.status,
-product_id:it.product_id,
-tray_id:it.tray_id,
-updated_at:it.updated_at
-};
-});
-
-await ref.update({
-shipment_id:data.shipment_id,
-fitting_id:data.fitting_id,
-items:items,
-status:"completed"
-});
-
-showStatus("✅ NexS Data Loaded","green");
-
-}else{
-
-await ref.update({status:"not_found"});
-showStatus("❌ Not Found in NexS","red");
-
-}
-
-}
-
-// ================= SCANNER INPUT =================
-
-document.getElementById("scanBox")
-.addEventListener("keypress",e=>{
-
-if(e.key==="Enter"){
-
-const val=e.target.value.trim();
-
-if(val.length!==7){
-showStatus("Invalid Tray ID","red");
-return;
-}
-
-handleScan(val);
-e.target.value="";
-
-}
-
-});
-
+    function saveData() {
+        alert("Status for all 21 locations has been captured locally!");
+        // Yahan humne pehle localStorage ka logic dala tha
+        let data = {};
+        for(let i=1; i<=21; i++) {
+            data[`Loc_${i}`] = document.getElementById(`status-${i}`).value;
+        }
+        console.log("Saving Data:", data);
+        localStorage.setItem('trackerData', JSON.stringify(data));
+    }
 </script>
 
 </body>
