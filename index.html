@@ -48,7 +48,7 @@
     </div>
 
 <script>
-    // --- YOUR ACTUAL CONFIG (From image_26ed53.png) ---
+    // EXACT CONFIG FROM YOUR IMAGE 26ed53
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -69,21 +69,24 @@
         document.getElementById('loginErr').style.display = 'none';
     }
 
-    // REGISTRATION (ID folder banaye bina login nahi hoga)
+    // REGISTRATION: Yahan badlav kiya gaya hai
     function registerUser() {
         const name = document.getElementById('newName').value.trim();
         const id = document.getElementById('newId').value.trim();
         if(name && id) {
-            // FIX: Data ko 'Users/ID' path par save karna hai
-            db.ref('Users/' + id).set({ name: name, empId: id })
+            // Hum data ko 'Users/ID' ke raste par save kar rahe hain
+            db.ref('Users/' + id).set({ 
+                name: name, 
+                empId: id 
+            })
             .then(() => {
-                alert("ID: " + id + " Registered! Ab login karein.");
+                alert("ID: " + id + " Registered Successfully! Ab login karein.");
                 toggleAuth(false);
             }).catch(e => alert("Error: " + e.message));
         } else { alert("Name aur ID dono bharein!"); }
     }
 
-    // LOGIN (Check exact ID folder)
+    // LOGIN: Ab ye ID folder ko dhundega
     function loginUser() {
         const id = document.getElementById('loginId').value.trim();
         if(!id) return;
