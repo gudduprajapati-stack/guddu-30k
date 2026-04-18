@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Working System</title>
+    <title>NexS Operational System</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
@@ -15,12 +15,9 @@
         input:focus { border-color: var(--primary); }
         .btn { width: 100%; padding: 12px; background: var(--primary); color: black; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
         .link-btn { color: var(--primary); background: none; border: none; cursor: pointer; text-decoration: underline; margin-top: 15px; font-size: 14px; width: 100%; }
-        
         #dashboard { display: none; width: 100%; max-width: 1200px; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
         .card { background: var(--card); padding: 15px; border-radius: 10px; border-top: 4px solid var(--primary); }
-        select { width: 100%; padding: 8px; background: #000; color: white; border: 1px solid #444; border-radius: 5px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -30,31 +27,28 @@
         <input type="text" id="loginId" placeholder="User ID (e.g. 138663)">
         <button class="btn" onclick="loginUser()">Login</button>
         <button class="link-btn" onclick="toggleAuth(true)">Create New ID / Register</button>
-        <p id="loginErr" style="color:#ff4444; font-size:12px; display:none; margin-top:10px;">⚠️ ID Not Found! Register First.</p>
+        <p id="loginErr" style="color:#ff4444; font-size:12px; display:none; margin-top:10px; font-weight:bold;">⚠️ ID Not Found! Register First.</p>
     </div>
 
     <div id="registerPage" class="auth-container" style="display:none;">
-        <h2 style="color:var(--primary)">NEW REGISTRATION</h2>
+        <h2 style="color:var(--primary)">REGISTER</h2>
         <input type="text" id="newName" placeholder="Full Name">
         <input type="text" id="newId" placeholder="Unique ID (Numbers)">
-        <button class="btn" style="background:#28a745; color:white;" onclick="registerUser()">Register ID</button>
+        <button class="btn" style="background:#28a745; color:white;" onclick="registerUser()">Save & Register</button>
         <button class="link-btn" onclick="toggleAuth(false)">Back to Login</button>
     </div>
 
     <div id="dashboard">
-        <div class="header">
-            <div>
-                <h2 id="welcomeName" style="margin:0;">Dashboard</h2>
-                <small id="welcomeId" style="color:var(--primary)"></small>
-            </div>
-            <button onclick="location.reload()" style="background:none; color:#ff4444; border:1px solid #ff4444; padding:5px 12px; cursor:pointer; border-radius:4px;">Logout</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px;">
+            <h2 id="welcomeName" style="margin:0;">Dashboard</h2>
+            <button onclick="location.reload()" style="background:none; color:red; border:1px solid red; padding:5px; cursor:pointer; border-radius:4px;">Logout</button>
         </div>
         <div class="grid" id="locGrid"></div>
-        <button class="btn" style="width:250px; margin: 40px auto; display:block;" onclick="syncData()">SAVE TO CLOUD</button>
+        <button class="btn" style="width:250px; margin:40px auto; display:block;" onclick="syncData()">SAVE TO CLOUD</button>
     </div>
 
 <script>
-    // --- EXACT CONFIG FROM YOUR IMAGE 26ed53 ---
+    // --- YOUR ACTUAL CONFIG (From image_26ed53.png) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -75,21 +69,21 @@
         document.getElementById('loginErr').style.display = 'none';
     }
 
-    // REGISTRATION (Creates ID-based folder structure)
+    // REGISTRATION (ID folder banaye bina login nahi hoga)
     function registerUser() {
         const name = document.getElementById('newName').value.trim();
         const id = document.getElementById('newId').value.trim();
         if(name && id) {
-            // FIX: Saving data under Users/ID path
+            // FIX: Data ko 'Users/ID' path par save karna hai
             db.ref('Users/' + id).set({ name: name, empId: id })
             .then(() => {
-                alert("ID: " + id + " Successfully Registered!");
+                alert("ID: " + id + " Registered! Ab login karein.");
                 toggleAuth(false);
-            }).catch(e => alert("Firebase Error: " + e.message));
-        } else { alert("Donon field bharna zaroori hai!"); }
+            }).catch(e => alert("Error: " + e.message));
+        } else { alert("Name aur ID dono bharein!"); }
     }
 
-    // LOGIN (Checks exact ID folder)
+    // LOGIN (Check exact ID folder)
     function loginUser() {
         const id = document.getElementById('loginId').value.trim();
         if(!id) return;
@@ -108,29 +102,24 @@
         document.getElementById('loginPage').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('welcomeName').innerText = "Hello, " + activeUser.name;
-        document.getElementById('welcomeId').innerText = "Active ID: " + activeUser.empId;
         
         const grid = document.getElementById('locGrid');
         grid.innerHTML = "";
         for(let i=1; i<=21; i++) {
             grid.innerHTML += `
                 <div class="card">
-                    <small style="color:#666">STATION ${i}</small>
-                    <select id="s-${i}">
-                        <option>Pending</option>
-                        <option>Scanning</option>
-                        <option>Completed</option>
+                    <small>STATION ${i}</small>
+                    <select id="s-${i}" style="width:100%; margin-top:10px; background:#000; color:white; padding:5px;">
+                        <option>Pending</option><option>Scanning</option><option>Completed</option>
                     </select>
                 </div>`;
         }
     }
 
     function syncData() {
-        let updates = { id: activeUser.empId, syncTime: new Date().toLocaleString() };
+        let updates = { id: activeUser.empId, time: new Date().toLocaleString() };
         for(let i=1; i<=21; i++) { updates[`Loc_${i}`] = document.getElementById(`s-${i}`).value; }
-        db.ref('TrackingData/' + activeUser.empId).set(updates)
-        .then(() => alert("Data Saved Successfully!"))
-        .catch(e => alert("Sync Failed: " + e.message));
+        db.ref('TrackingData/' + activeUser.empId).set(updates).then(() => alert("Data Synced!"));
     }
 </script>
 </body>
