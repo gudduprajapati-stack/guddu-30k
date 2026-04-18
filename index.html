@@ -3,142 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS Tracking System</title>
+    <title>NexS Management System</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #e0e0e0; }
+        :root { --primary: #00d4ff; --bg: #0d0d0d; --card: #1a1a1a; --text: #f0f0f0; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
         
-        /* Login Page */
-        #loginPage { width: 350px; padding: 40px; background: var(--card); border-radius: 15px; margin-top: 80px; height: fit-content; border: 1px solid #333; text-align: center; }
+        .auth-container { width: 350px; padding: 40px; background: var(--card); border-radius: 15px; margin-top: 50px; height: fit-content; border: 1px solid #333; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: black; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; }
-        .btn:hover { background: #008fb3; }
-
-        /* Tracker Dashboard */
-        #dashboard { display: none; width: 100%; max-width: 1200px; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 25px; }
-        .card { background: var(--card); padding: 15px; border-radius: 10px; border-left: 5px solid #444; position: relative; }
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; background: #555; margin-right: 5px; }
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: black; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; margin-top: 10px;}
+        .link-btn { color: var(--primary); background: none; border: none; cursor: pointer; text-decoration: underline; margin-top: 15px; font-size: 14px; }
         
-        select { width: 100%; padding: 8px; background: #000; color: white; border: 1px solid #333; margin-top: 10px; border-radius: 4px; }
-        .active-card { border-left-color: var(--primary); }
+        /* Dashboard Styling */
+        #dashboard { display: none; width: 100%; max-width: 1200px; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 25px; }
+        .card { background: var(--card); padding: 15px; border-radius: 10px; border-top: 4px solid var(--primary); }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); padding-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="loginPage">
+    <div id="loginPage" class="auth-container">
         <h2 style="color:var(--primary)">NexS LOGIN</h2>
-        <p style="font-size: 12px; color: #888;">Enter User ID (e.g., NexS-Guddu-30k)</p>
-        <input type="text" id="userId" placeholder="Employee ID">
-        <input type="password" id="userPass" placeholder="Password (default: 1234)">
-        <button class="btn" onclick="handleLogin()">Login to Dashboard</button>
-        <p id="err" style="color:red; font-size:12px; display:none;">Invalid Credentials!</p>
+        <input type="text" id="loginId" placeholder="Enter Your ID (e.g. 138663)">
+        <button class="btn" onclick="loginUser()">Login to Dashboard</button>
+        <button class="link-btn" onclick="showRegister()">Create New ID / Register</button>
+        <p id="loginErr" style="color:red; font-size:12px; display:none; margin-top:10px;">User ID not found!</p>
+    </div>
+
+    <div id="registerPage" class="auth-container" style="display:none;">
+        <h2 style="color:var(--primary)">NEW EMPLOYEE</h2>
+        <input type="text" id="newName" placeholder="Full Name">
+        <input type="text" id="newId" placeholder="Create Unique ID (Alpha-numeric)">
+        <button class="btn" style="background:#28a745;" onclick="registerUser()">Register & Save</button>
+        <button class="link-btn" onclick="showLogin()">Back to Login</button>
     </div>
 
     <div id="dashboard">
         <div class="header">
             <div>
-                <h2 id="welcomeMsg" style="margin:0;">Welcome</h2>
-                <small id="displayId" style="color:var(--primary)"></small>
+                <h2 id="welcomeName" style="margin:0;">Welcome</h2>
+                <small id="welcomeId" style="color:var(--primary)"></small>
             </div>
-            <button onclick="location.reload()" style="background:none; color:#ff4444; border:1px solid #ff4444; padding:5px 10px; cursor:pointer; border-radius:4px;">Logout</button>
+            <button onclick="location.reload()" style="background:none; color:red; border:1px solid red; padding:5px; cursor:pointer;">Logout</button>
         </div>
-
-        <div class="grid" id="locationGrid"></div>
-
-        <div style="margin-top: 40px; text-align: center;">
-            <button class="btn" style="width: 250px; font-size: 16px;" onclick="syncToFirebase()">SYNC TO FIREBASE</button>
-        </div>
+        <div class="grid" id="locGrid"></div>
+        <button class="btn" style="width:200px; margin: 30px auto; display:block;" onclick="syncData()">Sync to Firebase</button>
     </div>
 
 <script>
-    // 1. Firebase Configuration (Apni details yahan replace karein)
+    // FIREBASE CONFIG (Paste your details here)
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
-        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
         projectId: "YOUR_PROJECT_ID",
         appId: "YOUR_APP_ID"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let currentUser = "";
+    let activeUser = null;
 
-    // 2. Login Logic
-    function handleLogin() {
-        const id = document.getElementById('userId').value;
-        const pass = document.getElementById('userPass').value;
+    // Navigation
+    function showRegister() { document.getElementById('loginPage').style.display='none'; document.getElementById('registerPage').style.display='block'; }
+    function showLogin() { document.getElementById('registerPage').style.display='none'; document.getElementById('loginPage').style.display='block'; }
 
-        if (id && pass === "1234") {
-            currentUser = id;
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            document.getElementById('displayId').innerText = "Active User: " + id;
-            initGrid();
-            fetchFromFirebase();
-        } else {
-            document.getElementById('err').style.display = 'block';
-        }
+    // Register Logic
+    function registerUser() {
+        const name = document.getElementById('newName').value;
+        const id = document.getElementById('newId').value;
+        if(name && id) {
+            db.ref('Users/' + id).set({ name: name, empId: id })
+            .then(() => {
+                alert("Registration Successful! Now login with your ID.");
+                showLogin();
+            });
+        } else { alert("Please fill both fields!"); }
     }
 
-    // 3. Grid Generation (21 Locations)
-    function initGrid() {
-        const grid = document.getElementById('locationGrid');
-        for (let i = 1; i <= 21; i++) {
+    // Login Logic (ID only)
+    function loginUser() {
+        const id = document.getElementById('loginId').value;
+        db.ref('Users/' + id).once('value', (snap) => {
+            if(snap.exists()) {
+                activeUser = snap.val();
+                loadDashboard();
+            } else { document.getElementById('loginErr').style.display='block'; }
+        });
+    }
+
+    function loadDashboard() {
+        document.getElementById('loginPage').style.display='none';
+        document.getElementById('dashboard').style.display='block';
+        document.getElementById('welcomeName').innerText = "Hello, " + activeUser.name;
+        document.getElementById('welcomeId').innerText = "ID: " + activeUser.empId;
+        
+        const grid = document.getElementById('locGrid');
+        for(let i=1; i<=21; i++) {
             grid.innerHTML += `
-                <div class="card" id="card-${i}">
-                    <span class="id-label" style="font-size:10px; color:#666;">ID: LOC-${i.toString().padStart(2, '0')}</span>
-                    <div style="margin:5px 0; font-weight:bold;">Location ${i}</div>
-                    <select id="status-${i}" onchange="updateUI(${i})">
-                        <option value="Pending">Pending</option>
-                        <option value="Scanning">Scanning</option>
-                        <option value="Completed">Completed</option>
-                    </select>
+                <div class="card">
+                    <strong>Location ${i}</strong>
+                    <select id="s-${i}"><option>Pending</option><option>Scanning</option><option>Done</option></select>
                 </div>`;
         }
     }
 
-    function updateUI(id) {
-        const val = document.getElementById(`status-${id}`).value;
-        const card = document.getElementById(`card-${id}`);
-        card.style.borderLeftColor = (val === "Completed") ? "#00ff88" : (val === "Scanning" ? "#00d4ff" : "#444");
-    }
-
-    // 4. Firebase Sync (Guddu's Data Push)
-    function syncToFirebase() {
+    function syncData() {
         let updates = {};
-        for(let i=1; i<=21; i++) {
-            updates[`Loc_${i}`] = document.getElementById(`status-${i}`).value;
-        }
-        updates['timestamp'] = new Date().toLocaleString();
-        updates['user'] = currentUser;
-
-        // User ke unique ID ke andar data save hoga
-        db.ref('NexS_Tracker/' + currentUser).set(updates)
-          .then(() => alert("Data Cloud par save ho gaya!"))
-          .catch(e => alert("Error: " + e.message));
-    }
-
-    // Real-time data fetch
-    function fetchFromFirebase() {
-        db.ref('NexS_Tracker/' + currentUser).on('value', (snap) => {
-            const data = snap.val();
-            if(data) {
-                for(let i=1; i<=21; i++) {
-                    if(data[`Loc_${i}`]) {
-                        document.getElementById(`status-${i}`).value = data[`Loc_${i}`];
-                        updateUI(i);
-                    }
-                }
-            }
-        });
+        for(let i=1; i<=21; i++) { updates[`L${i}`] = document.getElementById(`s-${i}`).value; }
+        db.ref('Attendance/' + activeUser.empId).set(updates).then(() => alert("Data Saved!"));
     }
 </script>
-
 </body>
 </html>
