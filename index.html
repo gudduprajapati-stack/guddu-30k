@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Live System</title>
+    <title>NexS - Working System</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
         :root { --primary: #00d4ff; --bg: #0d0d0d; --card: #1a1a1a; --text: #f0f0f0; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .auth-container { width: 320px; padding: 30px; background: var(--card); border-radius: 15px; margin-top: 50px; height: fit-content; border: 1px solid #333; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .auth-container { width: 330px; padding: 35px; background: var(--card); border-radius: 15px; margin-top: 50px; height: fit-content; border: 1px solid #333; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; outline: none; }
         input:focus { border-color: var(--primary); }
         .btn { width: 100%; padding: 12px; background: var(--primary); color: black; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
         .link-btn { color: var(--primary); background: none; border: none; cursor: pointer; text-decoration: underline; margin-top: 15px; font-size: 14px; width: 100%; }
         
-        /* Dashboard */
         #dashboard { display: none; width: 100%; max-width: 1200px; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
@@ -35,7 +34,7 @@
     </div>
 
     <div id="registerPage" class="auth-container" style="display:none;">
-        <h2 style="color:var(--primary)">NEW EMPLOYEE</h2>
+        <h2 style="color:var(--primary)">NEW REGISTRATION</h2>
         <input type="text" id="newName" placeholder="Full Name">
         <input type="text" id="newId" placeholder="Unique ID (Numbers)">
         <button class="btn" style="background:#28a745; color:white;" onclick="registerUser()">Register ID</button>
@@ -55,7 +54,7 @@
     </div>
 
 <script>
-    // --- YOUR ACTUAL CONFIG FROM IMAGE ---
+    // --- EXACT CONFIG FROM YOUR IMAGE 26ed53 ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -66,7 +65,6 @@
         appId: "1:634684833271:web:31a25a2c5301fa108142f2"
     };
 
-    // Initialize Firebase logic
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let activeUser = null;
@@ -77,11 +75,12 @@
         document.getElementById('loginErr').style.display = 'none';
     }
 
-    // REGISTRATION (Creates ID-based folder)
+    // REGISTRATION (Creates ID-based folder structure)
     function registerUser() {
         const name = document.getElementById('newName').value.trim();
         const id = document.getElementById('newId').value.trim();
         if(name && id) {
+            // FIX: Saving data under Users/ID path
             db.ref('Users/' + id).set({ name: name, empId: id })
             .then(() => {
                 alert("ID: " + id + " Successfully Registered!");
@@ -90,7 +89,7 @@
         } else { alert("Donon field bharna zaroori hai!"); }
     }
 
-    // LOGIN (Checks ID-based folder)
+    // LOGIN (Checks exact ID folder)
     function loginUser() {
         const id = document.getElementById('loginId').value.trim();
         if(!id) return;
@@ -129,7 +128,6 @@
     function syncData() {
         let updates = { id: activeUser.empId, syncTime: new Date().toLocaleString() };
         for(let i=1; i<=21; i++) { updates[`Loc_${i}`] = document.getElementById(`s-${i}`).value; }
-        
         db.ref('TrackingData/' + activeUser.empId).set(updates)
         .then(() => alert("Data Saved Successfully!"))
         .catch(e => alert("Sync Failed: " + e.message));
