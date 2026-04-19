@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - identity Pro v52.0</title>
+    <title>NexS - Secure Identity v53.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -19,20 +19,12 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* 🔥 Design Fix: Flexbox for controls to prevent overlapping */
         .controls-hub { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 15px; 
-            background: var(--card); 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #333;
-            margin-bottom: 25px;
-            align-items: flex-end;
+            display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); 
+            padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end;
         }
 
-        .input-group { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; }
+        .input-group { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 8px; }
         label { font-size: 11px; color: var(--primary); text-transform: uppercase; font-weight: bold; }
         input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
         
@@ -40,43 +32,43 @@
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { text-align: left; padding: 14px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: #888; text-transform: uppercase; font-size: 11px; }
-        
-        /* User ID highlight */
         .identity-cell { color: var(--primary); font-weight: 600; }
 
         .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
         .btn-filter { background: var(--primary); color: #000; }
         .btn-export { background: var(--accent); color: #fff; }
         .btn-delete { background: var(--danger); color: #fff; }
 
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; }
+        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
     <div id="authSection">
         <div class="auth-card" id="loginBox">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 45px;" onclick="handleLogin()">Login System</button>
-            <p onclick="showReg(true)" style="margin-top:15px; color:#666; font-size:12px; cursor:pointer;">Register New User</p>
+            <h2 style="color:var(--primary); margin-bottom: 10px;">NexS LOGIN</h2>
+            <p style="color:#888; font-size: 12px; margin-bottom: 25px;">Please enter your ID to access system</p>
+            <input type="text" id="loginId" placeholder="Employee ID (e.g. 138663)" autocomplete="off">
+            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px; font-size: 14px;" onclick="handleLogin()">ENTER SYSTEM</button>
+            <p onclick="showReg(true)" style="margin-top:20px; color:var(--primary); font-size:12px; cursor:pointer; text-decoration: underline;">Register New ID</p>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER</h2>
-            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:10px;">
-            <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save Details</button>
-            <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer;">Back</p>
+            <h2 style="color:var(--primary); margin-bottom: 25px;">ID REGISTRATION</h2>
+            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:12px;">
+            <input type="text" id="regId" placeholder="Assign ID">
+            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">SAVE USER</button>
+            <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer; font-size: 12px;">Back to Login</p>
         </div>
     </div>
 
     <div class="sidebar" id="mainSidebar" style="display:none;">
         <div class="user-profile"><h4 id="sideName" style="color:var(--primary); margin:0;">---</h4><small id="sideId" style="color:#888;">ID: ---</small></div>
         <div class="nav-list" style="flex: 1;">
-            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning</div>
-            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment</div>
+            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
+            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
             <div class="nav-item" onclick="switchTab('history', this)">🕒 History Hub</div>
         </div>
         <div onclick="location.reload()" style="padding:20px; color:var(--danger); cursor:pointer; text-align:center; font-weight:bold; border-top:1px solid #222;">LOGOUT</div>
@@ -86,8 +78,16 @@
         
         <div id="scanning" class="tab-content active">
             <div class="controls-hub">
-                <div class="input-group"><label>Location</label><select id="locSelect"><option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>LO SEND TO ICU</option></select></div>
-                <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Tray..."></div>
+                <div class="input-group">
+                    <label>Location Selection</label>
+                    <select id="locSelect">
+                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
+                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
+                        <option>CS LOCATION</option>
+                        <optgroup label="OMT RACKS"><option>OMT RACK 01</option><option>OMT RACK 02</option></optgroup>
+                    </select>
+                </div>
+                <div class="input-group"><label>Scan Barcode</label><input type="text" id="trayInput" placeholder="Scan here..." autocomplete="off"></div>
             </div>
             <div class="data-table-container">
                 <table><thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>User Name (ID)</th></tr></thead><tbody id="scanLog"></tbody></table>
@@ -96,8 +96,8 @@
 
         <div id="shipment" class="tab-content">
             <div class="controls-hub">
-                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option></select></div>
-                <div class="input-group"><label>Shipment Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..." maxlength="23"></div>
+                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
+                <div class="input-group"><label>Shipment Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..." maxlength="23" autocomplete="off"></div>
             </div>
             <div class="data-table-container">
                 <table><thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Agency</th><th>User Name (ID)</th></tr></thead><tbody id="shipLog"></tbody></table>
@@ -109,7 +109,7 @@
                 <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
                 <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
                 <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
-                <div class="input-group"><label>Search ID</label><input type="text" id="histSearch" placeholder="Search..."></div>
+                <div class="input-group"><label>Search ID</label><input type="text" id="histSearch" placeholder="Search Barcode..."></div>
                 <div class="btn-row">
                     <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
                     <button class="btn btn-export" onclick="exportData()">Export</button>
@@ -132,29 +132,34 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    let loggedUser = { name: null, id: null };
+    let activeUser = { name: null, id: null };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
+    
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
+        if(!n || !i) return alert("Fill all fields!");
+        db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("User Saved!"); showReg(false); });
     }
 
+    // 🔥 STRICT LOGIN: No empty ID allowed
     function handleLogin() {
         const id = document.getElementById('loginId').value.trim();
+        if(!id) { alert("Please enter a valid Employee ID!"); return; }
+        
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 const d = snap.val();
-                loggedUser = { name: d.name, id: id };
+                activeUser.name = d.name; activeUser.id = id;
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('sideName').innerText = loggedUser.name;
+                document.getElementById('sideName').innerText = activeUser.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("ID Not Found!"); }
+            } else { alert("ID " + id + " not found! Please register first."); }
         });
     }
 
@@ -162,13 +167,13 @@
         db.ref('LiveScans').on('value', s1 => {
             db.ref('ShipmentScans').on('value', s2 => {
                 masterData = [];
-                const process = (snap, type, path) => {
+                const pull = (snap, type, path) => {
                     snap.forEach(c => {
                         const d = c.val();
-                        // 🔥 IDENTITY FIX: Har haal mein Name ke saath ID bracket mein aayegi
+                        // 🔥 IDENTITY CONSTRUCTOR: Forcefully merges Name and ID
                         const uName = d.user || d.userName || "Unknown";
-                        const uId = d.userId || d.empId || "";
-                        const fullIdentity = uId ? `${uName} (${uId})` : uName;
+                        const uId = d.userId || d.empId || d.ID || "";
+                        const fullId = uId ? `${uName} (${uId})` : uName;
 
                         masterData.push({
                             key: c.key, type: type, path: path,
@@ -176,13 +181,12 @@
                             dDate: d.date || d.scanDate || "---",
                             dTime: d.time || d.scanTime || "---",
                             dLoc: d.location || d.locName || "---",
-                            dFullIdentity: fullIdentity,
+                            dUser: fullId,
                             ts: d.timestamp || 0
                         });
                     });
                 };
-                process(s1, 'TRAY', 'LiveScans');
-                process(s2, 'SHIPMENT', 'ShipmentScans');
+                pull(s1, 'TRAY', 'LiveScans'); pull(s2, 'SHIPMENT', 'ShipmentScans');
                 masterData.sort((a,b) => b.ts - a.ts);
                 renderAll();
             });
@@ -194,7 +198,7 @@
         const hBody = document.getElementById('shipLog');
         sBody.innerHTML = ""; hBody.innerHTML = "";
         masterData.forEach(d => {
-            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-cell">${d.dFullIdentity}</td></tr>`;
+            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-cell">${d.dUser}</td></tr>`;
             if(d.type === 'TRAY') sBody.innerHTML += row;
             else hBody.innerHTML += row;
         });
@@ -208,8 +212,8 @@
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: loggedUser.name,
-                userId: loggedUser.id, // 🔥 ID yahan save ho rahi hai
+                user: activeUser.name,
+                userId: activeUser.id, // 🔥 ID yahan save ho rahi hai
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -223,8 +227,8 @@
                 location: document.getElementById('shipLocSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: loggedUser.name,
-                userId: loggedUser.id,
+                user: activeUser.name,
+                userId: activeUser.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -245,19 +249,19 @@
             const mFrom = from ? dObj >= new Date(from) : true;
             const mTo = to ? dObj <= new Date(to) : true;
             const mType = type === 'ALL' ? true : d.type === type;
-            const mSearch = d.dId.toUpperCase().includes(search) || d.dFullIdentity.toUpperCase().includes(search);
+            const mSearch = d.dId.toUpperCase().includes(search) || d.dUser.toUpperCase().includes(search);
             return mFrom && mTo && mType && mSearch;
         }).forEach(d => {
-            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-cell">${d.dFullIdentity}</td></tr>`;
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-cell">${d.dUser}</td></tr>`;
         });
     }
 
     function exportData() {
         let csv = "Type,Date,Time,ID,Location,User_Identity\n";
-        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dFullIdentity}\n`);
+        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dUser}\n`);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = "NexS_Identity_Report.csv"; a.click();
+        a.download = "NexS_Report.csv"; a.click();
     }
 
     function bulkDelete() {
@@ -280,7 +284,6 @@
         document.getElementById(t).classList.add('active');
         el.classList.add('active');
         if(t === 'scanning') document.getElementById('trayInput').focus();
-        if(t === 'shipment') document.getElementById('shipInput').focus();
     }
 </script>
 </body>
