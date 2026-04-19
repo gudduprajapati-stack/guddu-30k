@@ -3,29 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Operation Center v11.0</title>
+    <title>NexS - Operation Center v12.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
-        .user-profile small { color: #888; display: block; margin-top: 5px; }
-
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
         .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; }
-        
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
-
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 350px; text-align: center; }
         .btn { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
@@ -36,7 +28,7 @@
     <div id="authSection">
         <div id="loginCard" class="auth-card">
             <h2 style="color:var(--primary)">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="Employee ID (138663)">
+            <input type="text" id="loginId" placeholder="Employee ID">
             <button class="btn" onclick="handleLogin()">Login</button>
             <p onclick="showReg(true)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Register New ID</p>
         </div>
@@ -45,7 +37,6 @@
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
             <button class="btn" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
-            <p onclick="showReg(false)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Back to Login</p>
         </div>
     </div>
 
@@ -56,47 +47,41 @@
             <small id="sideId">ID: ---</small>
         </div>
         <div style="padding: 15px; flex-grow: 1;">
-            <div style="color:var(--primary); padding:10px; background:#1a1a1a; border-radius:8px; cursor:pointer;">📦 Scanning Page</div>
+            <div style="color:var(--primary); padding:10px; background:#1a1a1a; border-radius:8px;">📦 Scanning Page</div>
         </div>
         <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        <h2 id="tabTitle">Scanning Operations</h2>
-
-        <div id="scanning" class="tab-content active">
-            <div class="scan-bar">
-                <div>
-                    <label style="font-size:11px; color:#888;">CURRENT LOCATION</label>
-                    <select id="locSelect">
-                        <option>ICU ENTRY</option>
-                        <option>MEI ENTRY</option>
-                        <option>OMT ENTRY</option>
-                        <option>CS LOCATION</option>
-                        <optgroup label="OMT RACKS">
-                            <option>OMT RACK 01</option><option>OMT RACK 02</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:11px; color:#888;">FAST SCAN (ENTER)</label>
-                    <input type="text" id="trayInput" placeholder="Scan Barcode (MT...)" autocomplete="off">
-                </div>
+        <h2>Scanning Operations</h2>
+        <div class="scan-bar">
+            <div>
+                <label style="font-size:11px; color:#888;">CURRENT LOCATION</label>
+                <select id="locSelect">
+                    <option>ICU ENTRY</option>
+                    <option>MEI ENTRY</option>
+                    <option>OMT ENTRY</option>
+                    <option>CS LOCATION</option>
+                </select>
             </div>
-
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>DATE</th>
-                        <th>TIME</th>
-                        <th>BARCODE</th>
-                        <th>LOCATION</th>
-                        <th>ACTION BY</th>
-                    </tr>
-                </thead>
-                <tbody id="scanLog"></tbody>
-            </table>
+            <div>
+                <label style="font-size:11px; color:#888;">FAST SCAN (ENTER)</label>
+                <input type="text" id="trayInput" placeholder="Scan Barcode..." autocomplete="off">
+            </div>
         </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>DATE</th>
+                    <th>TIME</th>
+                    <th>BARCODE</th>
+                    <th>LOCATION</th>
+                    <th>ACTION BY</th>
+                </tr>
+            </thead>
+            <tbody id="scanLog"></tbody>
+        </table>
     </div>
 
 <script>
@@ -110,13 +95,10 @@
     const db = firebase.database();
     let loggedUser = null;
 
-    // --- DATE FIX: DD/MM/YYYY ---
+    // DD/MM/YYYY
     function getStandardDate() {
         const d = new Date();
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        return dd + "/" + mm + "/" + yyyy;
+        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     }
 
     function showReg(v) { 
@@ -127,9 +109,7 @@
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) {
-            db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
-        }
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -142,24 +122,24 @@
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + loggedUser.empId;
-                loadLiveScans();
+                loadData();
                 document.getElementById('trayInput').focus();
             } else { alert("User Not Found!"); }
         });
     }
 
-    // --- INSTANT SCAN LOGIC ---
+    // SCAN & SAVE
     document.getElementById('trayInput').addEventListener('keydown', function(e) {
         if (e.key === "Enter") {
             const val = this.value.toUpperCase().trim();
-            if (val !== "") {
+            if (val) {
                 const loc = document.getElementById('locSelect').value;
                 const scanData = {
-                    barcodeID: val, // Fixed Key Name
-                    locName: loc,
-                    scanDate: getStandardDate(),
-                    scanTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                    scannedBy: loggedUser.name,
+                    barcode: val,      // KEY: barcode
+                    location: loc,     // KEY: location
+                    date: getStandardDate(), // KEY: date
+                    time: new Date().toLocaleTimeString(), // KEY: time
+                    user: loggedUser.name, // KEY: user
                     ts: Date.now()
                 };
                 db.ref('LiveScans').push(scanData);
@@ -168,19 +148,19 @@
         }
     });
 
-    function loadLiveScans() {
-        db.ref('LiveScans').limitToLast(15).on('value', snap => {
+    function loadData() {
+        db.ref('LiveScans').limitToLast(20).on('value', snap => {
             const tbody = document.getElementById('scanLog');
             tbody.innerHTML = "";
             snap.forEach(child => {
                 const d = child.val();
-                // Matching Variable Names Exactly
+                // Matching the exact keys used in save
                 let row = `<tr>
-                    <td>${d.scanDate}</td>
-                    <td>${d.scanTime}</td>
-                    <td style="color:var(--primary); font-weight:bold;">${d.barcodeID}</td>
-                    <td>${d.locName}</td>
-                    <td>${d.scannedBy}</td>
+                    <td>${d.date || '---'}</td>
+                    <td>${d.time || '---'}</td>
+                    <td style="color:var(--primary); font-weight:bold;">${d.barcode || '---'}</td>
+                    <td>${d.location || '---'}</td>
+                    <td>${d.user || '---'}</td>
                 </tr>`;
                 tbody.innerHTML = row + tbody.innerHTML;
             });
