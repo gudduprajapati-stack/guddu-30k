@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v30.0</title>
+    <title>NexS - Final Fix v31.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -19,13 +19,13 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
-        .input-group { flex: 1; min-width: 200px; }
+        .input-group { flex: 1; min-width: 150px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 14px; box-sizing: border-box; }
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
-        .history-controls { background: #111; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; align-items: flex-end; }
+        .history-controls { background: #111; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; align-items: flex-end; }
         .btn { padding: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
         .btn-primary { background: var(--primary); color: #000; }
         .btn-danger { background: var(--danger); color: #fff; }
@@ -54,22 +54,33 @@
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        <h2 id="tabTitle">Scanning Operations</h2>
+        <h2 id="tabTitle">Scanning Page</h2>
 
         <div id="scanning" class="tab-content active">
             <div class="scan-bar">
-                <div class="input-group"><label>LOCATION</label>
+                <div class="input-group">
+                    <label>LOCATION</label>
                     <select id="locSelect">
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
                         <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
-                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option>
+                        <option>ORDER SEND TO MAIN LINE FOR FT</option><option>ORDER SEND TO MAIN LINE FOR QC</option><option>ORDER SEND TO MAIN LINE FOR PACKING</option>
+                        <option>TLP SEND TO MEI</option><option>QC FAIL SEND TO MEI</option><option>FRAME QC FAIL SEND TO MAIN LINE</option><option>SEND TO MEI FOR REVIEW</option>
+                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option><option>LO QC FAIL LOCATION (JIT)</option>
                         <optgroup label="OMT RACKS">
                             <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
                             <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
                         </optgroup>
+                        <optgroup label="ICU TROLLEYS">
+                            <option>ICU TROLLEY 1</option><option>ICU TROLLEY 2</option><option>ICU TROLLEY 3</option><option>ICU TROLLEY 4</option><option>ICU TROLLEY 5</option>
+                            <option>ICU TROLLEY 6</option><option>ICU TROLLEY 7</option><option>ICU TROLLEY 8</option><option>ICU TROLLEY 9</option><option>ICU TROLLEY 10</option>
+                        </optgroup>
+                        <optgroup label="OMT TROLLEYS">
+                            <option>OMT TROLLEY 1</option><option>OMT TROLLEY 2</option><option>OMT TROLLEY 3</option><option>OMT TROLLEY 4</option><option>OMT TROLLEY 5</option>
+                            <option>OMT TROLLEY 6</option><option>OMT TROLLEY 7</option><option>OMT TROLLEY 8</option><option>OMT TROLLEY 9</option><option>OMT TROLLEY 10</option>
+                        </optgroup>
                     </select>
                 </div>
-                <div class="input-group"><label>FAST SCAN</label><input type="text" id="trayInput" placeholder="Scan Barcode..."></div>
+                <div class="input-group"><label>TRAY BARCODE</label><input type="text" id="trayInput" placeholder="Scan Tray..."></div>
             </div>
             <table class="data-table">
                 <thead><tr><th>DATE</th><th>TIME</th><th>BARCODE</th><th>LOCATION</th><th>USER</th></tr></thead>
@@ -82,10 +93,10 @@
                 <div class="input-group"><label>LOCATION</label>
                     <select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select>
                 </div>
-                <div class="input-group"><label>SCANNING BOX</label><input type="text" id="shipInput" placeholder="Scan (Max 23 digit)" maxlength="23"></div>
+                <div class="input-group"><label>SHIPMENT BARCODE</label><input type="text" id="shipInput" placeholder="Scan Shipment..." maxlength="23"></div>
             </div>
             <table class="data-table">
-                <thead><tr><th>DATE</th><th>TIME</th><th>SHIPMENT ID</th><th>LOCATION</th><th>USER</th></tr></thead>
+                <thead><tr><th>DATE</th><th>TIME</th><th>ID</th><th>LOCATION</th><th>USER</th></tr></thead>
                 <tbody id="shipLog"></tbody>
             </table>
         </div>
@@ -97,7 +108,7 @@
                 <div><label>TYPE</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
                 <div><label>SEARCH ID</label><input type="text" id="histSearch" placeholder="Search Barcode..."></div>
                 <button class="btn btn-primary" onclick="applyFilters()">FILTER</button>
-                <button class="btn btn-danger" onclick="bulkDelete()">DELETE RANGE</button>
+                <button class="btn btn-danger" onclick="bulkDelete()">DELETE</button>
             </div>
             <table class="data-table">
                 <thead><tr><th>TYPE</th><th>DATE</th><th>TIME</th><th>ID</th><th>LOCATION</th><th>USER</th></tr></thead>
@@ -134,7 +145,7 @@
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("User Not Found!"); }
+            } else { alert("ID Not Registered!"); }
         });
     }
 
@@ -144,11 +155,22 @@
                 masterData = [];
                 s1.forEach(c => {
                     let d = c.val();
-                    masterData.push({...d, key: c.key, type: 'TRAY', dId: d.barcode || d.barcodeID || d.tray || '---', path: 'LiveScans'});
+                    // 🔥 Super Sync: Har tarah ki purani key ko check karega
+                    let id = d.barcode || d.barcodeID || d.tray || d.TrayID || '---';
+                    let dt = d.date || d.scanDate || '---';
+                    let tm = d.time || d.scanTime || '---';
+                    let lc = d.location || d.locName || '---';
+                    let us = d.user || d.userName || d.scannedBy || '---';
+                    masterData.push({...d, key: c.key, type: 'TRAY', dId: id, dDate: dt, dTime: tm, dLoc: lc, dUser: us, path: 'LiveScans'});
                 });
                 s2.forEach(c => {
                     let d = c.val();
-                    masterData.push({...d, key: c.key, type: 'SHIPMENT', dId: d.shipId || '---', path: 'ShipmentScans'});
+                    let id = d.shipId || d.shipmentID || '---';
+                    let dt = d.date || '---';
+                    let tm = d.time || '---';
+                    let lc = d.location || '---';
+                    let us = d.user || '---';
+                    masterData.push({...d, key: c.key, type: 'SHIPMENT', dId: id, dDate: dt, dTime: tm, dLoc: lc, dUser: us, path: 'ShipmentScans'});
                 });
                 masterData.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
                 renderTables(masterData);
@@ -163,14 +185,14 @@
         sLog.innerHTML = ""; hLog.innerHTML = ""; histLog.innerHTML = "";
 
         data.forEach(d => {
-            let row = `<tr><td>${d.date || '---'}</td><td>${d.time || '---'}</td><td>${d.dId}</td><td>${d.location || '---'}</td><td>${d.user || '---'}</td></tr>`;
+            let row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
             if(d.type === 'TRAY') sLog.innerHTML += row;
             if(d.type === 'SHIPMENT') hLog.innerHTML += row;
-            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+            
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
         });
     }
 
-    // High Speed Input
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
             db.ref('LiveScans').push({ barcode: e.target.value.toUpperCase().trim(), location: document.getElementById('locSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
@@ -185,7 +207,6 @@
         }
     });
 
-    // --- NEW FILTER LOGIC ---
     function applyFilters() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
@@ -193,7 +214,7 @@
         const search = document.getElementById('histSearch').value.toUpperCase();
 
         const filtered = masterData.filter(d => {
-            const dObj = new Date(d.date.split('/').reverse().join('-'));
+            const dObj = new Date(d.dDate.split('/').reverse().join('-'));
             const mFrom = from ? dObj >= new Date(from) : true;
             const mTo = to ? dObj <= new Date(to) : true;
             const mType = type === 'ALL' ? true : d.type === type;
@@ -201,24 +222,20 @@
             return mFrom && mTo && mType && mSearch;
         });
 
-        renderHistoryTable(filtered);
-    }
-
-    function renderHistoryTable(data) {
         const histLog = document.getElementById('historyTableBody');
         histLog.innerHTML = "";
-        data.forEach(d => {
-            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+        filtered.forEach(d => {
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
         });
     }
 
     function bulkDelete() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
-        if(!from || !to) return alert("Select From & To Dates!");
-        if(confirm("Permanently delete data in this range?")) {
+        if(!from || !to) return alert("Select Dates!");
+        if(confirm("Delete selected range?")) {
             masterData.forEach(d => {
-                const dObj = new Date(d.date.split('/').reverse().join('-'));
+                const dObj = new Date(d.dDate.split('/').reverse().join('-'));
                 if(dObj >= new Date(from) && dObj <= new Date(to)) {
                     db.ref(`${d.path}/${d.key}`).remove();
                 }
@@ -232,7 +249,7 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(t).classList.add('active');
         el.classList.add('active');
-        if(t === 'scanning') document.getElementById('trayInput').focus();
+        document.getElementById('tabTitle').innerText = el.innerText;
     }
 </script>
 </body>
