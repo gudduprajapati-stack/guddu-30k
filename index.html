@@ -3,35 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Version 10.0 Final</title>
+    <title>NexS - Operation Center v11.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
         
-        /* Sidebar */
-        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 10; }
+        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
         .user-profile small { color: #888; display: block; margin-top: 5px; }
-        .nav-list { padding: 15px; flex-grow: 1; }
-        .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; }
-        .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
-        
-        /* Main Content */
+
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Scanning UI */
         .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; }
+        
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
 
-        /* Login Overlay */
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 350px; text-align: center; }
         .btn { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
@@ -44,15 +38,13 @@
             <h2 style="color:var(--primary)">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID (138663)">
             <button class="btn" onclick="handleLogin()">Login</button>
-            <p onclick="showReg(true)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px; text-decoration: underline;">New Registration</p>
-            <p id="loginErr" style="color:red; display:none; margin-top:10px; font-size:12px;">ID not found! Please register.</p>
+            <p onclick="showReg(true)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Register New ID</p>
         </div>
-
         <div id="regCard" class="auth-card" style="display:none;">
             <h2 style="color:var(--primary)">REGISTER</h2>
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn" style="background:var(--accent); color:white;" onclick="handleRegister()">Save & Register</button>
+            <button class="btn" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
             <p onclick="showReg(false)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Back to Login</p>
         </div>
     </div>
@@ -63,17 +55,14 @@
             <h4 id="sideName">---</h4>
             <small id="sideId">ID: ---</small>
         </div>
-        <div class="nav-list">
-            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
-            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
-            <div class="nav-item" onclick="switchTab('history', this)">🕒 History Page</div>
-            <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
+        <div style="padding: 15px; flex-grow: 1;">
+            <div style="color:var(--primary); padding:10px; background:#1a1a1a; border-radius:8px; cursor:pointer;">📦 Scanning Page</div>
         </div>
         <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        <h2 id="tabTitle">Scanning Page</h2>
+        <h2 id="tabTitle">Scanning Operations</h2>
 
         <div id="scanning" class="tab-content active">
             <div class="scan-bar">
@@ -83,17 +72,15 @@
                         <option>ICU ENTRY</option>
                         <option>MEI ENTRY</option>
                         <option>OMT ENTRY</option>
-                        <option>LO SEND TO ICU</option>
-                        <option>LO SEND TO MEI</option>
                         <option>CS LOCATION</option>
                         <optgroup label="OMT RACKS">
-                            <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option>
+                            <option>OMT RACK 01</option><option>OMT RACK 02</option>
                         </optgroup>
                     </select>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#888;">FAST SCAN (ENTER TO SAVE)</label>
-                    <input type="text" id="trayInput" placeholder="Scan Barcode..." autocomplete="off">
+                    <label style="font-size:11px; color:#888;">FAST SCAN (ENTER)</label>
+                    <input type="text" id="trayInput" placeholder="Scan Barcode (MT...)" autocomplete="off">
                 </div>
             </div>
 
@@ -113,7 +100,6 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
@@ -124,102 +110,81 @@
     const db = firebase.database();
     let loggedUser = null;
 
-    // Fix Date to DD/MM/YYYY
+    // --- DATE FIX: DD/MM/YYYY ---
     function getStandardDate() {
         const d = new Date();
-        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return dd + "/" + mm + "/" + yyyy;
     }
 
     function showReg(v) { 
         document.getElementById('loginCard').style.display = v ? 'none' : 'block';
         document.getElementById('regCard').style.display = v ? 'block' : 'none';
-        document.getElementById('loginErr').style.display = 'none';
     }
 
-    // --- REGISTER LOGIC ---
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
         if(n && i) {
-            db.ref('Users/' + i).set({ name: n, empId: i })
-            .then(() => { 
-                alert("Registration Successful!"); 
-                showReg(false); 
-            }).catch(e => alert("Error: " + e.message));
-        } else {
-            alert("Please enter Name and ID!");
+            db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
         }
     }
 
-    // --- LOGIN LOGIC ---
     function handleLogin() {
-        const inputId = document.getElementById('loginId').value.trim();
-        if(!inputId) return;
-
-        db.ref('Users/' + inputId).once('value', (snap) => {
+        const id = document.getElementById('loginId').value.trim();
+        db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 loggedUser = snap.val();
-                
-                // Hide Auth & Show Dashboard
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                
-                // Update Profile Info (Fixing Undefined)
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + loggedUser.empId;
-                
                 loadLiveScans();
                 document.getElementById('trayInput').focus();
-            } else {
-                document.getElementById('loginErr').style.display = 'block';
-            }
+            } else { alert("User Not Found!"); }
         });
     }
 
-    // --- SCAN LOGIC ---
+    // --- INSTANT SCAN LOGIC ---
     document.getElementById('trayInput').addEventListener('keydown', function(e) {
         if (e.key === "Enter") {
             const val = this.value.toUpperCase().trim();
-            if (val) {
+            if (val !== "") {
                 const loc = document.getElementById('locSelect').value;
-                const scanEntry = {
-                    barcode: val,
-                    location: loc,
-                    date: getStandardDate(),
-                    time: new Date().toLocaleTimeString('en-US', { hour12: true }),
-                    userName: loggedUser.name,
-                    timestamp: Date.now()
+                const scanData = {
+                    barcodeID: val, // Fixed Key Name
+                    locName: loc,
+                    scanDate: getStandardDate(),
+                    scanTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    scannedBy: loggedUser.name,
+                    ts: Date.now()
                 };
-                db.ref('LiveScans').push(scanEntry);
-                this.value = "";
+                db.ref('LiveScans').push(scanData);
+                this.value = ""; 
             }
         }
     });
 
     function loadLiveScans() {
-        db.ref('LiveScans').limitToLast(20).on('value', snap => {
+        db.ref('LiveScans').limitToLast(15).on('value', snap => {
             const tbody = document.getElementById('scanLog');
             tbody.innerHTML = "";
             snap.forEach(child => {
                 const d = child.val();
+                // Matching Variable Names Exactly
                 let row = `<tr>
-                    <td>${d.date}</td>
-                    <td>${d.time}</td>
-                    <td style="color:var(--primary); font-weight:bold;">${d.barcode}</td>
-                    <td>${d.location}</td>
-                    <td>${d.userName}</td>
+                    <td>${d.scanDate}</td>
+                    <td>${d.scanTime}</td>
+                    <td style="color:var(--primary); font-weight:bold;">${d.barcodeID}</td>
+                    <td>${d.locName}</td>
+                    <td>${d.scannedBy}</td>
                 </tr>`;
                 tbody.innerHTML = row + tbody.innerHTML;
             });
         });
-    }
-
-    function switchTab(tab, el) {
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('tabTitle').innerText = el.innerText.split(' ').slice(1).join(' ') + " Page";
-        document.getElementById('trayInput').focus();
     }
 </script>
 </body>
