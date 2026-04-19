@@ -3,40 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v29.0</title>
+    <title>NexS - Master Build v30.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        
-        /* Sidebar */
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
         .nav-list { padding: 15px; flex-grow: 1; }
         .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
-        
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
-        /* UI Inputs */
         .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
-        .input-group { flex: 1; min-width: 250px; }
+        .input-group { flex: 1; min-width: 200px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 14px; box-sizing: border-box; }
-        
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
-
         .history-controls { background: #111; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; align-items: flex-end; }
-        .btn { padding: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: #000; width: 100%; }
-        .btn-danger { background: var(--danger); color: #fff; width: 100%; }
-
+        .btn { padding: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-danger { background: var(--danger); color: #fff; }
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
     </style>
@@ -46,8 +38,8 @@
     <div id="authSection">
         <div class="auth-card">
             <h2 style="color:var(--primary)">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="Employee ID (138663)">
-            <button class="btn btn-primary" style="margin-top:20px;" onclick="handleLogin()">Login</button>
+            <input type="text" id="loginId" placeholder="Employee ID">
+            <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="handleLogin()">Login</button>
         </div>
     </div>
 
@@ -66,25 +58,14 @@
 
         <div id="scanning" class="tab-content active">
             <div class="scan-bar">
-                <div class="input-group">
-                    <label>LOCATION</label>
+                <div class="input-group"><label>LOCATION</label>
                     <select id="locSelect">
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
                         <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
-                        <option>ORDER SEND TO MAIN LINE FOR FT</option><option>ORDER SEND TO MAIN LINE FOR QC</option><option>ORDER SEND TO MAIN LINE FOR PACKING</option>
-                        <option>TLP SEND TO MEI</option><option>QC FAIL SEND TO MEI</option><option>FRAME QC FAIL SEND TO MAIN LINE</option><option>SEND TO MEI FOR REVIEW</option>
-                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option><option>LO QC FAIL LOCATION (JIT)</option>
+                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option>
                         <optgroup label="OMT RACKS">
                             <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
                             <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
-                        </optgroup>
-                        <optgroup label="ICU TROLLEYS">
-                            <option>ICU TROLLEY 1</option><option>ICU TROLLEY 2</option><option>ICU TROLLEY 3</option><option>ICU TROLLEY 4</option><option>ICU TROLLEY 5</option>
-                            <option>ICU TROLLEY 6</option><option>ICU TROLLEY 7</option><option>ICU TROLLEY 8</option><option>ICU TROLLEY 9</option><option>ICU TROLLEY 10</option>
-                        </optgroup>
-                        <optgroup label="OMT TROLLEYS">
-                            <option>OMT TROLLEY 1</option><option>OMT TROLLEY 2</option><option>OMT TROLLEY 3</option><option>OMT TROLLEY 4</option><option>OMT TROLLEY 5</option>
-                            <option>OMT TROLLEY 6</option><option>OMT TROLLEY 7</option><option>OMT TROLLEY 8</option><option>OMT TROLLEY 9</option><option>OMT TROLLEY 10</option>
                         </optgroup>
                     </select>
                 </div>
@@ -98,8 +79,7 @@
 
         <div id="shipment" class="tab-content">
             <div class="scan-bar">
-                <div class="input-group">
-                    <label>SHIPMENT LOCATION</label>
+                <div class="input-group"><label>LOCATION</label>
                     <select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select>
                 </div>
                 <div class="input-group"><label>SCANNING BOX</label><input type="text" id="shipInput" placeholder="Scan (Max 23 digit)" maxlength="23"></div>
@@ -114,6 +94,8 @@
             <div class="history-controls">
                 <div><label>FROM DATE</label><input type="date" id="fromDate"></div>
                 <div><label>TO DATE</label><input type="date" id="toDate"></div>
+                <div><label>TYPE</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
+                <div><label>SEARCH ID</label><input type="text" id="histSearch" placeholder="Search Barcode..."></div>
                 <button class="btn btn-primary" onclick="applyFilters()">FILTER</button>
                 <button class="btn btn-danger" onclick="bulkDelete()">DELETE RANGE</button>
             </div>
@@ -141,7 +123,6 @@
         return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     }
 
-    // Login Logic
     function handleLogin() {
         const id = document.getElementById('loginId').value.trim();
         db.ref('Users/' + id).once('value', snap => {
@@ -153,91 +134,96 @@
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("User not registered!"); }
+            } else { alert("User Not Found!"); }
         });
     }
 
-    // Sync Logic (Fixed Undefined)
     function startSync() {
         db.ref('LiveScans').on('value', s1 => {
             db.ref('ShipmentScans').on('value', s2 => {
                 masterData = [];
                 s1.forEach(c => {
-                    const d = c.val();
+                    let d = c.val();
                     masterData.push({...d, key: c.key, type: 'TRAY', dId: d.barcode || d.barcodeID || d.tray || '---', path: 'LiveScans'});
                 });
                 s2.forEach(c => {
-                    const d = c.val();
+                    let d = c.val();
                     masterData.push({...d, key: c.key, type: 'SHIPMENT', dId: d.shipId || '---', path: 'ShipmentScans'});
                 });
                 masterData.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-                renderTables();
+                renderTables(masterData);
             });
         });
     }
 
-    function renderTables() {
-        const sBody = document.getElementById('scanLog');
-        const hBody = document.getElementById('historyTableBody');
-        const shipBody = document.getElementById('shipLog');
-        sBody.innerHTML = ""; hBody.innerHTML = ""; shipBody.innerHTML = "";
+    function renderTables(data) {
+        const sLog = document.getElementById('scanLog');
+        const hLog = document.getElementById('shipLog');
+        const histLog = document.getElementById('historyTableBody');
+        sLog.innerHTML = ""; hLog.innerHTML = ""; histLog.innerHTML = "";
 
-        masterData.forEach(d => {
-            const row = `<tr><td>${d.date || '---'}</td><td>${d.time || '---'}</td><td>${d.dId}</td><td>${d.location || '---'}</td><td>${d.user || '---'}</td></tr>`;
-            if(d.type === 'TRAY') sBody.innerHTML += row;
-            else if(d.type === 'SHIPMENT') shipBody.innerHTML += row;
-            
-            hBody.innerHTML += `<tr><td>${d.type}</td><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+        data.forEach(d => {
+            let row = `<tr><td>${d.date || '---'}</td><td>${d.time || '---'}</td><td>${d.dId}</td><td>${d.location || '---'}</td><td>${d.user || '---'}</td></tr>`;
+            if(d.type === 'TRAY') sLog.innerHTML += row;
+            if(d.type === 'SHIPMENT') hLog.innerHTML += row;
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
         });
     }
 
-    // Fast Input
+    // High Speed Input
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            const entry = { barcode: e.target.value.toUpperCase().trim(), location: document.getElementById('locSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() };
-            db.ref('LiveScans').push(entry);
+            db.ref('LiveScans').push({ barcode: e.target.value.toUpperCase().trim(), location: document.getElementById('locSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
             e.target.value = "";
         }
     });
 
     document.getElementById('shipInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            const entry = { shipId: e.target.value.toUpperCase().trim(), location: document.getElementById('shipLocSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() };
-            db.ref('ShipmentScans').push(entry);
+            db.ref('ShipmentScans').push({ shipId: e.target.value.toUpperCase().trim(), location: document.getElementById('shipLocSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
             e.target.value = "";
         }
     });
 
-    // Delete Filter
+    // --- NEW FILTER LOGIC ---
     function applyFilters() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
-        const hBody = document.getElementById('historyTableBody');
-        hBody.innerHTML = "";
+        const type = document.getElementById('typeFilter').value;
+        const search = document.getElementById('histSearch').value.toUpperCase();
 
-        masterData.forEach(d => {
+        const filtered = masterData.filter(d => {
             const dObj = new Date(d.date.split('/').reverse().join('-'));
             const mFrom = from ? dObj >= new Date(from) : true;
             const mTo = to ? dObj <= new Date(to) : true;
-            if(mFrom && mTo) {
-                hBody.innerHTML += `<tr><td>${d.type}</td><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
-            }
+            const mType = type === 'ALL' ? true : d.type === type;
+            const mSearch = d.dId.toUpperCase().includes(search);
+            return mFrom && mTo && mType && mSearch;
+        });
+
+        renderHistoryTable(filtered);
+    }
+
+    function renderHistoryTable(data) {
+        const histLog = document.getElementById('historyTableBody');
+        histLog.innerHTML = "";
+        data.forEach(d => {
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
         });
     }
 
     function bulkDelete() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
-        if(!from || !to) return alert("Select Date Range!");
-
-        if(confirm("Delete all data in this range from Firebase?")) {
+        if(!from || !to) return alert("Select From & To Dates!");
+        if(confirm("Permanently delete data in this range?")) {
             masterData.forEach(d => {
                 const dObj = new Date(d.date.split('/').reverse().join('-'));
                 if(dObj >= new Date(from) && dObj <= new Date(to)) {
                     db.ref(`${d.path}/${d.key}`).remove();
                 }
             });
-            alert("Deleted Successfully!");
+            alert("Deleted!");
         }
     }
 
