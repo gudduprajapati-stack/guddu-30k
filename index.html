@@ -3,53 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Operation Center v13.0</title>
+    <title>NexS - Final Sync v14.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        
-        /* Sidebar */
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
-        .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
-        
-        /* Layout */
+        .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; }
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; }
         .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
-        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; box-sizing: border-box; }
-        
-        /* Buttons - Equal Size Logic */
-        .btn-full { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 16px; }
-        .btn-reg { background: transparent; color: var(--primary); border: 1px solid var(--primary); margin-top: 10px; }
-
-        /* Table */
+        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; }
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
-
-        /* Auth */
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
+        .btn-full { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="authSection">
         <div id="loginCard" class="auth-card">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
+            <h2 style="color:var(--primary)">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
             <button class="btn-full" onclick="handleLogin()">Login</button>
-            <button class="btn-full btn-reg" onclick="showReg(true)">Register New ID</button>
+            <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(true)">Register New ID</button>
         </div>
-
         <div id="regCard" class="auth-card" style="display:none;">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">NEW REGISTRATION</h2>
+            <h2 style="color:var(--primary)">REGISTER</h2>
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
-            <button class="btn-full btn-reg" onclick="showReg(false)">Back to Login</button>
+            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Register Now</button>
+            <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(false)">Back</button>
         </div>
     </div>
 
@@ -57,12 +45,10 @@
         <div class="user-profile">
             <small style="color:#888;">Active User:</small>
             <h4 id="sideName">---</h4>
-            <small id="sideId" style="color:#666; display:block; margin-top:5px;">ID: ---</small>
+            <small id="sideId">ID: ---</small>
         </div>
-        <div style="padding: 15px; flex-grow: 1;">
-            <div style="color:var(--primary); padding:12px; background:#1a1a1a; border-radius:8px;">📦 Scanning Page</div>
-        </div>
-        <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
+        <div style="padding: 15px;"><div style="color:var(--primary); padding:10px; background:#1a1a1a; border-radius:8px;">📦 Scanning Page</div></div>
+        <div onclick="location.reload()" style="margin-top:auto; padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
@@ -71,10 +57,7 @@
             <div>
                 <label style="font-size:11px; color:#888;">CURRENT LOCATION</label>
                 <select id="locSelect">
-                    <option>ICU ENTRY</option>
-                    <option>MEI ENTRY</option>
-                    <option>OMT ENTRY</option>
-                    <option>CS LOCATION</option>
+                    <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>CS LOCATION</option>
                 </select>
             </div>
             <div>
@@ -85,13 +68,7 @@
 
         <table class="data-table">
             <thead>
-                <tr>
-                    <th>DATE</th>
-                    <th>TIME</th>
-                    <th>BARCODE</th>
-                    <th>LOCATION</th>
-                    <th>ACTION BY</th>
-                </tr>
+                <tr><th>DATE</th><th>TIME</th><th>BARCODE</th><th>LOCATION</th><th>ACTION BY</th></tr>
             </thead>
             <tbody id="scanLog"></tbody>
         </table>
@@ -108,34 +85,21 @@
     const db = firebase.database();
     let loggedUser = null;
 
-    // DD/MM/YYYY Format Fix
     function getStandardDate() {
         const d = new Date();
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        return dd + "/" + mm + "/" + yyyy;
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     }
 
-    function showReg(v) { 
-        document.getElementById('loginCard').style.display = v ? 'none' : 'block';
-        document.getElementById('regCard').style.display = v ? 'block' : 'none';
-    }
+    function showReg(v) { document.getElementById('loginCard').style.display = v ? 'none' : 'block'; document.getElementById('regCard').style.display = v ? 'block' : 'none'; }
 
     function handleRegister() {
-        const n = document.getElementById('regName').value.trim();
-        const i = document.getElementById('regId').value.trim();
-        if(n && i) {
-            db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { 
-                alert("Registered Successfully!"); 
-                showReg(false); 
-            });
-        } else { alert("Please fill all fields!"); }
+        const n = document.getElementById('regName').value;
+        const i = document.getElementById('regId').value;
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Success!"); showReg(false); });
     }
 
     function handleLogin() {
         const id = document.getElementById('loginId').value.trim();
-        if(!id) return;
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 loggedUser = snap.val();
@@ -146,45 +110,46 @@
                 document.getElementById('sideId').innerText = "ID: " + (loggedUser.empId || id);
                 loadData();
                 document.getElementById('trayInput').focus();
-            } else { alert("ID Not Found! Please Register."); }
+            } else { alert("User Not Found!"); }
         });
     }
 
-    // High Speed Save with Fixed Keys
     document.getElementById('trayInput').addEventListener('keydown', function(e) {
         if (e.key === "Enter") {
             const val = this.value.toUpperCase().trim();
             if (val) {
-                const loc = document.getElementById('locSelect').value;
-                const scanEntry = {
-                    barcode: val,         // KEY 1
-                    location: loc,        // KEY 2
-                    date: getStandardDate(), // KEY 3
-                    time: new Date().toLocaleTimeString(), // KEY 4
-                    user: loggedUser.name // KEY 5
-                };
-                db.ref('LiveScans').push(scanEntry);
+                db.ref('LiveScans').push({
+                    barcode: val,
+                    location: document.getElementById('locSelect').value,
+                    date: getStandardDate(),
+                    time: new Date().toLocaleTimeString(),
+                    user: loggedUser.name
+                });
                 this.value = ""; 
             }
         }
     });
 
     function loadData() {
-        // Load only newest scans to prevent old 'undefined' data from showing
         db.ref('LiveScans').limitToLast(20).on('value', snap => {
             const tbody = document.getElementById('scanLog');
             tbody.innerHTML = "";
             snap.forEach(child => {
                 const d = child.val();
-                // We use || '---' to handle any old bad data in your database
-                let row = `<tr>
-                    <td>${d.date || '---'}</td>
-                    <td>${d.time || '---'}</td>
-                    <td style="color:var(--primary); font-weight:bold;">${d.barcode || '---'}</td>
-                    <td>${d.location || '---'}</td>
-                    <td>${d.user || '---'}</td>
-                </tr>`;
-                tbody.innerHTML = row + tbody.innerHTML;
+                // 🔥 FLEXIBLE LOADING: Purane aur naye sabhi names ko check karega
+                const displayBarcode = d.barcode || d.barcodeID || d.tray || "---";
+                const displayDate = d.date || d.scanDate || "---";
+                const displayTime = d.time || d.scanTime || "---";
+                const displayLoc = d.location || d.locName || "---";
+                const displayUser = d.user || d.scannedBy || d.userName || "---";
+
+                tbody.innerHTML = `<tr>
+                    <td>${displayDate}</td>
+                    <td>${displayTime}</td>
+                    <td style="color:var(--primary); font-weight:bold;">${displayBarcode}</td>
+                    <td>${displayLoc}</td>
+                    <td>${displayUser}</td>
+                </tr>` + tbody.innerHTML;
             });
         });
     }
