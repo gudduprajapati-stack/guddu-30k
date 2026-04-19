@@ -3,24 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Final Sync v14.0</title>
+    <title>NexS - Final Restore v15.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; }
+        
+        /* Sidebar Navigation */
+        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
-        .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; }
-        .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; }
+        .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
+        .nav-list { padding: 15px; flex-grow: 1; }
+        .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; }
+        .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
+        
+        /* Main Layout */
+        .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* UI Elements */
         .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; }
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
+
+        /* Auth Screen */
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
-        .btn-full { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 16px; }
+        .btn-full { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -36,7 +50,7 @@
             <h2 style="color:var(--primary)">REGISTER</h2>
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Register Now</button>
+            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
             <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(false)">Back</button>
         </div>
     </div>
@@ -47,31 +61,64 @@
             <h4 id="sideName">---</h4>
             <small id="sideId">ID: ---</small>
         </div>
-        <div style="padding: 15px;"><div style="color:var(--primary); padding:10px; background:#1a1a1a; border-radius:8px;">📦 Scanning Page</div></div>
-        <div onclick="location.reload()" style="margin-top:auto; padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
+        <div class="nav-list">
+            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
+            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
+            <div class="nav-item" onclick="switchTab('history', this)">🕒 History Page</div>
+            <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
+        </div>
+        <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        <h2>Scanning Operations</h2>
-        <div class="scan-bar">
-            <div>
-                <label style="font-size:11px; color:#888;">CURRENT LOCATION</label>
-                <select id="locSelect">
-                    <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>CS LOCATION</option>
-                </select>
+        <h2 id="tabTitle">Scanning Page</h2>
+
+        <div id="scanning" class="tab-content active">
+            <div class="scan-bar">
+                <div>
+                    <label style="font-size:11px; color:#888;">LOCATION</label>
+                    <select id="locSelect">
+                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>CS LOCATION</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#888;">BARCODE SCAN (MT...)</label>
+                    <input type="text" id="trayInput" placeholder="Scan & Press Enter..." autocomplete="off">
+                </div>
             </div>
-            <div>
-                <label style="font-size:11px; color:#888;">FAST SCAN (ENTER)</label>
-                <input type="text" id="trayInput" placeholder="Scan Barcode (MT...)" autocomplete="off">
+            <table class="data-table">
+                <thead><tr><th>DATE</th><th>TIME</th><th>BARCODE</th><th>LOCATION</th><th>USER</th></tr></thead>
+                <tbody id="scanLog"></tbody>
+            </table>
+        </div>
+
+        <div id="shipment" class="tab-content">
+            <div class="scan-bar">
+                <div style="grid-column: span 2;">
+                    <label style="font-size:11px; color:#888;">SHIPMENT ID SCAN</label>
+                    <input type="text" id="shipInput" placeholder="Scan Shipment Barcode..." autocomplete="off">
+                </div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>DATE</th><th>TIME</th><th>SHIPMENT ID</th><th>USER</th></tr></thead>
+                <tbody id="shipLog"></tbody>
+            </table>
+        </div>
+
+        <div id="history" class="tab-content">
+            <div class="card" style="background:var(--card); padding:20px; border-radius:12px; border:1px solid #333;">
+                <h3>Full Activity History</h3>
+                <div id="historyData">All scans will be listed here...</div>
             </div>
         </div>
 
-        <table class="data-table">
-            <thead>
-                <tr><th>DATE</th><th>TIME</th><th>BARCODE</th><th>LOCATION</th><th>ACTION BY</th></tr>
-            </thead>
-            <tbody id="scanLog"></tbody>
-        </table>
+        <div id="productivity" class="tab-content">
+            <div class="card" style="background:var(--card); padding:20px; border-radius:12px; border:1px solid #333; text-align:center;">
+                <h3>Daily Productivity</h3>
+                <h1 id="prodCount" style="color:var(--primary); font-size:48px;">0</h1>
+                <p>Scans Completed Today (Target: 30,000)</p>
+            </div>
+        </div>
     </div>
 
 <script>
@@ -85,7 +132,7 @@
     const db = firebase.database();
     let loggedUser = null;
 
-    function getStandardDate() {
+    function getFormattedDate() {
         const d = new Date();
         return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     }
@@ -108,48 +155,74 @@
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + (loggedUser.empId || id);
-                loadData();
+                loadAllData();
                 document.getElementById('trayInput').focus();
-            } else { alert("User Not Found!"); }
+            } else { alert("ID Not Found!"); }
         });
     }
 
-    document.getElementById('trayInput').addEventListener('keydown', function(e) {
-        if (e.key === "Enter") {
-            const val = this.value.toUpperCase().trim();
-            if (val) {
-                db.ref('LiveScans').push({
-                    barcode: val,
-                    location: document.getElementById('locSelect').value,
-                    date: getStandardDate(),
-                    time: new Date().toLocaleTimeString(),
-                    user: loggedUser.name
-                });
-                this.value = ""; 
-            }
+    // --- INSTANT SCAN SAVING ---
+    document.getElementById('trayInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('LiveScans').push({
+                barcode: e.target.value.toUpperCase().trim(),
+                location: document.getElementById('locSelect').value,
+                date: getFormattedDate(),
+                time: new Date().toLocaleTimeString(),
+                user: loggedUser.name
+            });
+            e.target.value = "";
         }
     });
 
-    function loadData() {
+    document.getElementById('shipInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('ShipmentScans').push({
+                shipId: e.target.value.toUpperCase().trim(),
+                date: getFormattedDate(),
+                time: new Date().toLocaleTimeString(),
+                user: loggedUser.name
+            });
+            e.target.value = "";
+        }
+    });
+
+    function switchTab(tab, el) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(tab).classList.add('active');
+        el.classList.add('active');
+        document.getElementById('tabTitle').innerText = el.innerText.split(' ').slice(1).join(' ');
+    }
+
+    function loadAllData() {
+        // Load Scanning Data (FLEXIBLE SYNC)
         db.ref('LiveScans').limitToLast(20).on('value', snap => {
             const tbody = document.getElementById('scanLog');
             tbody.innerHTML = "";
+            let count = 0;
             snap.forEach(child => {
                 const d = child.val();
-                // 🔥 FLEXIBLE LOADING: Purane aur naye sabhi names ko check karega
-                const displayBarcode = d.barcode || d.barcodeID || d.tray || "---";
-                const displayDate = d.date || d.scanDate || "---";
-                const displayTime = d.time || d.scanTime || "---";
-                const displayLoc = d.location || d.locName || "---";
-                const displayUser = d.user || d.scannedBy || d.userName || "---";
+                count++;
+                // Yeh line purane sare formats (barcodeID, tray, barcode) ko sync karegi
+                const b = d.barcode || d.barcodeID || d.tray || "---";
+                const dt = d.date || d.scanDate || "---";
+                const tm = d.time || d.scanTime || "---";
+                const lc = d.location || d.locName || "---";
+                const us = d.user || d.scannedBy || "---";
 
-                tbody.innerHTML = `<tr>
-                    <td>${displayDate}</td>
-                    <td>${displayTime}</td>
-                    <td style="color:var(--primary); font-weight:bold;">${displayBarcode}</td>
-                    <td>${displayLoc}</td>
-                    <td>${displayUser}</td>
-                </tr>` + tbody.innerHTML;
+                tbody.innerHTML = `<tr><td>${dt}</td><td>${tm}</td><td>${b}</td><td>${lc}</td><td>${us}</td></tr>` + tbody.innerHTML;
+            });
+            document.getElementById('prodCount').innerText = count;
+        });
+
+        // Load Shipment Data
+        db.ref('ShipmentScans').limitToLast(20).on('value', snap => {
+            const tbody = document.getElementById('shipLog');
+            tbody.innerHTML = "";
+            snap.forEach(child => {
+                const d = child.val();
+                tbody.innerHTML = `<tr><td>${d.date}</td><td>${d.time}</td><td>${d.shipId}</td><td>${d.user}</td></tr>` + tbody.innerHTML;
             });
         });
     }
