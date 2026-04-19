@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Final Build v51.0</title>
+    <title>NexS - identity Pro v52.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
         
-        /* Sidebar Layout */
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; z-index: 100; display: flex; flex-direction: column; }
         .user-profile { padding: 25px; border-bottom: 1px solid #222; background: #111; }
         .nav-item { padding: 14px 20px; cursor: pointer; color: #888; transition: 0.2s; font-size: 14px; border-left: 4px solid transparent; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
         
-        /* Main Content Area */
         .main-content { margin-left: 260px; padding: 25px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* 🔥 Layout Overlap Fix */
+        /* 🔥 Design Fix: Flexbox for controls to prevent overlapping */
         .controls-hub { 
             display: flex; 
             flex-wrap: wrap; 
@@ -34,26 +32,26 @@
             align-items: flex-end;
         }
 
-        .input-group { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 8px; }
+        .input-group { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; }
         label { font-size: 11px; color: var(--primary); text-transform: uppercase; font-weight: bold; }
         input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
         
-        /* Table ID Highlight */
         .data-table-container { background: var(--card); border-radius: 12px; border: 1px solid #333; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th, td { text-align: left; padding: 14px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: #888; text-transform: uppercase; font-size: 11px; }
-        .identity-text { color: var(--primary); font-weight: 600; }
+        
+        /* User ID highlight */
+        .identity-cell { color: var(--primary); font-weight: 600; }
 
-        /* History Buttons */
-        .history-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
-        .btn { padding: 12px 20px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; min-width: 110px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
         .btn-filter { background: var(--primary); color: #000; }
         .btn-export { background: var(--accent); color: #fff; }
         .btn-delete { background: var(--danger); color: #fff; }
 
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
+        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; }
     </style>
 </head>
 <body>
@@ -62,14 +60,14 @@
         <div class="auth-card" id="loginBox">
             <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">Login System</button>
-            <p style="color:#666; font-size:12px; margin-top:15px; cursor:pointer;" onclick="showReg(true)">Register New User</p>
+            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 45px;" onclick="handleLogin()">Login System</button>
+            <p onclick="showReg(true)" style="margin-top:15px; color:#666; font-size:12px; cursor:pointer;">Register New User</p>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
             <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER</h2>
-            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:12px;">
+            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:10px;">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save User</button>
+            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save Details</button>
             <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer;">Back</p>
         </div>
     </div>
@@ -77,8 +75,8 @@
     <div class="sidebar" id="mainSidebar" style="display:none;">
         <div class="user-profile"><h4 id="sideName" style="color:var(--primary); margin:0;">---</h4><small id="sideId" style="color:#888;">ID: ---</small></div>
         <div class="nav-list" style="flex: 1;">
-            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
-            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
+            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning</div>
+            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment</div>
             <div class="nav-item" onclick="switchTab('history', this)">🕒 History Hub</div>
         </div>
         <div onclick="location.reload()" style="padding:20px; color:var(--danger); cursor:pointer; text-align:center; font-weight:bold; border-top:1px solid #222;">LOGOUT</div>
@@ -88,17 +86,8 @@
         
         <div id="scanning" class="tab-content active">
             <div class="controls-hub">
-                <div class="input-group">
-                    <label>Scan Location</label>
-                    <select id="locSelect">
-                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
-                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
-                        <option>CS LOCATION</option>
-                        <optgroup label="OMT RACKS"><option>OMT RACK 01</option><option>OMT RACK 02</option></optgroup>
-                        <optgroup label="TROLLEYS"><option>ICU TROLLEY 1</option><option>OMT TROLLEY 1</option></optgroup>
-                    </select>
-                </div>
-                <div class="input-group"><label>Fast Barcode Scan</label><input type="text" id="trayInput" placeholder="Scan Barcode..."></div>
+                <div class="input-group"><label>Location</label><select id="locSelect"><option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>LO SEND TO ICU</option></select></div>
+                <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Tray..."></div>
             </div>
             <div class="data-table-container">
                 <table><thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>User Name (ID)</th></tr></thead><tbody id="scanLog"></tbody></table>
@@ -107,8 +96,8 @@
 
         <div id="shipment" class="tab-content">
             <div class="controls-hub">
-                <div class="input-group"><label>Shipment Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
-                <div class="input-group"><label>Shipment Scan</label><input type="text" id="shipInput" placeholder="Scan Shipment..." maxlength="23"></div>
+                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option></select></div>
+                <div class="input-group"><label>Shipment Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..." maxlength="23"></div>
             </div>
             <div class="data-table-container">
                 <table><thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Agency</th><th>User Name (ID)</th></tr></thead><tbody id="shipLog"></tbody></table>
@@ -120,8 +109,8 @@
                 <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
                 <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
                 <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
-                <div class="input-group"><label>Search Barcode</label><input type="text" id="histSearch" placeholder="Search ID..."></div>
-                <div class="history-btn-row">
+                <div class="input-group"><label>Search ID</label><input type="text" id="histSearch" placeholder="Search..."></div>
+                <div class="btn-row">
                     <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
                     <button class="btn btn-export" onclick="exportData()">Export</button>
                     <button class="btn btn-delete" onclick="bulkDelete()">Delete</button>
@@ -143,15 +132,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // Global User Lock
-    let sessionUser = { name: null, id: null };
+    let loggedUser = { name: null, id: null };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("User Saved!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -159,15 +147,14 @@
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 const d = snap.val();
-                sessionUser.name = d.name; 
-                sessionUser.id = id;
+                loggedUser = { name: d.name, id: id };
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('sideName').innerText = sessionUser.name;
+                document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("User ID Not Found!"); }
+            } else { alert("ID Not Found!"); }
         });
     }
 
@@ -175,41 +162,41 @@
         db.ref('LiveScans').on('value', s1 => {
             db.ref('ShipmentScans').on('value', s2 => {
                 masterData = [];
-                const puller = (snap, type, path) => {
+                const process = (snap, type, path) => {
                     snap.forEach(c => {
                         const d = c.val();
-                        // 🛠 Identity Engine: Triple check for Name and ID
-                        const uName = d.user || d.userName || d.scannedBy || "Unknown";
-                        const uId = d.userId || d.empId || d.ID || "";
-                        const finalUserDisplay = uId ? `${uName} (${uId})` : uName;
+                        // 🔥 IDENTITY FIX: Har haal mein Name ke saath ID bracket mein aayegi
+                        const uName = d.user || d.userName || "Unknown";
+                        const uId = d.userId || d.empId || "";
+                        const fullIdentity = uId ? `${uName} (${uId})` : uName;
 
                         masterData.push({
                             key: c.key, type: type, path: path,
-                            dId: d.barcode || d.shipId || d.tray || d.barcodeID || "---",
+                            dId: d.barcode || d.shipId || d.tray || "---",
                             dDate: d.date || d.scanDate || "---",
                             dTime: d.time || d.scanTime || "---",
                             dLoc: d.location || d.locName || "---",
-                            dFullUser: finalUserDisplay,
+                            dFullIdentity: fullIdentity,
                             ts: d.timestamp || 0
                         });
                     });
                 };
-                puller(s1, 'TRAY', 'LiveScans');
-                puller(s2, 'SHIPMENT', 'ShipmentScans');
+                process(s1, 'TRAY', 'LiveScans');
+                process(s2, 'SHIPMENT', 'ShipmentScans');
                 masterData.sort((a,b) => b.ts - a.ts);
-                refreshUI();
+                renderAll();
             });
         });
     }
 
-    function refreshUI() {
-        const sT = document.getElementById('scanLog');
-        const shT = document.getElementById('shipLog');
-        sT.innerHTML = ""; shT.innerHTML = "";
+    function renderAll() {
+        const sBody = document.getElementById('scanLog');
+        const hBody = document.getElementById('shipLog');
+        sBody.innerHTML = ""; hBody.innerHTML = "";
         masterData.forEach(d => {
-            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-text">${d.dFullUser}</td></tr>`;
-            if(d.type === 'TRAY') sT.innerHTML += row;
-            else shT.innerHTML += row;
+            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-cell">${d.dFullIdentity}</td></tr>`;
+            if(d.type === 'TRAY') sBody.innerHTML += row;
+            else hBody.innerHTML += row;
         });
         applyFilters();
     }
@@ -221,8 +208,8 @@
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: sessionUser.name,
-                userId: sessionUser.id, // Pakka save hoga ID
+                user: loggedUser.name,
+                userId: loggedUser.id, // 🔥 ID yahan save ho rahi hai
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -236,8 +223,8 @@
                 location: document.getElementById('shipLocSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: sessionUser.name,
-                userId: sessionUser.id,
+                user: loggedUser.name,
+                userId: loggedUser.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -249,8 +236,8 @@
         const to = document.getElementById('toDate').value;
         const type = document.getElementById('typeFilter').value;
         const search = document.getElementById('histSearch').value.toUpperCase();
-        const hLog = document.getElementById('historyTableBody');
-        hLog.innerHTML = "";
+        const histLog = document.getElementById('historyTableBody');
+        histLog.innerHTML = "";
 
         masterData.filter(d => {
             const p = d.dDate.split('/');
@@ -258,16 +245,16 @@
             const mFrom = from ? dObj >= new Date(from) : true;
             const mTo = to ? dObj <= new Date(to) : true;
             const mType = type === 'ALL' ? true : d.type === type;
-            const mSearch = d.dId.toUpperCase().includes(search) || d.dFullUser.toUpperCase().includes(search);
+            const mSearch = d.dId.toUpperCase().includes(search) || d.dFullIdentity.toUpperCase().includes(search);
             return mFrom && mTo && mType && mSearch;
         }).forEach(d => {
-            hLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-text">${d.dFullUser}</td></tr>`;
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="identity-cell">${d.dFullIdentity}</td></tr>`;
         });
     }
 
     function exportData() {
         let csv = "Type,Date,Time,ID,Location,User_Identity\n";
-        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dFullUser}\n`);
+        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dFullIdentity}\n`);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
         a.download = "NexS_Identity_Report.csv"; a.click();
@@ -276,8 +263,8 @@
     function bulkDelete() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
-        if(!from || !to) return alert("Select Date Range!");
-        if(confirm("Permanently delete data in this range?")) {
+        if(!from || !to) return alert("Select range!");
+        if(confirm("Delete data in this range permanently?")) {
             masterData.forEach(d => {
                 const p = d.dDate.split('/');
                 const dObj = new Date(p[2], p[1]-1, p[0]);
@@ -293,6 +280,7 @@
         document.getElementById(t).classList.add('active');
         el.classList.add('active');
         if(t === 'scanning') document.getElementById('trayInput').focus();
+        if(t === 'shipment') document.getElementById('shipInput').focus();
     }
 </script>
 </body>
