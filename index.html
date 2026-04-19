@@ -3,37 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Sync v36.0</title>
+    <title>NexS - Master Build v37.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
-        
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
         .scan-bar, .history-controls { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
         .input-group { flex: 1; min-width: 150px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; font-weight: bold; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 14px; box-sizing: border-box; }
-        
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
-
         .btn { padding: 12px 24px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
         .btn-primary { background: var(--primary); color: #000; }
         .btn-danger { background: var(--danger); color: #fff; }
-
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
     </style>
@@ -67,7 +60,7 @@
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        <h2 id="tabTitle">Operations Center</h2>
+        <h2 id="tabTitle">Operations Hub</h2>
 
         <div id="scanning" class="tab-content active">
             <div class="scan-bar">
@@ -77,13 +70,13 @@
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
                         <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
                         <option>CS LOCATION</option>
-                        <optgroup label="TROLLEYS/RACKS"><option>OMT RACK 01</option><option>ICU TROLLEY 1</option></optgroup>
+                        <optgroup label="OMT RACKS"><option>OMT RACK 01</option><option>OMT RACK 02</option></optgroup>
                     </select>
                 </div>
                 <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Tray..." autocomplete="off"></div>
             </div>
             <table class="data-table">
-                <thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>User</th></tr></thead>
+                <thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>User (ID)</th></tr></thead>
                 <tbody id="scanLog"></tbody>
             </table>
         </div>
@@ -94,7 +87,7 @@
                 <div class="input-group"><label>Shipment ID</label><input type="text" id="shipInput" placeholder="Max 23 digit" maxlength="23" autocomplete="off"></div>
             </div>
             <table class="data-table">
-                <thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
+                <thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead>
                 <tbody id="shipLog"></tbody>
             </table>
         </div>
@@ -106,10 +99,10 @@
                 <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL DATA</option><option value="TRAY">TRAYS</option><option value="SHIPMENT">SHIPMENTS</option></select></div>
                 <div class="input-group"><label>Search ID</label><input type="text" id="histSearch" placeholder="Search ID..."></div>
                 <button class="btn btn-primary" onclick="applyFilters()">Filter</button>
-                <button class="btn btn-danger" onclick="bulkDelete()">Delete Range</button>
+                <button class="btn btn-danger" onclick="bulkDelete()">Delete</button>
             </div>
             <table class="data-table">
-                <thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
+                <thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead>
                 <tbody id="historyTableBody"></tbody>
             </table>
         </div>
@@ -157,31 +150,28 @@
                 masterData = [];
                 s1.forEach(c => {
                     let d = c.val();
-                    // 🔥 SYNC FIX: Mapping all possible old names to avoid undefined
+                    let bar = d.barcode || d.barcodeID || d.tray || '---';
+                    // User + ID display logic
+                    let userDisplay = (d.user || 'User') + (d.userId ? ` (${d.userId})` : '');
+                    if (!d.userId && d.user === loggedUser.name) userDisplay = `${loggedUser.name} (${loggedUser.id})`;
+
                     masterData.push({
-                        key: c.key, 
-                        type: 'TRAY', 
-                        dId: d.barcode || d.barcodeID || d.tray || d.TrayID || '---', 
-                        dDate: d.date || d.scanDate || '---', 
-                        dTime: d.time || d.scanTime || '---', 
-                        dLoc: d.location || d.locName || '---', 
-                        dUser: d.user || d.userName || d.scannedBy || '---',
-                        timestamp: d.timestamp || 0,
-                        path: 'LiveScans'
+                        key: c.key, type: 'TRAY', dId: bar, 
+                        dDate: d.date || '---', dTime: d.time || '---', 
+                        dLoc: d.location || '---', dUser: userDisplay,
+                        timestamp: d.timestamp || 0, path: 'LiveScans'
                     });
                 });
                 s2.forEach(c => {
                     let d = c.val();
+                    let userDisplay = (d.user || 'User') + (d.userId ? ` (${d.userId})` : '');
+                    if (!d.userId && d.user === loggedUser.name) userDisplay = `${loggedUser.name} (${loggedUser.id})`;
+                    
                     masterData.push({
-                        key: c.key, 
-                        type: 'SHIPMENT', 
-                        dId: d.shipId || d.shipmentID || '---', 
-                        dDate: d.date || '---', 
-                        dTime: d.time || '---', 
-                        dLoc: d.location || '---', 
-                        dUser: d.user || '---',
-                        timestamp: d.timestamp || 0,
-                        path: 'ShipmentScans'
+                        key: c.key, type: 'SHIPMENT', dId: d.shipId || '---', 
+                        dDate: d.date || '---', dTime: d.time || '---', 
+                        dLoc: d.location || '---', dUser: userDisplay,
+                        timestamp: d.timestamp || 0, path: 'ShipmentScans'
                     });
                 });
                 masterData.sort((a,b) => b.timestamp - a.timestamp);
@@ -197,7 +187,7 @@
         sLog.innerHTML = ""; shipLog.innerHTML = ""; histLog.innerHTML = "";
 
         masterData.forEach(d => {
-            let row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
+            let row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td style="color:var(--primary); font-weight:500;">${d.dUser}</td></tr>`;
             if(d.type === 'TRAY') sLog.innerHTML += row;
             if(d.type === 'SHIPMENT') shipLog.innerHTML += row;
             histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
@@ -206,14 +196,30 @@
 
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            db.ref('LiveScans').push({ barcode: e.target.value.toUpperCase().trim(), location: document.getElementById('locSelect').value, date: new Date().toLocaleDateString('en-GB'), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
+            db.ref('LiveScans').push({ 
+                barcode: e.target.value.toUpperCase().trim(), 
+                location: document.getElementById('locSelect').value, 
+                date: new Date().toLocaleDateString('en-GB'), 
+                time: new Date().toLocaleTimeString(), 
+                user: loggedUser.name, 
+                userId: loggedUser.id,
+                timestamp: Date.now() 
+            });
             e.target.value = "";
         }
     });
 
     document.getElementById('shipInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            db.ref('ShipmentScans').push({ shipId: e.target.value.toUpperCase().trim(), location: document.getElementById('shipLocSelect').value, date: new Date().toLocaleDateString('en-GB'), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
+            db.ref('ShipmentScans').push({ 
+                shipId: e.target.value.toUpperCase().trim(), 
+                location: document.getElementById('shipLocSelect').value, 
+                date: new Date().toLocaleDateString('en-GB'), 
+                time: new Date().toLocaleTimeString(), 
+                user: loggedUser.name, 
+                userId: loggedUser.id,
+                timestamp: Date.now() 
+            });
             e.target.value = "";
         }
     });
@@ -245,7 +251,7 @@
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
         if(!from || !to) return alert("Select range!");
-        if(confirm("Delete selected data?")) {
+        if(confirm("Delete data in this range?")) {
             masterData.forEach(d => {
                 const parts = d.dDate.split('/');
                 const dObj = new Date(parts[2], parts[1]-1, parts[0]);
