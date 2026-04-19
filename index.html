@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v19.0</title>
+    <title>NexS - Ultra Clean v20.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -18,25 +18,25 @@
         .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
         
-        /* Layout */
+        /* Layout Fixes */
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* SCAN BOX UI FIX - Bahr nahi jayega */
-        .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
-        .input-group { flex: 1; min-width: 200px; }
+        /* Scanning Bar Responsive Fix */
+        .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; box-sizing: border-box; }
+        .input-group { flex: 1; min-width: 150px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
         
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; box-sizing: border-box; }
         input:focus { border-color: var(--primary); }
 
-        /* Table */
+        /* Table Design */
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
 
-        /* Login Symmetric Design */
+        /* Auth Symmetric */
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
         .btn-full { width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 16px; }
@@ -55,7 +55,7 @@
             <h2 style="color:var(--primary); margin-bottom: 30px;">REGISTER</h2>
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
+            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Save User</button>
             <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(false)">Back</button>
         </div>
     </div>
@@ -72,7 +72,7 @@
             <div class="nav-item" onclick="switchTab('history', this)">🕒 History Page</div>
             <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
         </div>
-        <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
+        <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold; margin-top: auto;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
@@ -83,12 +83,12 @@
                 <div class="input-group">
                     <label>LOCATION</label>
                     <select id="locSelect">
-                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>CS LOCATION</option>
-                    </select>
+                        <option value="DEFAULT">SELECT LOCATION</option>
+                        </select>
                 </div>
                 <div class="input-group">
                     <label>FAST SCAN (ENTER)</label>
-                    <input type="text" id="trayInput" placeholder="Scan & Save..." autocomplete="off">
+                    <input type="text" id="trayInput" placeholder="Scan Barcode..." autocomplete="off">
                 </div>
             </div>
             <table class="data-table">
@@ -99,7 +99,7 @@
 
         <div id="productivity" class="tab-content">
             <div style="background:var(--card); padding:40px; border-radius:12px; border:1px solid #333; text-align:center;">
-                <h3>Total Scans Loaded</h3>
+                <h3>Today's Total Scans</h3>
                 <h1 id="totalCount" style="color:var(--primary); font-size:60px;">0</h1>
             </div>
         </div>
@@ -124,9 +124,9 @@
     function showReg(v) { document.getElementById('loginCard').style.display = v ? 'none' : 'block'; document.getElementById('regCard').style.display = v ? 'block' : 'none'; }
 
     function handleRegister() {
-        const n = document.getElementById('regName').value.trim();
-        const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Done!"); showReg(false); });
+        const n = document.getElementById('regName').value;
+        const i = document.getElementById('regId').value;
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -145,6 +145,7 @@
         });
     }
 
+    // High Speed Scanner Logic
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
             db.ref('LiveScans').push({
@@ -166,12 +167,11 @@
             snap.forEach(child => {
                 count++;
                 const d = child.val();
-                // 🔥 SYNC LOGIC: Name restoration
                 const b = d.barcode || d.barcodeID || d.tray || "---";
                 const dt = d.date || d.scanDate || "---";
                 const tm = d.time || d.scanTime || "---";
                 const lc = d.location || d.locName || "---";
-                const us = d.user || d.scannedBy || d.userName || loggedUser.name || "---";
+                const us = d.user || d.scannedBy || d.userName || "---";
 
                 tbody.innerHTML = `<tr><td>${dt}</td><td>${tm}</td><td>${b}</td><td>${lc}</td><td>${us}</td></tr>` + tbody.innerHTML;
             });
