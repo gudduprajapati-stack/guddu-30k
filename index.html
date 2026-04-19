@@ -3,40 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Operation Center v5.0</title>
+    <title>NexS - High-Speed Scan v8.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        
-        /* Sidebar */
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; }
-        .user-profile small { color: #888; display: block; margin-top: 5px; }
-
         .nav-list { padding: 15px; flex-grow: 1; }
-        .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.3s; }
+        .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
-        
-        /* Main Content */
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
-        /* Auth UI */
+        .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
+        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 212, 255, 0.2); }
+        .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
+        th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 350px; text-align: center; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; }
-
-        /* Scanning UI */
-        .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr auto; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
-        .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
-        th { color: var(--primary); text-transform: uppercase; font-size: 11px; }
-        
-        .logout-btn { padding: 15px; color: var(--danger); cursor: pointer; border-top: 1px solid #222; text-align: center; }
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+        .status-msg { font-size: 12px; color: var(--accent); margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -44,15 +35,15 @@
     <div id="authSection">
         <div id="loginCard" class="auth-card">
             <h2 style="color:var(--primary)">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="Employee ID (138663)">
-            <button onclick="handleLogin()" style="width:100%; padding:12px; background:var(--primary); border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Login</button>
+            <input type="text" id="loginId" placeholder="Employee ID">
+            <button class="btn" onclick="handleLogin()">Login</button>
             <p onclick="showReg(true)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Register New ID</p>
         </div>
         <div id="regCard" class="auth-card" style="display:none;">
             <h2 style="color:var(--primary)">REGISTER</h2>
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button onclick="handleRegister()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Register</button>
+            <button class="btn" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
             <p onclick="showReg(false)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Back to Login</p>
         </div>
     </div>
@@ -60,8 +51,8 @@
     <div class="sidebar" id="mainSidebar" style="display:none;">
         <div class="user-profile">
             <small>Active User:</small>
-            <h4 id="sideName">Loading...</h4>
-            <small id="sideId">ID: Loading...</small>
+            <h4 id="sideName">---</h4>
+            <small id="sideId">ID: ---</small>
         </div>
         <div class="nav-list">
             <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
@@ -69,7 +60,7 @@
             <div class="nav-item" onclick="switchTab('history', this)">🕒 History Page</div>
             <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
         </div>
-        <div class="logout-btn" onclick="location.reload()">LOGOUT</div>
+        <div class="logout-btn" onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
@@ -100,21 +91,33 @@
                     </select>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#888;">TRAY SCAN (MTXXXXX)</label>
-                    <input type="text" id="trayInput" placeholder="Scan Tray..." onkeypress="handleKeyPress(event)">
+                    <label style="font-size:11px; color:#888;">FAST SCAN BOX</label>
+                    <input type="text" id="trayInput" placeholder="Waiting for scan..." autocomplete="off">
+                    <div id="lastSaved" class="status-msg"></div>
                 </div>
-                <button onclick="addScan()" style="height:45px; width:80px; background:var(--primary); border:none; border-radius:6px; cursor:pointer; font-weight:bold;">ADD</button>
             </div>
 
             <table class="data-table">
-                <thead><tr><th>Date</th><th>Time</th><th>Tray ID</th><th>Location</th><th>Action By</th></tr></thead>
+                <thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>Action By</th></tr></thead>
                 <tbody id="scanLog"></tbody>
             </table>
         </div>
-        
-        <div id="shipment" class="tab-content"><h3>Shipment Page - Ready for Work</h3></div>
-        <div id="history" class="tab-content"><h3>History Logs - Recording Data</h3></div>
-        <div id="productivity" class="tab-content"><h3>Productivity - Tracking Target</h3></div>
+
+        <div id="shipment" class="tab-content">
+            <div class="scan-bar">
+                <div style="grid-column: span 2;">
+                    <label style="font-size:11px; color:#888;">FAST SHIPMENT SCAN</label>
+                    <input type="text" id="shipInput" placeholder="Scan shipment..." autocomplete="off">
+                </div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Time</th><th>Shipment ID</th><th>User</th></tr></thead>
+                <tbody id="shipLog"></tbody>
+            </table>
+        </div>
+
+        <div id="history" class="tab-content"><h3>History Logs - Real-time</h3></div>
+        <div id="productivity" class="tab-content"><h3>Productivity - Target 30k</h3></div>
     </div>
 
 <script>
@@ -128,6 +131,11 @@
     const db = firebase.database();
     let loggedUser = null;
 
+    function getFormattedDate() {
+        const d = new Date();
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+
     function showReg(v) { 
         document.getElementById('loginCard').style.display = v ? 'none' : 'block';
         document.getElementById('regCard').style.display = v ? 'block' : 'none';
@@ -136,9 +144,7 @@
     function handleRegister() {
         const n = document.getElementById('regName').value;
         const i = document.getElementById('regId').value;
-        if(n && i) {
-            db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
-        }
+        if(n && i) { db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); }); }
     }
 
     function handleLogin() {
@@ -149,59 +155,75 @@
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                // ID undefined FIX
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + loggedUser.empId;
-                loadLiveScans();
-            } else { alert("User Not Found!"); }
+                loadData('LiveScans', 'scanLog');
+                loadData('ShipmentScans', 'shipLog');
+                document.getElementById('trayInput').focus();
+            } else { alert("ID Not Found!"); }
         });
     }
+
+    // --- INSTANT SCAN LOGIC (NO DELAY) ---
+    document.getElementById('trayInput').addEventListener('keydown', function(e) {
+        if (e.key === "Enter") {
+            const val = this.value.toUpperCase().trim();
+            if (val) {
+                const loc = document.getElementById('locSelect').value;
+                db.ref('LiveScans').push({
+                    barcode: val,
+                    location: loc,
+                    date: getFormattedDate(),
+                    time: new Date().toLocaleTimeString(),
+                    userName: loggedUser.name,
+                    timestamp: Date.now()
+                });
+                document.getElementById('lastSaved').innerText = "✓ Saved: " + val;
+                this.value = ""; 
+            }
+        }
+    });
+
+    document.getElementById('shipInput').addEventListener('keydown', function(e) {
+        if (e.key === "Enter") {
+            const val = this.value.toUpperCase().trim();
+            if (val) {
+                db.ref('ShipmentScans').push({
+                    shipmentId: val,
+                    date: getFormattedDate(),
+                    time: new Date().toLocaleTimeString(),
+                    userName: loggedUser.name,
+                    timestamp: Date.now()
+                });
+                this.value = "";
+            }
+        }
+    });
 
     function switchTab(tab, el) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(tab).classList.add('active');
         el.classList.add('active');
-        document.getElementById('tabTitle').innerText = el.innerText.split(' ')[1] + " Page";
+        document.getElementById('tabTitle').innerText = el.innerText.split(' ').slice(1).join(' ');
+        const targetInput = tab === 'scanning' ? 'trayInput' : 'shipInput';
+        if(document.getElementById(targetInput)) document.getElementById(targetInput).focus();
     }
 
-    function handleKeyPress(e) {
-        if(e.key === "Enter") { addScan(); }
-    }
-
-    function addScan() {
-        const tray = document.getElementById('trayInput').value.toUpperCase().trim();
-        const loc = document.getElementById('locSelect').value;
-        if(!tray) return;
-
-        const now = new Date();
-        const entry = {
-            tray: tray,
-            location: loc,
-            date: now.toLocaleDateString(),
-            time: now.toLocaleTimeString(),
-            userName: loggedUser.name,
-            timestamp: Date.now()
-        };
-
-        db.ref('LiveScans').push(entry);
-        document.getElementById('trayInput').value = "";
-        document.getElementById('trayInput').focus();
-    }
-
-    function loadLiveScans() {
-        db.ref('LiveScans').limitToLast(20).on('value', snap => {
-            const tbody = document.getElementById('scanLog');
+    function loadData(refName, tableId) {
+        db.ref(refName).limitToLast(20).on('value', snap => {
+            const tbody = document.getElementById(tableId);
             tbody.innerHTML = "";
             snap.forEach(child => {
                 const d = child.val();
-                tbody.innerHTML = `<tr>
+                let row = `<tr>
                     <td>${d.date}</td>
                     <td>${d.time}</td>
-                    <td style="color:var(--primary); font-weight:bold;">${d.tray}</td>
-                    <td>${d.location}</td>
+                    <td style="color:var(--primary); font-weight:bold;">${d.barcode || d.shipmentId}</td>
+                    <td>${d.location || d.userName}</td>
                     <td>${d.userName}</td>
-                </tr>` + tbody.innerHTML;
+                </tr>`;
+                tbody.innerHTML = row + tbody.innerHTML;
             });
         });
     }
