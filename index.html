@@ -3,30 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Control v27.0</title>
+    <title>NexS - Final Master Build v28.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
+        
+        /* Sidebar */
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
         .nav-list { padding: 15px; flex-grow: 1; }
         .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
+        
+        /* Main Layout */
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
+        /* UI Blocks */
+        .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
+        .input-group { flex: 1; min-width: 250px; }
+        label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 14px; box-sizing: border-box; }
+        
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
-        .history-controls { background: #111; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: flex-end; }
+
+        /* History Controls */
+        .history-controls { background: #111; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; align-items: flex-end; }
         .btn { padding: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .btn-primary { background: var(--primary); color: #000; }
-        .btn-accent { background: var(--accent); color: #fff; }
+        .btn-full { width: 100%; margin-top: 15px; background: var(--primary); color: #000; }
         .btn-danger { background: var(--danger); color: #fff; }
+        .btn-accent { background: var(--accent); color: #fff; }
+
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
     </style>
@@ -35,47 +48,95 @@
 
     <div id="authSection">
         <div id="loginCard" class="auth-card">
-            <h2 style="color:var(--primary); margin-bottom: 20px;">NexS LOGIN</h2>
+            <h2 style="color:var(--primary); margin-bottom: 30px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="handleLogin()">Login</button>
+            <button class="btn btn-full" onclick="handleLogin()">Login</button>
+            <button class="btn btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(true)">New Registration</button>
+        </div>
+        <div id="regCard" class="auth-card" style="display:none;">
+            <h2 style="color:var(--primary); margin-bottom: 30px;">REGISTER</h2>
+            <input type="text" id="regName" placeholder="Full Name"><input type="text" id="regId" placeholder="Employee ID">
+            <button class="btn btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Save User</button>
+            <button class="btn btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(false)">Back</button>
         </div>
     </div>
 
     <div class="sidebar" id="mainSidebar" style="display:none;">
         <div class="user-profile"><h4 id="sideName">---</h4><small id="sideId">ID: ---</small></div>
         <div class="nav-list">
-            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning</div>
-            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment</div>
-            <div class="nav-item" onclick="switchTab('history', this)">🕒 History</div>
+            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
+            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
+            <div class="nav-item" onclick="switchTab('history', this)">🕒 History Hub</div>
+            <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
         </div>
-        <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; font-weight:bold; margin-top: auto;">LOGOUT</div>
+        <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; font-weight:bold; border-top:1px solid #222; margin-top: auto;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        <h2 id="tabTitle">Operations</h2>
+        <h2 id="tabTitle">Scanning Operations</h2>
 
         <div id="scanning" class="tab-content active">
-            <table class="data-table"><thead><tr><th>DATE</th><th>TIME</th><th>BARCODE</th><th>LOCATION</th></tr></thead><tbody id="scanLog"></tbody></table>
+            <div class="scan-bar">
+                <div class="input-group">
+                    <label>LOCATION</label>
+                    <select id="locSelect">
+                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
+                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
+                        <option>ORDER SEND TO MAIN LINE FOR FT</option><option>ORDER SEND TO MAIN LINE FOR QC</option><option>ORDER SEND TO MAIN LINE FOR PACKING</option>
+                        <option>TLP SEND TO MEI</option><option>QC FAIL SEND TO MEI</option><option>FRAME QC FAIL SEND TO MAIN LINE</option><option>SEND TO MEI FOR REVIEW</option>
+                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option><option>LO QC FAIL LOCATION (JIT)</option>
+                        <optgroup label="OMT RACKS">
+                            <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
+                            <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
+                        </optgroup>
+                        <optgroup label="ICU TROLLEYS">
+                            <option>ICU TROLLEY 1</option><option>ICU TROLLEY 2</option><option>ICU TROLLEY 3</option><option>ICU TROLLEY 4</option><option>ICU TROLLEY 5</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="input-group"><label>FAST TRAY SCAN (MT...)</label><input type="text" id="trayInput" placeholder="Scan Tray..." autocomplete="off"></div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>DATE</th><th>TIME</th><th>BARCODE</th><th>LOCATION</th><th>USER</th></tr></thead>
+                <tbody id="scanLog"></tbody>
+            </table>
         </div>
 
         <div id="shipment" class="tab-content">
-            <table class="data-table"><thead><tr><th>DATE</th><th>TIME</th><th>SHIPMENT ID</th><th>LOCATION</th></tr></thead><tbody id="shipLog"></tbody></table>
+            <div class="scan-bar">
+                <div class="input-group">
+                    <label>SHIPMENT LOCATION</label>
+                    <select id="shipLocSelect">
+                        <option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>SCANNING BOX (MAX 23 DIGIT)</label><input type="text" id="shipInput" placeholder="Scan Shipment..." maxlength="23" autocomplete="off"></div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>DATE</th><th>TIME</th><th>SHIPMENT ID</th><th>LOCATION</th><th>USER</th></tr></thead>
+                <tbody id="shipLog"></tbody>
+            </table>
         </div>
 
         <div id="history" class="tab-content">
             <div class="history-controls">
                 <div><label>FROM DATE</label><input type="date" id="fromDate"></div>
                 <div><label>TO DATE</label><input type="date" id="toDate"></div>
-                <div><label>TYPE</label><select id="filterType"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
+                <div><label>TYPE</label><select id="filterType"><option value="ALL">ALL DATA</option><option value="TRAY">TRAYS</option><option value="SHIPMENT">SHIPMENTS</option></select></div>
                 <button class="btn btn-primary" onclick="applyFilters()">FILTER</button>
                 <button class="btn btn-accent" onclick="exportCSV()">DOWNLOAD</button>
                 <button class="btn btn-danger" onclick="bulkDelete()">DELETE RANGE</button>
             </div>
-            <p id="filterInfo" style="font-size:12px; color:var(--primary); margin-bottom:10px;"></p>
             <table class="data-table">
                 <thead><tr><th>TYPE</th><th>DATE</th><th>TIME</th><th>ID</th><th>LOCATION</th><th>USER</th></tr></thead>
                 <tbody id="historyTableBody"></tbody>
             </table>
+        </div>
+
+        <div id="productivity" class="tab-content">
+            <div style="background:var(--card); padding:40px; border-radius:12px; border:1px solid #333; text-align:center;">
+                <h3>Today's Total Scans</h3><h1 id="totalCount" style="color:var(--primary); font-size:60px;">0</h1>
+            </div>
         </div>
     </div>
 
@@ -90,7 +151,12 @@
     const db = firebase.database();
     let loggedUser = null;
     let masterList = [];
-    let currentFilteredKeys = []; 
+    let currentFilteredKeys = [];
+
+    function getFormattedDate() {
+        const d = new Date();
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
 
     function parseDate(str) {
         const p = str.split('/');
@@ -108,7 +174,7 @@
                 document.getElementById('sideName').innerText = loggedUser.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 initSync();
-            } else { alert("ID Not Found!"); }
+            } else { alert("User Not Found!"); }
         });
     }
 
@@ -119,16 +185,43 @@
                 s1.forEach(c => masterList.push({...c.val(), key: c.key, type: 'TRAY', dId: c.val().barcode || c.val().tray, path: 'LiveScans'}));
                 s2.forEach(c => masterList.push({...c.val(), key: c.key, type: 'SHIPMENT', dId: c.val().shipId, path: 'ShipmentScans'}));
                 masterList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                // Update specific logs
+                updateLog('scanLog', 'TRAY');
+                updateLog('shipLog', 'SHIPMENT');
                 applyFilters();
             });
         });
     }
 
+    function updateLog(id, type) {
+        const tbody = document.getElementById(id);
+        tbody.innerHTML = "";
+        masterList.filter(d => d.type === type).slice(0, 20).forEach(d => {
+            tbody.innerHTML += `<tr><td>${d.date}</td><td>${d.time}</td><td>${d.dId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+        });
+        document.getElementById('totalCount').innerText = masterList.length;
+    }
+
+    // High Speed Input
+    document.getElementById('trayInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('LiveScans').push({ barcode: e.target.value.toUpperCase().trim(), location: document.getElementById('locSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
+            e.target.value = "";
+        }
+    });
+
+    document.getElementById('shipInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('ShipmentScans').push({ shipId: e.target.value.toUpperCase().trim(), location: document.getElementById('shipLocSelect').value, date: getFormattedDate(), time: new Date().toLocaleTimeString(), user: loggedUser.name, timestamp: Date.now() });
+            e.target.value = "";
+        }
+    });
+
     function applyFilters() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
         const type = document.getElementById('filterType').value;
-
         const filtered = masterList.filter(d => {
             const dObj = parseDate(d.date || '01/01/2000');
             const mFrom = from ? dObj >= new Date(from) : true;
@@ -136,10 +229,7 @@
             const mType = type === 'ALL' ? true : d.type === type;
             return mFrom && mTo && mType;
         });
-
         currentFilteredKeys = filtered.map(d => ({path: d.path, key: d.key}));
-        document.getElementById('filterInfo').innerText = `Records Found: ${filtered.length}`;
-        
         const tbody = document.getElementById('historyTableBody');
         tbody.innerHTML = "";
         filtered.forEach(d => {
@@ -147,27 +237,20 @@
         });
     }
 
-    // 🔥 BULK DELETE LOGIC
     function bulkDelete() {
-        if (currentFilteredKeys.length === 0) return alert("No data selected to delete!");
-        
-        const confirmMsg = `WARNING: You are about to delete ${currentFilteredKeys.length} records from Firebase PERMANENTLY. Continue?`;
-        if (confirm(confirmMsg)) {
-            const promises = currentFilteredKeys.map(item => db.ref(`${item.path}/${item.key}`).remove());
-            
-            Promise.all(promises).then(() => {
-                alert("Selected range deleted successfully!");
-            }).catch(err => alert("Error deleting: " + err.message));
+        if (currentFilteredKeys.length === 0) return alert("Select range first!");
+        if (confirm(`Delete ${currentFilteredKeys.length} records permanently?`)) {
+            currentFilteredKeys.forEach(item => db.ref(`${item.path}/${item.key}`).remove());
+            alert("Deleted!");
         }
     }
 
     function exportCSV() {
         let csv = "Type,Date,Time,ID,Location,User\n";
         masterList.forEach(d => csv += `${d.type},${d.date},${d.time},${d.dId},${d.location},${d.user}\n`);
-        const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = "NexS_History.csv";
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = "NexS_History_Full.csv";
         a.click();
     }
 
@@ -176,6 +259,9 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(t).classList.add('active');
         el.classList.add('active');
+        document.getElementById('tabTitle').innerText = el.innerText;
+        if(t === 'scanning') document.getElementById('trayInput').focus();
+        if(t === 'shipment') document.getElementById('shipInput').focus();
     }
 </script>
 </body>
