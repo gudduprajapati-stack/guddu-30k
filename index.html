@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Hub v43.0</title>
+    <title>NexS - Final Identity Fix v44.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -23,7 +23,7 @@
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
-        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 12px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: #000; width: 100%; }
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
@@ -35,19 +35,23 @@
         <div class="auth-card" id="loginBox">
             <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-primary" style="margin-top:20px;" onclick="handleLogin()">Login</button>
+            <button class="btn btn-primary" style="margin-top:20px;" onclick="handleLogin()">Login System</button>
             <button class="btn" style="background:transparent; color:var(--primary); margin-top:10px;" onclick="showReg(true)">New Registration</button>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
             <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER</h2>
-            <input type="text" id="regName" placeholder="Full Name"><input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn btn-primary" style="margin-top:20px; background:var(--accent); color:#fff;" onclick="handleRegister()">Save</button>
+            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:10px;">
+            <input type="text" id="regId" placeholder="Employee ID">
+            <button class="btn btn-primary" style="margin-top:20px; background:var(--accent); color:#fff;" onclick="handleRegister()">Save Details</button>
             <button class="btn" style="background:transparent; color:var(--primary); margin-top:10px;" onclick="showReg(false)">Back</button>
         </div>
     </div>
 
     <div class="sidebar" id="mainSidebar" style="display:none;">
-        <div class="user-profile"><h4 id="sideName" style="color:var(--primary); margin:0;">---</h4><small id="sideId" style="color:#888;">ID: ---</small></div>
+        <div class="user-profile">
+            <h4 id="sideName" style="color:var(--primary); margin:0;">---</h4>
+            <small id="sideId" style="color:#888;">ID: ---</small>
+        </div>
         <div class="nav-list">
             <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
             <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
@@ -70,7 +74,7 @@
         <div id="shipment" class="tab-content">
             <div class="scan-bar">
                 <div class="input-group"><label>Shipment Loc</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
-                <div class="input-group"><label>ID Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..." maxlength="23" autocomplete="off"></div>
+                <div class="input-group"><label>ID Scan</label><input type="text" id="shipInput" placeholder="Scan Shipment..." maxlength="23" autocomplete="off"></div>
             </div>
             <table class="data-table"><thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead><tbody id="shipLog"></tbody></table>
         </div>
@@ -79,7 +83,7 @@
             <div class="history-controls">
                 <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
                 <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
-                <button class="btn btn-primary" style="width:auto;" onclick="applyFilters()">Filter</button>
+                <button class="btn btn-primary" style="width:auto;" onclick="applyFilters()">Filter Data</button>
             </div>
             <table class="data-table"><thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead><tbody id="historyTableBody"></tbody></table>
         </div>
@@ -95,15 +99,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // 🔥 MEMORY LOCK FOR USER
-    let globalUser = { name: "---", id: "---" };
+    // 🔥 FINAL LOCK FOR IDENTITY
+    let activeSession = { name: "---", id: "---" };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
+    
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Saved!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("User Registered!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -111,15 +116,15 @@
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 const d = snap.val();
-                globalUser.name = d.name;
-                globalUser.id = id;
+                activeSession.name = d.name;
+                activeSession.id = id;
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('sideName').innerText = globalUser.name;
-                document.getElementById('sideId').innerText = "ID: " + id;
+                document.getElementById('sideName').innerText = activeSession.name;
+                document.getElementById('sideId').innerText = "ID: " + activeSession.id;
                 startSync();
-            } else { alert("User Not Found!"); }
+            } else { alert("ID Not Found!"); }
         });
     }
 
@@ -127,22 +132,21 @@
         db.ref('LiveScans').on('value', s1 => {
             db.ref('ShipmentScans').on('value', s2 => {
                 masterData = [];
-                // 🔥 SUPER DYNAMIC SYNC
                 const mapper = (snap, type, path) => {
                     snap.forEach(c => {
                         const d = c.val();
-                        // Har column ko check karo, agar ek naam na mile toh doosra dhoondo
-                        const finalId = d.barcode || d.barcodeID || d.shipId || d.tray || "---";
-                        const finalDate = d.date || d.scanDate || "---";
-                        const finalTime = d.time || d.scanTime || "---";
-                        const finalLoc = d.location || d.locName || "---";
-                        const finalUser = d.user || d.userName || d.scannedBy || "---";
-                        const finalEmpId = d.userId || d.empId || "";
-
+                        // 🛠️ Force identity check: d.userId naya hai, d.empId purana hai
+                        const userName = d.user || d.userName || "Unknown";
+                        const userId = d.userId || d.empId || "";
+                        
                         masterData.push({
                             key: c.key, type: type, path: path,
-                            dId: finalId, dDate: finalDate, dTime: finalTime,
-                            dLoc: finalLoc, dUser: finalEmpId ? `${finalUser} (${finalEmpId})` : finalUser,
+                            dId: d.barcode || d.shipId || d.tray || "---",
+                            dDate: d.date || d.scanDate || "---",
+                            dTime: d.time || d.scanTime || "---",
+                            dLoc: d.location || d.locName || "---",
+                            // 🔥 Yahan Name + ID combine hokar dikhegi
+                            dUser: userId ? `${userName} (${userId})` : userName,
                             ts: d.timestamp || 0
                         });
                     });
@@ -156,29 +160,28 @@
     }
 
     function renderTables() {
-        const sBody = document.getElementById('scanLog');
-        const hBody = document.getElementById('shipLog');
-        const histBody = document.getElementById('historyTableBody');
-        sBody.innerHTML = ""; hBody.innerHTML = ""; histBody.innerHTML = "";
+        const logs = ['scanLog', 'shipLog', 'historyTableBody'];
+        const tbodies = logs.map(id => document.getElementById(id));
+        tbodies.forEach(tb => tb.innerHTML = "");
 
         masterData.forEach(d => {
-            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
-            if(d.type === 'TRAY') sBody.innerHTML += row;
-            if(d.type === 'SHIPMENT') hBody.innerHTML += row;
-            histBody.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
+            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td style="color:var(--primary); font-weight:bold;">${d.dUser}</td></tr>`;
+            if(d.type === 'TRAY') tbodies[0].innerHTML += row;
+            if(d.type === 'SHIPMENT') tbodies[1].innerHTML += row;
+            tbodies[2].innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
         });
     }
 
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            // 🔥 FORCE SAVE WITH ALL FIELDS
+            // 🔥 Save with Verified Identity
             db.ref('LiveScans').push({
                 barcode: e.target.value.toUpperCase().trim(),
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: globalUser.name,
-                userId: globalUser.id,
+                user: activeSession.name,
+                userId: activeSession.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -192,8 +195,8 @@
                 location: document.getElementById('shipLocSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: globalUser.name,
-                userId: globalUser.id,
+                user: activeSession.name,
+                userId: activeSession.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
