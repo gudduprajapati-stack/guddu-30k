@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v21.0</title>
+    <title>NexS - Master Build v23.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -21,7 +21,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* SCAN BOX FIX */
         .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
         .input-group { flex: 1; min-width: 250px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
@@ -88,19 +87,11 @@
                             <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
                             <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
                         </optgroup>
-                        <optgroup label="ICU TROLLEYS">
-                            <option>ICU TROLLEY 1</option><option>ICU TROLLEY 2</option><option>ICU TROLLEY 3</option><option>ICU TROLLEY 4</option><option>ICU TROLLEY 5</option>
-                            <option>ICU TROLLEY 6</option><option>ICU TROLLEY 7</option><option>ICU TROLLEY 8</option><option>ICU TROLLEY 9</option><option>ICU TROLLEY 10</option>
-                        </optgroup>
-                        <optgroup label="OMT TROLLEYS">
-                            <option>OMT TROLLEY 1</option><option>OMT TROLLEY 2</option><option>OMT TROLLEY 3</option><option>OMT TROLLEY 4</option><option>OMT TROLLEY 5</option>
-                            <option>OMT TROLLEY 6</option><option>OMT TROLLEY 7</option><option>OMT TROLLEY 8</option><option>OMT TROLLEY 9</option><option>OMT TROLLEY 10</option>
-                        </optgroup>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>FAST SCAN (ENTER)</label>
-                    <input type="text" id="trayInput" placeholder="Scan Barcode (MT...)" autocomplete="off">
+                    <label>FAST TRAY SCAN (MT...)</label>
+                    <input type="text" id="trayInput" placeholder="Scan Tray..." autocomplete="off">
                 </div>
             </div>
             <table class="data-table">
@@ -109,10 +100,34 @@
             </table>
         </div>
 
+        <div id="shipment" class="tab-content">
+            <div class="scan-bar">
+                <div class="input-group">
+                    <label>SHIPMENT LOCATION</label>
+                    <select id="shipLocSelect">
+                        <option>DHL SHIPMENT</option>
+                        <option>GPSUPPLY</option>
+                        <option>SREERAJXPRESS</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>SHIPMENT SCANNING BOX (MAX 23 DIGIT)</label>
+                    <input type="text" id="shipInput" placeholder="Scan Shipment..." maxlength="23" autocomplete="off">
+                </div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>DATE</th><th>TIME</th><th>SHIPMENT ID</th><th>LOCATION</th><th>USER NAME</th></tr></thead>
+                <tbody id="shipLog"></tbody>
+            </table>
+        </div>
+
         <div id="productivity" class="tab-content">
             <div style="background:var(--card); padding:40px; border-radius:12px; border:1px solid #333; text-align:center;">
-                <h3>Today's Total Scans</h3>
-                <h1 id="totalCount" style="color:var(--primary); font-size:60px;">0</h1>
+                <h3>Today's Summary</h3>
+                <div style="display:flex; justify-content: space-around; margin-top:20px;">
+                    <div><h4>Tray Scans</h4><h1 id="totalCount" style="color:var(--primary);">0</h1></div>
+                    <div><h4>Shipment Scans</h4><h1 id="shipCount" style="color:var(--accent);">0</h1></div>
+                </div>
             </div>
         </div>
     </div>
@@ -157,11 +172,25 @@
         });
     }
 
+    // --- High Speed Scan Handlers ---
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
             db.ref('LiveScans').push({
                 barcode: e.target.value.toUpperCase().trim(),
                 location: document.getElementById('locSelect').value,
+                date: getFormattedDate(),
+                time: new Date().toLocaleTimeString(),
+                user: loggedUser.name
+            });
+            e.target.value = "";
+        }
+    });
+
+    document.getElementById('shipInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('ShipmentScans').push({
+                shipId: e.target.value.toUpperCase().trim(),
+                location: document.getElementById('shipLocSelect').value,
                 date: getFormattedDate(),
                 time: new Date().toLocaleTimeString(),
                 user: loggedUser.name
@@ -179,14 +208,21 @@
                 count++;
                 const d = child.val();
                 const b = d.barcode || d.barcodeID || d.tray || "---";
-                const dt = d.date || d.scanDate || "---";
-                const tm = d.time || d.scanTime || "---";
-                const lc = d.location || d.locName || "---";
-                const us = d.user || d.scannedBy || d.userName || "---";
-
-                tbody.innerHTML = `<tr><td>${dt}</td><td>${tm}</td><td>${b}</td><td>${lc}</td><td>${us}</td></tr>` + tbody.innerHTML;
+                tbody.innerHTML = `<tr><td>${d.date || '---'}</td><td>${d.time || '---'}</td><td>${b}</td><td>${d.location || '---'}</td><td>${d.user || '---'}</td></tr>` + tbody.innerHTML;
             });
             document.getElementById('totalCount').innerText = count;
+        });
+
+        db.ref('ShipmentScans').limitToLast(35).on('value', snap => {
+            const tbody = document.getElementById('shipLog');
+            tbody.innerHTML = "";
+            let count = 0;
+            snap.forEach(child => {
+                count++;
+                const d = child.val();
+                tbody.innerHTML = `<tr><td>${d.date}</td><td>${d.time}</td><td>${d.shipId}</td><td>${d.location}</td><td>${d.user}</td></tr>` + tbody.innerHTML;
+            });
+            document.getElementById('shipCount').innerText = count;
         });
     }
 
@@ -195,7 +231,9 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(tab).classList.add('active');
         el.classList.add('active');
+        document.getElementById('tabTitle').innerText = el.innerText.split(' ').slice(1).join(' ');
         if(tab === 'scanning') document.getElementById('trayInput').focus();
+        if(tab === 'shipment') document.getElementById('shipInput').focus();
     }
 </script>
 </body>
