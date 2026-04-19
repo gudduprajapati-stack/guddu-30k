@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v38.0</title>
+    <title>NexS - Final Master Fix v39.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -74,4 +74,137 @@
                 </div>
                 <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Tray..." autocomplete="off"></div>
             </div>
-            <table class
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>User (ID)</th></tr></thead>
+                <tbody id="scanLog"></tbody>
+            </table>
+        </div>
+
+        <div id="shipment" class="tab-content">
+            <div class="scan-bar">
+                <div class="input-group"><label>Shipment Loc</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
+                <div class="input-group"><label>Shipment ID</label><input type="text" id="shipInput" placeholder="Scan (Max 23 digit)" maxlength="23" autocomplete="off"></div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead>
+                <tbody id="shipLog"></tbody>
+            </table>
+        </div>
+
+        <div id="history" class="tab-content">
+            <div class="history-controls">
+                <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
+                <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
+                <button class="btn btn-primary" onclick="applyFilters()">Filter</button>
+                <button class="btn btn-danger" onclick="bulkDelete()">Delete Range</button>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+        databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
+        projectId: "nexs-guddu-30k",
+        appId: "1:634684833271:web:31a25a2c5301fa108142f2"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let loggedUser = { name: "Guest", id: "---" };
+    let masterData = [];
+
+    function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
+
+    function handleRegister() {
+        const n = document.getElementById('regName').value.trim();
+        const i = document.getElementById('regId').value.trim();
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registration Success!"); showReg(false); });
+    }
+
+    // 🔥 LOGIN FIX: Makes sure Name and ID are fetched and stored
+    function handleLogin() {
+        const id = document.getElementById('loginId').value.trim();
+        if(!id) return;
+        db.ref('Users/' + id).once('value', snap => {
+            if(snap.exists()) {
+                const data = snap.val();
+                loggedUser = { name: data.name, id: id };
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('mainSidebar').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('sideName').innerText = loggedUser.name;
+                document.getElementById('sideId').innerText = "ID: " + id;
+                startSync();
+            } else { alert("User Not Found!"); }
+        });
+    }
+
+    function startSync() {
+        db.ref('LiveScans').on('value', s1 => {
+            db.ref('ShipmentScans').on('value', s2 => {
+                masterData = [];
+                s1.forEach(c => {
+                    let d = c.val();
+                    // DEEP SYNC: Mapping all possible old database keys
+                    let bar = d.barcode || d.barcodeID || d.tray || d.TrayID || '---';
+                    let dt = d.date || d.scanDate || d.Date || '---';
+                    let tm = d.time || d.scanTime || d.Time || '---';
+                    let lc = d.location || d.locName || d.Location || '---';
+                    let us = d.user || d.userName || d.scannedBy || '---';
+                    let uid = d.userId || d.empId || '';
+                    masterData.push({ key: c.key, type: 'TRAY', dId: bar, dDate: dt, dTime: tm, dLoc: lc, dUser: us + (uid ? ` (${uid})` : ''), timestamp: d.timestamp || 0, path: 'LiveScans' });
+                });
+                s2.forEach(c => {
+                    let d = c.val();
+                    let id = d.shipId || d.shipmentID || '---';
+                    let us = d.user || d.userName || '---';
+                    let uid = d.userId || d.empId || '';
+                    masterData.push({ key: c.key, type: 'SHIPMENT', dId: id, dDate: d.date || '---', dTime: d.time || '---', dLoc: d.location || '---', dUser: us + (uid ? ` (${uid})` : ''), timestamp: d.timestamp || 0, path: 'ShipmentScans' });
+                });
+                masterData.sort((a,b) => b.timestamp - a.timestamp);
+                renderAll();
+            });
+        });
+    }
+
+    function renderAll() {
+        const sLog = document.getElementById('scanLog');
+        const shipLog = document.getElementById('shipLog');
+        const histLog = document.getElementById('historyTableBody');
+        sLog.innerHTML = ""; shipLog.innerHTML = ""; histLog.innerHTML = "";
+        masterData.forEach(d => {
+            let row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
+            if(d.type === 'TRAY') sLog.innerHTML += row;
+            if(d.type === 'SHIPMENT') shipLog.innerHTML += row;
+            histLog.innerHTML += `<tr><td style="color:${d.type==='TRAY'?'#00d4ff':'#28a745'}">${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
+        });
+    }
+
+    document.getElementById('trayInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('LiveScans').push({ 
+                barcode: e.target.value.toUpperCase().trim(), 
+                location: document.getElementById('locSelect').value, 
+                date: new Date().toLocaleDateString('en-GB'), 
+                time: new Date().toLocaleTimeString(), 
+                user: loggedUser.name, userId: loggedUser.id,
+                timestamp: Date.now() 
+            });
+            e.target.value = "";
+        }
+    });
+
+    function switchTab(t, el) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(t).classList.add('active');
+        el.classList.add('active');
+        if(t === 'scanning') document.getElementById('trayInput').focus();
+    }
+</script>
+</body>
+</html>
