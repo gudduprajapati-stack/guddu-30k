@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v18.0</title>
+    <title>NexS - Master Build v19.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -23,14 +23,20 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* UI Components */
-        .scan-bar { display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: flex-end; }
-        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; }
+        /* SCAN BOX UI FIX - Bahr nahi jayega */
+        .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
+        .input-group { flex: 1; min-width: 200px; }
+        label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
+        
+        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); }
+
+        /* Table */
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
 
-        /* Auth Symmetric Design */
+        /* Login Symmetric Design */
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
         .btn-full { width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 16px; }
@@ -49,7 +55,7 @@
             <h2 style="color:var(--primary); margin-bottom: 30px;">REGISTER</h2>
             <input type="text" id="regName" placeholder="Full Name">
             <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Save & Register</button>
+            <button class="btn-full" style="background:var(--accent); color:white;" onclick="handleRegister()">Register</button>
             <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(false)">Back</button>
         </div>
     </div>
@@ -64,7 +70,7 @@
             <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
             <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
             <div class="nav-item" onclick="switchTab('history', this)">🕒 History Page</div>
-            <div class="nav-item" onclick="productivityLink(this)">📊 Productivity</div>
+            <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
         </div>
         <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold;">LOGOUT</div>
     </div>
@@ -74,14 +80,14 @@
 
         <div id="scanning" class="tab-content active">
             <div class="scan-bar">
-                <div>
-                    <label style="font-size:11px; color:#888;">LOCATION</label>
+                <div class="input-group">
+                    <label>LOCATION</label>
                     <select id="locSelect">
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option><option>CS LOCATION</option>
                     </select>
                 </div>
-                <div>
-                    <label style="font-size:11px; color:#888;">FAST SCAN (ENTER)</label>
+                <div class="input-group">
+                    <label>FAST SCAN (ENTER)</label>
                     <input type="text" id="trayInput" placeholder="Scan & Save..." autocomplete="off">
                 </div>
             </div>
@@ -91,19 +97,9 @@
             </table>
         </div>
 
-        <div id="shipment" class="tab-content">
-            <div class="scan-bar">
-                <div style="grid-column: span 2;"><input type="text" id="shipInput" placeholder="Scan Shipment ID..."></div>
-            </div>
-            <table class="data-table">
-                <thead><tr><th>DATE</th><th>TIME</th><th>SHIPMENT ID</th><th>USER NAME</th></tr></thead>
-                <tbody id="shipLog"></tbody>
-            </table>
-        </div>
-
         <div id="productivity" class="tab-content">
             <div style="background:var(--card); padding:40px; border-radius:12px; border:1px solid #333; text-align:center;">
-                <h3>Total Scans Today</h3>
+                <h3>Total Scans Loaded</h3>
                 <h1 id="totalCount" style="color:var(--primary); font-size:60px;">0</h1>
             </div>
         </div>
@@ -162,33 +158,33 @@
         }
     });
 
-    function switchTab(tab, el) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(tab).classList.add('active');
-        el.classList.add('active');
-        document.getElementById('tabTitle').innerText = el.innerText.split(' ').slice(1).join(' ');
-    }
-
     function loadAllData() {
-        db.ref('LiveScans').limitToLast(30).on('value', snap => {
+        db.ref('LiveScans').limitToLast(35).on('value', snap => {
             const tbody = document.getElementById('scanLog');
             tbody.innerHTML = "";
             let count = 0;
             snap.forEach(child => {
                 count++;
                 const d = child.val();
-                // 🔥 SYNC LOGIC: Sabhi purane/naye keys check karega
+                // 🔥 SYNC LOGIC: Name restoration
                 const b = d.barcode || d.barcodeID || d.tray || "---";
                 const dt = d.date || d.scanDate || "---";
                 const tm = d.time || d.scanTime || "---";
                 const lc = d.location || d.locName || "---";
-                const us = d.user || d.scannedBy || d.userName || "---";
+                const us = d.user || d.scannedBy || d.userName || loggedUser.name || "---";
 
                 tbody.innerHTML = `<tr><td>${dt}</td><td>${tm}</td><td>${b}</td><td>${lc}</td><td>${us}</td></tr>` + tbody.innerHTML;
             });
             document.getElementById('totalCount').innerText = count;
         });
+    }
+
+    function switchTab(tab, el) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(tab).classList.add('active');
+        el.classList.add('active');
+        if(tab === 'scanning') document.getElementById('trayInput').focus();
     }
 </script>
 </body>
