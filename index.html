@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Hub v42.0</title>
+    <title>NexS - Master Hub v43.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -35,14 +35,13 @@
         <div class="auth-card" id="loginBox">
             <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-primary" style="margin-top:20px;" onclick="handleLogin()">Login System</button>
+            <button class="btn btn-primary" style="margin-top:20px;" onclick="handleLogin()">Login</button>
             <button class="btn" style="background:transparent; color:var(--primary); margin-top:10px;" onclick="showReg(true)">New Registration</button>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER USER</h2>
-            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:10px;">
-            <input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn btn-primary" style="margin-top:20px; background:var(--accent); color:#fff;" onclick="handleRegister()">Save User</button>
+            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER</h2>
+            <input type="text" id="regName" placeholder="Full Name"><input type="text" id="regId" placeholder="Employee ID">
+            <button class="btn btn-primary" style="margin-top:20px; background:var(--accent); color:#fff;" onclick="handleRegister()">Save</button>
             <button class="btn" style="background:transparent; color:var(--primary); margin-top:10px;" onclick="showReg(false)">Back</button>
         </div>
     </div>
@@ -78,9 +77,9 @@
 
         <div id="history" class="tab-content">
             <div class="history-controls">
-                <div class="input-group"><label>From Date</label><input type="date" id="fromDate"></div>
-                <div class="input-group"><label>To Date</label><input type="date" id="toDate"></div>
-                <button class="btn btn-primary" style="width:auto;" onclick="applyFilters()">Filter Data</button>
+                <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
+                <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
+                <button class="btn btn-primary" style="width:auto;" onclick="applyFilters()">Filter</button>
             </div>
             <table class="data-table"><thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User (ID)</th></tr></thead><tbody id="historyTableBody"></tbody></table>
         </div>
@@ -95,14 +94,16 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let currentUser = { name: "", id: "" };
+    
+    // 🔥 MEMORY LOCK FOR USER
+    let globalUser = { name: "---", id: "---" };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Success!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Saved!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -110,14 +111,15 @@
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 const d = snap.val();
-                currentUser = { name: d.name, id: id }; // GLOBAL LOCK
+                globalUser.name = d.name;
+                globalUser.id = id;
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('sideName').innerText = currentUser.name;
-                document.getElementById('sideId').innerText = "ID: " + currentUser.id;
+                document.getElementById('sideName').innerText = globalUser.name;
+                document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("User not found!"); }
+            } else { alert("User Not Found!"); }
         });
     }
 
@@ -125,62 +127,59 @@
         db.ref('LiveScans').on('value', s1 => {
             db.ref('ShipmentScans').on('value', s2 => {
                 masterData = [];
-                s1.forEach(c => {
-                    const d = c.val();
-                    // 🔥 TRUE SYNC: Reading both 'user' and 'userId' fields
-                    const dispUser = d.user || "---";
-                    const dispId = d.userId || "";
-                    masterData.push({
-                        key: c.key, type: 'TRAY', 
-                        dId: d.barcode || d.barcodeID || '---', 
-                        dDate: d.date || '---', dTime: d.time || '---', 
-                        dLoc: d.location || '---', 
-                        dUser: dispId ? `${dispUser} (${dispId})` : dispUser,
-                        timestamp: d.timestamp || 0, path: 'LiveScans'
+                // 🔥 SUPER DYNAMIC SYNC
+                const mapper = (snap, type, path) => {
+                    snap.forEach(c => {
+                        const d = c.val();
+                        // Har column ko check karo, agar ek naam na mile toh doosra dhoondo
+                        const finalId = d.barcode || d.barcodeID || d.shipId || d.tray || "---";
+                        const finalDate = d.date || d.scanDate || "---";
+                        const finalTime = d.time || d.scanTime || "---";
+                        const finalLoc = d.location || d.locName || "---";
+                        const finalUser = d.user || d.userName || d.scannedBy || "---";
+                        const finalEmpId = d.userId || d.empId || "";
+
+                        masterData.push({
+                            key: c.key, type: type, path: path,
+                            dId: finalId, dDate: finalDate, dTime: finalTime,
+                            dLoc: finalLoc, dUser: finalEmpId ? `${finalUser} (${finalEmpId})` : finalUser,
+                            ts: d.timestamp || 0
+                        });
                     });
-                });
-                s2.forEach(c => {
-                    const d = c.val();
-                    const dispUser = d.user || "---";
-                    const dispId = d.userId || "";
-                    masterData.push({
-                        key: c.key, type: 'SHIPMENT', 
-                        dId: d.shipId || '---', 
-                        dDate: d.date || '---', dTime: d.time || '---', 
-                        dLoc: d.location || '---', 
-                        dUser: dispId ? `${dispUser} (${dispId})` : dispUser,
-                        timestamp: d.timestamp || 0, path: 'ShipmentScans'
-                    });
-                });
-                masterData.sort((a,b) => b.timestamp - a.timestamp);
-                renderAll();
+                };
+                mapper(s1, 'TRAY', 'LiveScans');
+                mapper(s2, 'SHIPMENT', 'ShipmentScans');
+                masterData.sort((a,b) => b.ts - a.ts);
+                renderTables();
             });
         });
     }
 
-    function renderAll() {
-        const sLog = document.getElementById('scanLog');
-        const shipLog = document.getElementById('shipLog');
-        const histLog = document.getElementById('historyTableBody');
-        sLog.innerHTML = ""; shipLog.innerHTML = ""; histLog.innerHTML = "";
+    function renderTables() {
+        const sBody = document.getElementById('scanLog');
+        const hBody = document.getElementById('shipLog');
+        const histBody = document.getElementById('historyTableBody');
+        sBody.innerHTML = ""; hBody.innerHTML = ""; histBody.innerHTML = "";
+
         masterData.forEach(d => {
             const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
-            if(d.type === 'TRAY') sLog.innerHTML += row;
-            if(d.type === 'SHIPMENT') shipLog.innerHTML += row;
-            histLog.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
+            if(d.type === 'TRAY') sBody.innerHTML += row;
+            if(d.type === 'SHIPMENT') hBody.innerHTML += row;
+            histBody.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dUser}</td></tr>`;
         });
     }
 
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            db.ref('LiveScans').push({ 
-                barcode: e.target.value.toUpperCase().trim(), 
-                location: document.getElementById('locSelect').value, 
-                date: new Date().toLocaleDateString('en-GB'), 
-                time: new Date().toLocaleTimeString(), 
-                user: currentUser.name, // Saved from handleLogin
-                userId: currentUser.id, // Saved from handleLogin
-                timestamp: Date.now() 
+            // 🔥 FORCE SAVE WITH ALL FIELDS
+            db.ref('LiveScans').push({
+                barcode: e.target.value.toUpperCase().trim(),
+                location: document.getElementById('locSelect').value,
+                date: new Date().toLocaleDateString('en-GB'),
+                time: new Date().toLocaleTimeString(),
+                user: globalUser.name,
+                userId: globalUser.id,
+                timestamp: Date.now()
             });
             e.target.value = "";
         }
@@ -188,14 +187,14 @@
 
     document.getElementById('shipInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
-            db.ref('ShipmentScans').push({ 
-                shipId: e.target.value.toUpperCase().trim(), 
-                location: document.getElementById('shipLocSelect').value, 
-                date: new Date().toLocaleDateString('en-GB'), 
-                time: new Date().toLocaleTimeString(), 
-                user: currentUser.name, 
-                userId: currentUser.id, 
-                timestamp: Date.now() 
+            db.ref('ShipmentScans').push({
+                shipId: e.target.value.toUpperCase().trim(),
+                location: document.getElementById('shipLocSelect').value,
+                date: new Date().toLocaleDateString('en-GB'),
+                time: new Date().toLocaleTimeString(),
+                user: globalUser.name,
+                userId: globalUser.id,
+                timestamp: Date.now()
             });
             e.target.value = "";
         }
