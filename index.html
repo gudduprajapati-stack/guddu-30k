@@ -3,111 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS Operational System</title>
+    <title>NexS - Scanning Expert</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; }
         
-        /* Auth Styles */
-        .auth-container { width: 330px; padding: 35px; background: var(--card); border-radius: 15px; margin: 80px auto; border: 1px solid #333; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: black; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
-
-        /* Dashboard Styles */
-        #dashboard { display: none; }
-        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: #000; padding: 20px; border-right: 1px solid #222; }
-        .main-content { margin-left: 240px; padding: 30px; }
-        .nav-item { padding: 12px; margin-bottom: 10px; cursor: pointer; border-radius: 8px; transition: 0.3s; color: #888; border-left: 3px solid transparent; }
-        .nav-item:hover { background: #1a1a1a; color: #fff; }
-        .nav-item.active { background: #1a1a1a; color: var(--primary); border-left-color: var(--primary); }
+        /* Sidebar Navigation */
+        .sidebar { width: 240px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; padding: 20px; box-sizing: border-box; }
+        .nav-item { padding: 12px; margin-bottom: 8px; cursor: pointer; border-radius: 6px; color: #888; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 3px solid var(--primary); }
         
-        /* Content Tabs */
-        .tab-content { display: none; animation: fadeIn 0.4s; }
+        /* Main Content */
+        .main-content { margin-left: 240px; padding: 30px; width: 100%; }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        /* Scanning Box UI */
+        .scan-header { display: flex; gap: 20px; background: var(--card); padding: 25px; border-radius: 12px; border: 1px solid #333; align-items: flex-end; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        
+        select, input { padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 15px; }
+        input:focus { border-color: var(--primary); }
+        
+        .btn { padding: 12px 25px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+
+        /* Table UI */
+        .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-top: 25px; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; }
-        th { color: var(--primary); font-size: 13px; text-transform: uppercase; }
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #333; }
+        th { color: var(--primary); font-size: 12px; text-transform: uppercase; }
+        .status-tag { background: #1a1a1a; color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
-    <div id="authSection">
-        <div id="loginPage" class="auth-container">
-            <h2 style="color:var(--primary)">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="User ID (138663)">
-            <button class="btn" onclick="loginUser()">LOGIN</button>
-            <p onclick="toggleAuth(true)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Register New ID</p>
-        </div>
-
-        <div id="registerPage" class="auth-container" style="display:none;">
-            <h2 style="color:var(--primary)">REGISTER</h2>
-            <input type="text" id="newName" placeholder="Full Name">
-            <input type="text" id="newId" placeholder="Unique ID">
-            <button class="btn" style="background:var(--accent); color:white;" onclick="registerUser()">SAVE & REGISTER</button>
-            <p onclick="toggleAuth(false)" style="color:var(--primary); cursor:pointer; margin-top:15px; font-size:14px;">Back to Login</p>
-        </div>
+    <div class="sidebar">
+        <h2 style="color:var(--primary); margin-bottom:40px;">NexS System</h2>
+        <div class="nav-item active" onclick="switchTab('scanning')">Scanning Page</div>
+        <div class="nav-item" onclick="switchTab('shipment')">Shipment Page</div>
+        <div class="nav-item" onclick="switchTab('history')">History Page</div>
+        <div class="nav-item" onclick="switchTab('productivity')">Productivity Page</div>
+        <div class="nav-item" style="color:#ff4444; margin-top:50px;" onclick="location.reload()">Logout</div>
     </div>
 
-    <div id="dashboard">
-        <div class="sidebar">
-            <h3 style="color:var(--primary); margin-bottom:40px;">NexS System</h3>
-            <div class="nav-item active" onclick="switchTab('scanning', this)">Scanning Page</div>
-            <div class="nav-item" onclick="switchTab('shipment', this)">Shipment Scan</div>
-            <div class="nav-item" onclick="switchTab('history', this)">History Page</div>
-            <div class="nav-item" onclick="switchTab('productivity', this)">Productivity</div>
-            <div class="nav-item" style="color:#ff4444; margin-top:50px;" onclick="location.reload()">Logout</div>
+    <div class="main-content">
+        <div id="scanning" class="tab-content active">
+            <h1>Scanning Operations</h1>
+            <div class="scan-header">
+                <div class="input-group">
+                    <label>Select Location</label>
+                    <select id="locationSelect">
+                        <option value="ICU ENTRY">ICU ENTRY</option>
+                        <option value="MEI ENTRY">MEI ENTRY</option>
+                        <option value="OMT ENTRY">OMT ENTRY</option>
+                        <option value="LO SEND TO ICU">LO SEND TO ICU</option>
+                        <option value="LO SEND TO MEI">LO SEND TO MEI</option>
+                        <option value="ORDER SEND TO MAIN LINE FOR FT">ORDER SEND TO MAIN LINE FOR FT</option>
+                        <option value="ORDER SEND TO MAIN LINE FOR QC">ORDER SEND TO MAIN LINE FOR QC</option>
+                        <option value="ORDER SEND TO MAIN LINE FOR PACKING">ORDER SEND TO MAIN LINE FOR PACKING</option>
+                        <option value="TLP SEND TO MEI">TLP SEND TO MEI</option>
+                        <option value="QC FAIL SEND TO MEI">QC FAIL SEND TO MEI</option>
+                        <option value="FRAME QC FAIL SEND TO MAIN LINE">FRAME QC FAIL SEND TO MAIN LINE</option>
+                        <option value="SEND TO MEI FOR REVIEW">SEND TO MEI FOR REVIEW</option>
+                        <option value="CS LOCATION">CS LOCATION</option>
+                        <option value="SMALL DIA LOCATION">SMALL DIA LOCATION</option>
+                        <option value="LO QC FAIL LOCATION (JIT)">LO QC FAIL LOCATION (JIT)</option>
+                        <optgroup label="OMT RACKS">
+                            <option value="OMT RACK 00">OMT RACK 00</option>
+                            <option value="OMT RACK 01">OMT RACK 01</option>
+                            <option value="OMT RACK 02">OMT RACK 02</option>
+                            <option value="OMT RACK 03">OMT RACK 03</option>
+                            <option value="OMT RACK 04">OMT RACK 04</option>
+                            <option value="OMT RACK 05">OMT RACK 05</option>
+                            <option value="OMT RACK 06">OMT RACK 06</option>
+                            <option value="OMT RACK 07">OMT RACK 07</option>
+                            <option value="OMT RACK 08">OMT RACK 08</option>
+                            <option value="OMT RACK 09">OMT RACK 09</option>
+                        </optgroup>
+                        <optgroup label="ICU TROLLEYS">
+                            <option value="ICU TROLLEY 1">ICU TROLLEY 1</option>
+                            <option value="ICU TROLLEY 2">ICU TROLLEY 2</option>
+                            <option value="ICU TROLLEY 3">ICU TROLLEY 3</option>
+                            <option value="ICU TROLLEY 4">ICU TROLLEY 4</option>
+                            <option value="ICU TROLLEY 5">ICU TROLLEY 5</option>
+                            <option value="ICU TROLLEY 6">ICU TROLLEY 6</option>
+                            <option value="ICU TROLLEY 7">ICU TROLLEY 7</option>
+                            <option value="ICU TROLLEY 8">ICU TROLLEY 8</option>
+                            <option value="ICU TROLLEY 9">ICU TROLLEY 9</option>
+                            <option value="ICU TROLLEY 10">ICU TROLLEY 10</option>
+                        </optgroup>
+                        <optgroup label="OMT TROLLEYS">
+                            <option value="OMT TROLLEY 1">OMT TROLLEY 1</option>
+                            <option value="OMT TROLLEY 2">OMT TROLLEY 2</option>
+                            <option value="OMT TROLLEY 3">OMT TROLLEY 3</option>
+                            <option value="OMT TROLLEY 4">OMT TROLLEY 4</option>
+                            <option value="OMT TROLLEY 5">OMT TROLLEY 5</option>
+                            <option value="OMT TROLLEY 6">OMT TROLLEY 6</option>
+                            <option value="OMT TROLLEY 7">OMT TROLLEY 7</option>
+                            <option value="OMT TROLLEY 8">OMT TROLLEY 8</option>
+                            <option value="OMT TROLLEY 9">OMT TROLLEY 9</option>
+                            <option value="OMT TROLLEY 10">OMT TROLLEY 10</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Tray Scan (7 Digits)</label>
+                    <input type="number" id="trayInput" placeholder="Scan Tray..." oninput="handleScan(this)">
+                </div>
+                <button class="btn" onclick="manualAdd()">ADD</button>
+            </div>
+
+            <div class="card">
+                <h3>Live Scans</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Tray ID</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scanTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="main-content">
-            <div class="header" style="margin-bottom:30px;">
-                <h2 id="userTitle" style="margin:0;">Welcome</h2>
-                <small id="userSubTitle" style="color:var(--primary)"></small>
-            </div>
-
-            <div id="scanning" class="tab-content active">
-                <div class="card">
-                    <h3>Operational Stations</h3>
-                    <div id="locGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;"></div>
-                    <button class="btn" style="width:200px; margin-top:20px;" onclick="saveScan()">SAVE SCANNING</button>
-                </div>
-            </div>
-
-            <div id="shipment" class="tab-content">
-                <div class="card">
-                    <h3>Shipment Scanning</h3>
-                    <input type="text" id="shipId" placeholder="Scan Shipment Barcode" style="max-width:400px;">
-                    <button class="btn" style="width:150px; margin-left:10px;">ADD SCAN</button>
-                </div>
-            </div>
-
-            <div id="history" class="tab-content">
-                <div class="card">
-                    <h3>Past Activities</h3>
-                    <table>
-                        <thead><tr><th>Date</th><th>Task</th><th>Location</th><th>Status</th></tr></thead>
-                        <tbody id="historyList"><tr><td colspan="4" style="text-align:center;">No history found</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="productivity" class="tab-content">
-                <div class="card">
-                    <h3>Daily Productivity</h3>
-                    <div style="font-size:32px; color:var(--accent);">85%</div>
-                    <p>Scanning Target: 30,000 / Day</p>
-                </div>
-            </div>
-        </div>
+        <div id="shipment" class="tab-content"><h1>Shipment Page Under Construction</h1></div>
+        <div id="history" class="tab-content"><h1>History Page Under Construction</h1></div>
+        <div id="productivity" class="tab-content"><h1>Productivity Page Under Construction</h1></div>
     </div>
 
 <script>
-    // FIREBASE CONFIG
+    // --- FIREBASE SETUP ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
         databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
@@ -116,59 +146,60 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let currentUser = null;
 
-    function toggleAuth(reg) {
-        document.getElementById('loginPage').style.display = reg ? 'none' : 'block';
-        document.getElementById('registerPage').style.display = reg ? 'block' : 'none';
-    }
-
-    function registerUser() {
-        const n = document.getElementById('newName').value.trim();
-        const i = document.getElementById('newId').value.trim();
-        if(n && i) {
-            database.ref('Users/' + i).set({ name: n, empId: i })
-            .then(() => { alert("Success! Login now."); toggleAuth(false); });
-        }
-    }
-
-    function loginUser() {
-        const id = document.getElementById('loginId').value.trim();
-        database.ref('Users/' + id).once('value').then(snap => {
-            if(snap.exists()) {
-                currentUser = snap.val();
-                document.getElementById('authSection').style.display='none';
-                document.getElementById('dashboard').style.display='block';
-                document.getElementById('userTitle').innerText = "Hello, " + currentUser.name;
-                document.getElementById('userSubTitle').innerText = "ID: " + currentUser.empId;
-                initStations();
-            } else { alert("ID Not Found!"); }
-        });
-    }
-
-    function switchTab(tabId, el) {
+    // Tab Switching
+    function switchTab(id) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        el.classList.add('active');
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
     }
 
-    function initStations() {
-        const grid = document.getElementById('locGrid');
-        grid.innerHTML = "";
-        for(let i=1; i<=21; i++) {
-            grid.innerHTML += `<div style="background:#000; padding:10px; border-radius:8px; border:1px solid #222;">
-                <small style="color:#666">Station ${i}</small>
-                <select id="s-${i}" style="width:100%; margin-top:5px; background:none; color:white; border:1px solid #333;">
-                    <option>Pending</option><option>Scanning</option><option>Done</option>
-                </select></div>`;
+    // Handle Tray Scanning
+    function handleScan(input) {
+        if(input.value.length === 7) {
+            saveToFirebase(input.value);
+            input.value = ""; // Clear for next scan
         }
     }
 
-    function saveScan() {
-        let updates = { time: new Date().toLocaleString() };
-        for(let i=1; i<=21; i++) { updates[`St_${i}`] = document.getElementById(`s-${i}`).value; }
-        database.ref('LiveStatus/' + currentUser.empId).set(updates).then(() => alert("Saved!"));
+    function manualAdd() {
+        const val = document.getElementById('trayInput').value;
+        if(val.length === 7) {
+            saveToFirebase(val);
+            document.getElementById('trayInput').value = "";
+        } else {
+            alert("Please enter exactly 7 digits!");
+        }
+    }
+
+    function saveToFirebase(trayId) {
+        const loc = document.getElementById('locationSelect').value;
+        const time = new Date().toLocaleTimeString();
+        const date = new Date().toLocaleDateString().replace(/\//g, '-');
+        
+        const scanData = {
+            trayId: trayId,
+            location: loc,
+            time: time,
+            timestamp: Date.now()
+        };
+
+        // Saving to Firebase
+        database.ref('ScanningData/' + date).push(scanData);
+        updateTable(scanData);
+    }
+
+    // Real-time table update
+    function updateTable(data) {
+        const tbody = document.getElementById('scanTableBody');
+        const row = `<tr>
+            <td>${data.time}</td>
+            <td style="color:var(--primary); font-weight:bold;">${data.trayId}</td>
+            <td>${data.location}</td>
+            <td><span class="status-tag">SCANNED</span></td>
+        </tr>`;
+        tbody.innerHTML = row + tbody.innerHTML; // Add to top
     }
 </script>
 </body>
