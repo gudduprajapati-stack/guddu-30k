@@ -3,35 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Build v23.0</title>
+    <title>NexS - Master Sync v24.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
         .nav-list { padding: 15px; flex-grow: 1; }
         .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
-        
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
         .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
         .input-group { flex: 1; min-width: 250px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
-        
         input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 14px; box-sizing: border-box; }
-        input:focus { border-color: var(--primary); }
-
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
-
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
         .btn-full { width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; }
@@ -44,7 +37,7 @@
             <h2 style="color:var(--primary); margin-bottom: 30px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
             <button class="btn-full" onclick="handleLogin()">Login</button>
-            <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(true)">New Registration</button>
+            <button class="btn-full" style="background:transparent; color:var(--primary); border:1px solid var(--primary);" onclick="showReg(true)">Register New ID</button>
         </div>
         <div id="regCard" class="auth-card" style="display:none;">
             <h2 style="color:var(--primary); margin-bottom: 30px;">REGISTER</h2>
@@ -64,7 +57,6 @@
         <div class="nav-list">
             <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
             <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
-            <div class="nav-item" onclick="switchTab('history', this)">🕒 History Page</div>
             <div class="nav-item" onclick="switchTab('productivity', this)">📊 Productivity</div>
         </div>
         <div onclick="location.reload()" style="padding:15px; color:var(--danger); cursor:pointer; text-align:center; border-top:1px solid #222; font-weight:bold; margin-top: auto;">LOGOUT</div>
@@ -79,13 +71,8 @@
                     <label>LOCATION</label>
                     <select id="locSelect">
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
-                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
-                        <option>ORDER SEND TO MAIN LINE FOR FT</option><option>ORDER SEND TO MAIN LINE FOR QC</option><option>ORDER SEND TO MAIN LINE FOR PACKING</option>
-                        <option>TLP SEND TO MEI</option><option>QC FAIL SEND TO MEI</option><option>FRAME QC FAIL SEND TO MAIN LINE</option><option>SEND TO MEI FOR REVIEW</option>
-                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option><option>LO QC FAIL LOCATION (JIT)</option>
-                        <optgroup label="OMT RACKS">
-                            <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
-                            <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
+                        <optgroup label="RACKS/TROLLEYS">
+                            <option>OMT RACK 01</option><option>ICU TROLLEY 1</option>
                         </optgroup>
                     </select>
                 </div>
@@ -103,7 +90,7 @@
         <div id="shipment" class="tab-content">
             <div class="scan-bar">
                 <div class="input-group">
-                    <label>SHIPMENT LOCATION</label>
+                    <label>LOCATION</label>
                     <select id="shipLocSelect">
                         <option>DHL SHIPMENT</option>
                         <option>GPSUPPLY</option>
@@ -123,11 +110,8 @@
 
         <div id="productivity" class="tab-content">
             <div style="background:var(--card); padding:40px; border-radius:12px; border:1px solid #333; text-align:center;">
-                <h3>Today's Summary</h3>
-                <div style="display:flex; justify-content: space-around; margin-top:20px;">
-                    <div><h4>Tray Scans</h4><h1 id="totalCount" style="color:var(--primary);">0</h1></div>
-                    <div><h4>Shipment Scans</h4><h1 id="shipCount" style="color:var(--accent);">0</h1></div>
-                </div>
+                <h3>Today's Scans</h3>
+                <h1 id="totalCount" style="color:var(--primary); font-size:60px;">0</h1>
             </div>
         </div>
     </div>
@@ -143,7 +127,7 @@
     const db = firebase.database();
     let loggedUser = null;
 
-    function getFormattedDate() {
+    function getStandardDate() {
         const d = new Date();
         return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     }
@@ -153,7 +137,7 @@
     function handleRegister() {
         const n = document.getElementById('regName').value;
         const i = document.getElementById('regId').value;
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registered!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Success!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -172,13 +156,13 @@
         });
     }
 
-    // --- High Speed Scan Handlers ---
+    // High Speed Save
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
             db.ref('LiveScans').push({
                 barcode: e.target.value.toUpperCase().trim(),
                 location: document.getElementById('locSelect').value,
-                date: getFormattedDate(),
+                date: getStandardDate(),
                 time: new Date().toLocaleTimeString(),
                 user: loggedUser.name
             });
@@ -191,7 +175,7 @@
             db.ref('ShipmentScans').push({
                 shipId: e.target.value.toUpperCase().trim(),
                 location: document.getElementById('shipLocSelect').value,
-                date: getFormattedDate(),
+                date: getStandardDate(),
                 time: new Date().toLocaleTimeString(),
                 user: loggedUser.name
             });
@@ -207,8 +191,14 @@
             snap.forEach(child => {
                 count++;
                 const d = child.val();
+                // 🔥 SUPER SYNC LOGIC: Checks all possible old/new keys
                 const b = d.barcode || d.barcodeID || d.tray || "---";
-                tbody.innerHTML = `<tr><td>${d.date || '---'}</td><td>${d.time || '---'}</td><td>${b}</td><td>${d.location || '---'}</td><td>${d.user || '---'}</td></tr>` + tbody.innerHTML;
+                const dt = d.date || d.scanDate || "19/04/2026"; 
+                const tm = d.time || d.scanTime || "---";
+                const lc = d.location || d.locName || "---";
+                const us = d.user || d.scannedBy || d.userName || "---";
+
+                tbody.innerHTML = `<tr><td>${dt}</td><td>${tm}</td><td>${b}</td><td>${lc}</td><td>${us}</td></tr>` + tbody.innerHTML;
             });
             document.getElementById('totalCount').innerText = count;
         });
@@ -216,13 +206,10 @@
         db.ref('ShipmentScans').limitToLast(35).on('value', snap => {
             const tbody = document.getElementById('shipLog');
             tbody.innerHTML = "";
-            let count = 0;
             snap.forEach(child => {
-                count++;
                 const d = child.val();
                 tbody.innerHTML = `<tr><td>${d.date}</td><td>${d.time}</td><td>${d.shipId}</td><td>${d.location}</td><td>${d.user}</td></tr>` + tbody.innerHTML;
             });
-            document.getElementById('shipCount').innerText = count;
         });
     }
 
@@ -231,7 +218,6 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(tab).classList.add('active');
         el.classList.add('active');
-        document.getElementById('tabTitle').innerText = el.innerText.split(' ').slice(1).join(' ');
         if(tab === 'scanning') document.getElementById('trayInput').focus();
         if(tab === 'shipment') document.getElementById('shipInput').focus();
     }
