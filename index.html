@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Ultra Clean v20.0</title>
+    <title>NexS - Master Build v21.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
         
-        /* Sidebar */
         .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; display: flex; flex-direction: column; z-index: 100; }
         .user-profile { background: #111; padding: 25px 20px; border-bottom: 1px solid #222; }
         .user-profile h4 { margin: 0; color: var(--primary); font-size: 16px; text-transform: capitalize; }
@@ -18,28 +17,25 @@
         .nav-item { padding: 12px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #888; transition: 0.2s; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
         
-        /* Layout Fixes */
         .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Scanning Bar Responsive Fix */
-        .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; box-sizing: border-box; }
-        .input-group { flex: 1; min-width: 150px; }
+        /* SCAN BOX FIX */
+        .scan-bar { display: flex; flex-wrap: wrap; gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
+        .input-group { flex: 1; min-width: 250px; }
         label { font-size: 11px; color: #888; display: block; margin-bottom: 8px; }
         
-        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 16px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; outline: none; font-size: 14px; box-sizing: border-box; }
         input:focus { border-color: var(--primary); }
 
-        /* Table Design */
         .data-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: var(--primary); text-transform: uppercase; font-size: 11px; }
 
-        /* Auth Symmetric */
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 380px; text-align: center; }
-        .btn-full { width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 16px; }
+        .btn-full { width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -83,12 +79,28 @@
                 <div class="input-group">
                     <label>LOCATION</label>
                     <select id="locSelect">
-                        <option value="DEFAULT">SELECT LOCATION</option>
-                        </select>
+                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
+                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
+                        <option>ORDER SEND TO MAIN LINE FOR FT</option><option>ORDER SEND TO MAIN LINE FOR QC</option><option>ORDER SEND TO MAIN LINE FOR PACKING</option>
+                        <option>TLP SEND TO MEI</option><option>QC FAIL SEND TO MEI</option><option>FRAME QC FAIL SEND TO MAIN LINE</option><option>SEND TO MEI FOR REVIEW</option>
+                        <option>CS LOCATION</option><option>SMALL DIA LOCATION</option><option>LO QC FAIL LOCATION (JIT)</option>
+                        <optgroup label="OMT RACKS">
+                            <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
+                            <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
+                        </optgroup>
+                        <optgroup label="ICU TROLLEYS">
+                            <option>ICU TROLLEY 1</option><option>ICU TROLLEY 2</option><option>ICU TROLLEY 3</option><option>ICU TROLLEY 4</option><option>ICU TROLLEY 5</option>
+                            <option>ICU TROLLEY 6</option><option>ICU TROLLEY 7</option><option>ICU TROLLEY 8</option><option>ICU TROLLEY 9</option><option>ICU TROLLEY 10</option>
+                        </optgroup>
+                        <optgroup label="OMT TROLLEYS">
+                            <option>OMT TROLLEY 1</option><option>OMT TROLLEY 2</option><option>OMT TROLLEY 3</option><option>OMT TROLLEY 4</option><option>OMT TROLLEY 5</option>
+                            <option>OMT TROLLEY 6</option><option>OMT TROLLEY 7</option><option>OMT TROLLEY 8</option><option>OMT TROLLEY 9</option><option>OMT TROLLEY 10</option>
+                        </optgroup>
+                    </select>
                 </div>
                 <div class="input-group">
                     <label>FAST SCAN (ENTER)</label>
-                    <input type="text" id="trayInput" placeholder="Scan Barcode..." autocomplete="off">
+                    <input type="text" id="trayInput" placeholder="Scan Barcode (MT...)" autocomplete="off">
                 </div>
             </div>
             <table class="data-table">
@@ -145,7 +157,6 @@
         });
     }
 
-    // High Speed Scanner Logic
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
             db.ref('LiveScans').push({
