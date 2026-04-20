@@ -1,262 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Final Force v66.0</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <style>
-        :root { --primary: #00d4ff; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; --accent: #28a745; --danger: #ff4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
-        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; border-right: 1px solid #222; z-index: 100; display: flex; flex-direction: column; }
-        .user-profile { padding: 25px; border-bottom: 1px solid #222; background: #111; }
-        .nav-item { padding: 14px 20px; cursor: pointer; color: #888; transition: 0.2s; font-size: 14px; border-left: 4px solid transparent; }
-        .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
-        .main-content { margin-left: 260px; padding: 25px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: end; }
-        .input-group { display: flex; flex-direction: column; gap: 8px; }
-        label { font-size: 11px; color: var(--primary); text-transform: uppercase; font-weight: bold; }
-        input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
-        .data-table-container { background: var(--card); border-radius: 12px; border: 1px solid #333; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th, td { text-align: left; padding: 14px; border-bottom: 1px solid #222; font-size: 13px; }
-        th { background: #111; color: #888; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
-        .id-col { color: var(--primary); font-weight: bold; font-family: monospace; }
-        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .btn { padding: 12px 20px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.2s; }
-        .btn-filter { background: var(--primary); color: #000; }
-        .btn-export { background: var(--accent); color: #fff; }
-        #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexS Final System v1</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+<style>
+:root { --primary:#00d4ff; --bg:#0a0a0a; --card:#161616; --text:#fff; }
+body{background:var(--bg);color:#fff;font-family:sans-serif;margin:0;display:flex}
+
+.sidebar{width:240px;background:#000;height:100vh;padding:20px}
+.main{flex:1;padding:20px}
+
+input,select{padding:10px;background:#000;border:1px solid #444;color:#fff;width:100%;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+td,th{padding:10px;border-bottom:1px solid #333}
+
+.highlight{background:#003300}
+</style>
 </head>
+
 <body>
 
-    <div id="authSection">
-        <div class="auth-card" id="loginBox">
-            <h2 style="color:var(--primary); margin-bottom: 10px;">NexS LOGIN</h2>
-            <p style="color:#666; font-size: 12px; margin-bottom: 20px;">Enter ID to Access Hub</p>
-            <input type="text" id="loginId" placeholder="Employee ID (e.g. 138663)">
-            <button id="loginBtn" class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">LOGIN SYSTEM</button>
-            <p onclick="showReg(true)" style="margin-top:20px; color:#888; font-size:12px; cursor:pointer;">Register New ID</p>
-        </div>
-        <div class="auth-card" id="regBox" style="display:none;">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTRATION</h2>
-            <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:12px;"><input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">SAVE USER</button>
-            <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer;">Back</p>
-        </div>
-    </div>
+<div class="sidebar">
+<h3 id="userName">---</h3>
+<button onclick="showTab('scan')">Scan</button>
+<button onclick="showTab('history')">History</button>
+<button onclick="logout()">Logout</button>
+</div>
 
-    <div class="sidebar" id="mainSidebar" style="display:none;">
-        <div class="user-profile"><h4 id="sideName" style="color:var(--primary); margin:0;">---</h4><small id="sideId" style="color:#888;">ID: ---</small></div>
-        <div class="nav-list" style="flex: 1;">
-            <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
-            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
-            <div class="nav-item" onclick="switchTab('history', this)">🕒 History Hub</div>
-        </div>
-        <div onclick="location.reload()" style="padding:20px; color:var(--danger); cursor:pointer; text-align:center; font-weight:bold; border-top:1px solid #222;">LOGOUT</div>
-    </div>
+<div class="main">
 
-    <div class="main-content" id="mainContent" style="display:none;">
-        <div id="scanning" class="tab-content active">
-            <div class="controls-grid">
-                <div class="input-group">
-                    <label>Location Selection (45+)</label>
-                    <select id="locSelect">
-                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
-                        <option>CS LOCATION</option>
-                        <optgroup label="TROLLEYS"><option>ICU TROLLEY 1</option><option>OMT TROLLEY 1</option></optgroup>
-                    </select>
-                </div>
-                <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Barcode..."></div>
-            </div>
-            <div class="data-table-container">
-                <table><thead><tr><th>Date</th><th>Time</th><th>Barcode</th><th>Location</th><th>User Name</th><th>Employee ID</th></tr></thead><tbody id="scanLog"></tbody></table>
-            </div>
-        </div>
+<!-- LOGIN -->
+<div id="login">
+<h2>Login</h2>
+<input id="loginId" placeholder="Enter Employee ID">
+<button onclick="login()">Login</button>
+</div>
 
-        <div id="shipment" class="tab-content">
-            <div class="controls-grid">
-                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option></select></div>
-                <div class="input-group"><label>Shipment ID</label><input type="text" id="shipInput" placeholder="Max 23 digit..."></div>
-            </div>
-            <div class="data-table-container">
-                <table><thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Agency</th><th>User Name</th><th>Employee ID</th></tr></thead><tbody id="shipLog"></tbody></table>
-            </div>
-        </div>
+<!-- SCAN PAGE -->
+<div id="scanPage" style="display:none">
 
-        <div id="history" class="tab-content">
-            <div class="controls-grid">
-                <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
-                <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
-                <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIP">SHIPMENT</option></select></div>
-                <div class="input-group"><label>Search Barcode</label><input type="text" id="histSearch" placeholder="Search ID..."></div>
-                <div class="btn-row">
-                    <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
-                    <button class="btn btn-export" onclick="exportData()">Export</button>
-                </div>
-            </div>
-            <div class="data-table-container">
-                <table><thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User Name</th><th>Employee ID</th></tr></thead><tbody id="historyTableBody"></tbody></table>
-            </div>
-        </div>
-    </div>
+<h3>Scan Tray</h3>
+
+<select id="loc">
+<option>ICU ENTRY</option>
+<option>MEI ENTRY</option>
+<option>OMT ENTRY</option>
+<option>CS LOCATION</option>
+</select>
+
+<input id="scanBox" placeholder="Scan barcode">
+
+<h3>Location Tracking</h3>
+
+<select id="locFilter" onchange="renderLocation()">
+<option value="ALL">ALL</option>
+<option>ICU ENTRY</option>
+<option>MEI ENTRY</option>
+<option>OMT ENTRY</option>
+<option>CS LOCATION</option>
+</select>
+
+<input id="count" disabled placeholder="Total Count">
+
+<table>
+<thead><tr><th>Time</th><th>Barcode</th><th>Location</th></tr></thead>
+<tbody id="locTable"></tbody>
+</table>
+
+</div>
+
+<!-- HISTORY -->
+<div id="historyPage" style="display:none">
+<h3>History</h3>
+<button onclick="exportData()">Export CSV</button>
+
+<table>
+<thead><tr><th>ID</th><th>Location</th><th>Time</th></tr></thead>
+<tbody id="history"></tbody>
+</table>
+
+</div>
+
+</div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
-        databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
-        projectId: "nexs-guddu-30k",
-        appId: "1:634684833271:web:31a25a2c5301fa108142f2"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    let activeSession = { name: "---", id: "---" };
-    let masterData = [];
 
-    function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
-    
-    function handleRegister() {
-        const n = document.getElementById('regName').value.trim();
-        const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registration Done!"); showReg(false); });
-    }
+// 🔥 YOUR FIREBASE CONFIG
+firebase.initializeApp({
+apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+authDomain: "nexs-guddu-30k.firebaseapp.com",
+databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
+projectId: "nexs-guddu-30k",
+storageBucket: "nexs-guddu-30k.firebasestorage.app",
+messagingSenderId: "634684833271",
+appId: "1:634684833271:web:31a25a2c5301fa108142f2"
+});
 
-    // 🔥 FORCE LOGIN LOGIC
-    function handleLogin() {
-        const id = document.getElementById('loginId').value.trim();
-        const btn = document.getElementById('loginBtn');
-        if(!id) return alert("Please Enter ID!");
-        
-        btn.innerText = "VERIFYING...";
-        btn.disabled = true;
+const db = firebase.database();
 
-        db.ref('Users/' + id).once('value', snap => {
-            if(snap.exists()) {
-                const d = snap.val();
-                activeSession.name = d.name; activeSession.id = id;
-                document.getElementById('authSection').style.display = 'none';
-                document.getElementById('mainSidebar').style.display = 'flex';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('sideName').innerText = activeSession.name;
-                document.getElementById('sideId').innerText = "ID: " + id;
-                startSync();
-            } else { 
-                alert("ID " + id + " not found!");
-                btn.innerText = "LOGIN SYSTEM";
-                btn.disabled = false;
-            }
-        });
-    }
+let user = {id:"",name:""};
+let masterData=[];
 
-    function startSync() {
-        const paths = ['LiveScans', 'ShipmentScans'];
-        masterData = [];
-        paths.forEach(p => {
-            db.ref(p).on('value', snap => {
-                snap.forEach(c => {
-                    const d = c.val();
-                    // 🛠 THE UNIVERSAL DECODER (Matches any key)
-                    masterData.push({
-                        key: c.key, type: p.includes('Ship') ? 'SHIP' : 'TRAY', path: p,
-                        dId: d.barcode || d.shipId || d.tray || "---",
-                        dDate: d.date || "---", dTime: d.time || "---",
-                        dLoc: d.location || "---",
-                        dName: d.user || d.userName || "---",
-                        dEmpId: d.userId || d.empId || d.ID || "---",
-                        ts: d.timestamp || 0
-                    });
-                });
-                masterData.sort((a,b) => b.ts - a.ts);
-                renderTables();
-            });
-        });
-    }
+// LOGIN
+function login(){
+const id=document.getElementById('loginId').value.trim();
 
-    function renderTables() {
-        const sBody = document.getElementById('scanLog');
-        const shBody = document.getElementById('shipLog');
-        sBody.innerHTML = ""; shBody.innerHTML = "";
-        masterData.forEach(d => {
-            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
-            if(d.type === 'TRAY') sBody.innerHTML += row;
-            else shBody.innerHTML += row;
-        });
-        applyFilters();
-    }
+if(!id) return alert("Enter ID");
 
-    document.getElementById('trayInput').addEventListener('keydown', e => {
-        if(e.key === 'Enter' && e.target.value) {
-            db.ref('LiveScans').push({
-                barcode: e.target.value.toUpperCase().trim(),
-                location: document.getElementById('locSelect').value,
-                date: new Date().toLocaleDateString('en-GB'),
-                time: new Date().toLocaleTimeString(),
-                user: activeSession.name,
-                userId: activeSession.id,
-                timestamp: Date.now()
-            });
-            e.target.value = "";
-        }
-    });
+db.ref('Users/'+id).once('value',snap=>{
+if(snap.exists()){
+user.id=id;
+user.name=snap.val().name;
 
-    document.getElementById('shipInput').addEventListener('keydown', e => {
-        if(e.key === 'Enter' && e.target.value) {
-            db.ref('ShipmentScans').push({
-                shipId: e.target.value.toUpperCase().trim(),
-                location: document.getElementById('shipLocSelect').value,
-                date: new Date().toLocaleDateString('en-GB'),
-                time: new Date().toLocaleTimeString(),
-                user: activeSession.name,
-                userId: activeSession.id,
-                timestamp: Date.now()
-            });
-            e.target.value = "";
-        }
-    });
+document.getElementById('userName').innerText=user.name;
 
-    function applyFilters() {
-        const from = document.getElementById('fromDate').value;
-        const to = document.getElementById('toDate').value;
-        const type = document.getElementById('typeFilter').value;
-        const search = document.getElementById('histSearch').value.toUpperCase();
-        const histLog = document.getElementById('historyTableBody');
-        histLog.innerHTML = "";
+document.getElementById('login').style.display='none';
+document.getElementById('scanPage').style.display='block';
 
-        masterData.filter(d => {
-            const p = d.dDate.split('/');
-            const dObj = new Date(p[2], p[1]-1, p[0]);
-            const mFrom = from ? dObj >= new Date(from) : true;
-            const mTo = to ? dObj <= new Date(to) : true;
-            const mType = type === 'ALL' ? true : d.type === type;
-            const mSearch = d.dId.toUpperCase().includes(search) || d.dName.toUpperCase().includes(search);
-            return mFrom && mTo && mType && mSearch;
-        }).forEach(d => {
-            histLog.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
-        });
-    }
+startSync();
 
-    function exportData() {
-        let csv = "Type,Date,Time,ID,Location,Name,EmpID\n";
-        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dName},${d.dEmpId}\n`);
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = "NexS_Report.csv"; a.click();
-    }
+}else{
+alert("ID not found");
+}
+});
+}
 
-    function switchTab(t, el) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(t).classList.add('active');
-        el.classList.add('active');
-        if(t === 'scanning') document.getElementById('trayInput').focus();
-        if(t === 'shipment') document.getElementById('shipInput').focus();
-    }
+// LOGOUT
+function logout(){
+location.reload();
+}
+
+// 🔥 CLEAN SYNC (NO DUPLICATE ISSUE)
+function startSync(){
+['LiveScans','ShipmentScans'].forEach(p=>{
+db.ref(p).on('value',snap=>{
+
+// remove old data of that path
+masterData = masterData.filter(d=>d.path!==p);
+
+snap.forEach(c=>{
+let d=c.val();
+
+masterData.push({
+path:p,
+type:p.includes('Ship')?'SHIP':'TRAY',
+id:d.barcode||d.shipId||'---',
+loc:d.location||'---',
+time:d.time||'---',
+date:d.date||'---',
+ts:d.timestamp||0
+});
+});
+
+masterData.sort((a,b)=>b.ts-a.ts);
+
+renderLocation();
+renderHistory();
+
+});
+});
+}
+
+// SCAN INPUT
+document.getElementById('scanBox').addEventListener('keydown',e=>{
+if(e.key==='Enter'){
+
+let val=e.target.value.toUpperCase().trim();
+
+if(!val){
+beep(200);
+alert("Empty Scan!");
+return;
+}
+
+db.ref('LiveScans').push({
+barcode:val,
+location:document.getElementById('loc').value,
+date:new Date().toLocaleDateString('en-GB'),
+time:new Date().toLocaleTimeString(),
+user:user.name,
+userId:user.id,
+timestamp:Date.now()
+});
+
+beep(800);
+
+e.target.value="";
+}
+});
+
+// 🔊 SOUND
+function beep(freq){
+let ctx=new (window.AudioContext||window.webkitAudioContext)();
+let osc=ctx.createOscillator();
+osc.frequency.value=freq;
+osc.connect(ctx.destination);
+osc.start();
+setTimeout(()=>osc.stop(),100);
+}
+
+// 📍 LOCATION TRACKING
+function renderLocation(){
+let filter=document.getElementById('locFilter').value;
+let table=document.getElementById('locTable');
+let count=0;
+
+table.innerHTML="";
+
+let filtered = masterData.filter(d=>d.type==='TRAY');
+
+if(filter!=='ALL'){
+filtered = filtered.filter(d=>d.loc===filter);
+}
+
+filtered.forEach((d,i)=>{
+count++;
+table.innerHTML+=`
+<tr class="${i===0?'highlight':''}">
+<td>${d.time}</td>
+<td>${d.id}</td>
+<td>${d.loc}</td>
+</tr>`;
+});
+
+document.getElementById('count').value="Total: "+count;
+}
+
+// 🕒 HISTORY
+function renderHistory(){
+let table=document.getElementById('history');
+table.innerHTML="";
+
+masterData.forEach(d=>{
+table.innerHTML+=`
+<tr>
+<td>${d.id}</td>
+<td>${d.loc}</td>
+<td>${d.time}</td>
+</tr>`;
+});
+}
+
+// 📤 EXPORT CSV
+function exportData(){
+let csv="ID,Location,Time\n";
+
+masterData.forEach(d=>{
+csv+=`${d.id},${d.loc},${d.time}\n`;
+});
+
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="NexS_Report.csv";
+a.click();
+}
+
+// TAB SWITCH
+function showTab(t){
+document.getElementById('scanPage').style.display = t==='scan'?'block':'none';
+document.getElementById('historyPage').style.display = t==='history'?'block':'none';
+}
+
+// ⚡ AUTO FOCUS SCANNER
+setInterval(()=>{
+document.getElementById('scanBox')?.focus();
+},500);
+
 </script>
+
 </body>
 </html>
