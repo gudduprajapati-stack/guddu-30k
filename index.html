@@ -3,94 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexS Final System v1</title>
+<title>NexS System</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
 :root { --primary:#00d4ff; --bg:#0a0a0a; --card:#161616; --text:#fff; }
-body{background:var(--bg);color:#fff;font-family:sans-serif;margin:0;display:flex}
+body{margin:0;font-family:sans-serif;background:var(--bg);color:#fff;display:flex}
 
-.sidebar{width:240px;background:#000;height:100vh;padding:20px}
+/* LOGIN */
+#auth{position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center}
+.card{background:#161616;padding:30px;border-radius:10px;width:300px;text-align:center}
+input{width:100%;padding:10px;margin:10px 0;background:#000;border:1px solid #444;color:#fff}
+button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-weight:bold;cursor:pointer}
+
+/* MAIN */
+.sidebar{width:220px;background:#000;height:100vh;padding:20px}
+.nav{padding:12px;cursor:pointer;color:#888}
+.nav.active{color:#00d4ff;background:#111}
+
 .main{flex:1;padding:20px}
-
-input,select{padding:10px;background:#000;border:1px solid #444;color:#fff;width:100%;margin-bottom:10px}
-table{width:100%;border-collapse:collapse;margin-top:20px}
-td,th{padding:10px;border-bottom:1px solid #333}
-
-.highlight{background:#003300}
+.tab{display:none}
+.tab.active{display:block}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-<h3 id="userName">---</h3>
-<button onclick="showTab('scan')">Scan</button>
-<button onclick="showTab('history')">History</button>
-<button onclick="logout()">Logout</button>
-</div>
+<!-- 🔐 LOGIN / REGISTER -->
+<div id="auth">
 
-<div class="main">
-
-<!-- LOGIN -->
-<div id="login">
+<div class="card" id="loginBox">
 <h2>Login</h2>
-<input id="loginId" placeholder="Enter Employee ID">
+<input id="loginId" placeholder="Employee ID">
 <button onclick="login()">Login</button>
+<p onclick="toggleAuth(true)" style="cursor:pointer">New Registration</p>
 </div>
 
-<!-- SCAN PAGE -->
-<div id="scanPage" style="display:none">
-
-<h3>Scan Tray</h3>
-
-<select id="loc">
-<option>ICU ENTRY</option>
-<option>MEI ENTRY</option>
-<option>OMT ENTRY</option>
-<option>CS LOCATION</option>
-</select>
-
-<input id="scanBox" placeholder="Scan barcode">
-
-<h3>Location Tracking</h3>
-
-<select id="locFilter" onchange="renderLocation()">
-<option value="ALL">ALL</option>
-<option>ICU ENTRY</option>
-<option>MEI ENTRY</option>
-<option>OMT ENTRY</option>
-<option>CS LOCATION</option>
-</select>
-
-<input id="count" disabled placeholder="Total Count">
-
-<table>
-<thead><tr><th>Time</th><th>Barcode</th><th>Location</th></tr></thead>
-<tbody id="locTable"></tbody>
-</table>
+<div class="card" id="regBox" style="display:none">
+<h2>Register</h2>
+<input id="regName" placeholder="Full Name">
+<input id="regId" placeholder="Employee ID">
+<button onclick="register()">Register</button>
+<p onclick="toggleAuth(false)" style="cursor:pointer">Back to Login</p>
+</div>
 
 </div>
 
-<!-- HISTORY -->
-<div id="historyPage" style="display:none">
-<h3>History</h3>
-<button onclick="exportData()">Export CSV</button>
+<!-- 🏠 MAIN APP -->
+<div class="sidebar" id="sidebar" style="display:none">
+<h3 id="userName">---</h3>
 
-<table>
-<thead><tr><th>ID</th><th>Location</th><th>Time</th></tr></thead>
-<tbody id="history"></tbody>
-</table>
+<div class="nav active" onclick="openTab('tray',this)">📦 Tray Scan</div>
+<div class="nav" onclick="openTab('shipment',this)">🚛 Shipment Scan</div>
+<div class="nav" onclick="openTab('history',this)">🕒 History Hub</div>
+<div class="nav" onclick="openTab('dashboard',this)">📊 Dashboard</div>
+<div class="nav" onclick="logout()">🔓 Logout</div>
+</div>
 
+<div class="main" id="main" style="display:none">
+
+<div id="tray" class="tab active">
+<h2>Tray Scan Page</h2>
+</div>
+
+<div id="shipment" class="tab">
+<h2>Shipment Scan Page</h2>
+</div>
+
+<div id="history" class="tab">
+<h2>History Hub</h2>
+</div>
+
+<div id="dashboard" class="tab">
+<h2>Dashboard</h2>
 </div>
 
 </div>
 
 <script>
 
-// 🔥 YOUR FIREBASE CONFIG
+// 🔥 FIREBASE CONFIG
 firebase.initializeApp({
 apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
 authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -102,174 +96,61 @@ appId: "1:634684833271:web:31a25a2c5301fa108142f2"
 });
 
 const db = firebase.database();
+let user={};
 
-let user = {id:"",name:""};
-let masterData=[];
+// 🔁 LOGIN / REGISTER SWITCH
+function toggleAuth(showReg){
+document.getElementById('loginBox').style.display = showReg ? 'none':'block';
+document.getElementById('regBox').style.display = showReg ? 'block':'none';
+}
 
-// LOGIN
+// 🆕 REGISTER
+function register(){
+let name=document.getElementById('regName').value.trim();
+let id=document.getElementById('regId').value.trim();
+
+if(!name||!id) return alert("Fill all fields");
+
+db.ref('Users/'+id).set({name,id}).then(()=>{
+alert("Registered!");
+toggleAuth(false);
+});
+}
+
+// 🔐 LOGIN
 function login(){
-const id=document.getElementById('loginId').value.trim();
-
+let id=document.getElementById('loginId').value.trim();
 if(!id) return alert("Enter ID");
 
 db.ref('Users/'+id).once('value',snap=>{
 if(snap.exists()){
-user.id=id;
-user.name=snap.val().name;
+user=snap.val();
 
 document.getElementById('userName').innerText=user.name;
 
-document.getElementById('login').style.display='none';
-document.getElementById('scanPage').style.display='block';
-
-startSync();
+document.getElementById('auth').style.display='none';
+document.getElementById('sidebar').style.display='block';
+document.getElementById('main').style.display='block';
 
 }else{
-alert("ID not found");
+alert("User not found");
 }
 });
 }
 
-// LOGOUT
+// 🔄 TAB SWITCH
+function openTab(tab,el){
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+
+document.getElementById(tab).classList.add('active');
+el.classList.add('active');
+}
+
+// 🔓 LOGOUT
 function logout(){
 location.reload();
 }
-
-// 🔥 CLEAN SYNC (NO DUPLICATE ISSUE)
-function startSync(){
-['LiveScans','ShipmentScans'].forEach(p=>{
-db.ref(p).on('value',snap=>{
-
-// remove old data of that path
-masterData = masterData.filter(d=>d.path!==p);
-
-snap.forEach(c=>{
-let d=c.val();
-
-masterData.push({
-path:p,
-type:p.includes('Ship')?'SHIP':'TRAY',
-id:d.barcode||d.shipId||'---',
-loc:d.location||'---',
-time:d.time||'---',
-date:d.date||'---',
-ts:d.timestamp||0
-});
-});
-
-masterData.sort((a,b)=>b.ts-a.ts);
-
-renderLocation();
-renderHistory();
-
-});
-});
-}
-
-// SCAN INPUT
-document.getElementById('scanBox').addEventListener('keydown',e=>{
-if(e.key==='Enter'){
-
-let val=e.target.value.toUpperCase().trim();
-
-if(!val){
-beep(200);
-alert("Empty Scan!");
-return;
-}
-
-db.ref('LiveScans').push({
-barcode:val,
-location:document.getElementById('loc').value,
-date:new Date().toLocaleDateString('en-GB'),
-time:new Date().toLocaleTimeString(),
-user:user.name,
-userId:user.id,
-timestamp:Date.now()
-});
-
-beep(800);
-
-e.target.value="";
-}
-});
-
-// 🔊 SOUND
-function beep(freq){
-let ctx=new (window.AudioContext||window.webkitAudioContext)();
-let osc=ctx.createOscillator();
-osc.frequency.value=freq;
-osc.connect(ctx.destination);
-osc.start();
-setTimeout(()=>osc.stop(),100);
-}
-
-// 📍 LOCATION TRACKING
-function renderLocation(){
-let filter=document.getElementById('locFilter').value;
-let table=document.getElementById('locTable');
-let count=0;
-
-table.innerHTML="";
-
-let filtered = masterData.filter(d=>d.type==='TRAY');
-
-if(filter!=='ALL'){
-filtered = filtered.filter(d=>d.loc===filter);
-}
-
-filtered.forEach((d,i)=>{
-count++;
-table.innerHTML+=`
-<tr class="${i===0?'highlight':''}">
-<td>${d.time}</td>
-<td>${d.id}</td>
-<td>${d.loc}</td>
-</tr>`;
-});
-
-document.getElementById('count').value="Total: "+count;
-}
-
-// 🕒 HISTORY
-function renderHistory(){
-let table=document.getElementById('history');
-table.innerHTML="";
-
-masterData.forEach(d=>{
-table.innerHTML+=`
-<tr>
-<td>${d.id}</td>
-<td>${d.loc}</td>
-<td>${d.time}</td>
-</tr>`;
-});
-}
-
-// 📤 EXPORT CSV
-function exportData(){
-let csv="ID,Location,Time\n";
-
-masterData.forEach(d=>{
-csv+=`${d.id},${d.loc},${d.time}\n`;
-});
-
-let a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="NexS_Report.csv";
-a.click();
-}
-
-// TAB SWITCH
-function showTab(t){
-document.getElementById('scanPage').style.display = t==='scan'?'block':'none';
-document.getElementById('historyPage').style.display = t==='history'?'block':'none';
-}
-
-// ⚡ AUTO FOCUS SCANNER
-setInterval(()=>{
-document.getElementById('scanBox')?.focus();
-},500);
 
 </script>
 
