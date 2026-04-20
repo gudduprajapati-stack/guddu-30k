@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <title>NexS Final System</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+<!-- 🔥 Calendar (Flatpickr) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <style>
 body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex}
@@ -127,8 +132,8 @@ th{color:#00d4ff}
 <h2>History</h2>
 
 <div class="row">
-<input type="date" id="fromDate">
-<input type="date" id="toDate">
+<input id="fromDate" placeholder="From Date">
+<input id="toDate" placeholder="To Date">
 
 <select id="typeFilter">
 <option value="ALL">ALL</option>
@@ -165,13 +170,24 @@ databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 const db=firebase.database();
 let user={},historyData=[];
 
-// DATE FIX
+// DATE FORMAT
 function formatDate(d){
 if(!d)return "-";
 let p=d.split('/');
 if(p[0]>12)return d;
 return p[1]+"/"+p[0]+"/"+p[2];
 }
+
+// DATE PARSE
+function parseDate(d){
+if(!d) return null;
+let p=d.split('/');
+return new Date(p[2],p[1]-1,p[0]);
+}
+
+// 🔥 CALENDAR INIT
+flatpickr("#fromDate",{dateFormat:"d/m/Y"});
+flatpickr("#toDate",{dateFormat:"d/m/Y"});
 
 // LOGIN
 function login(){
@@ -186,7 +202,6 @@ startTray();startShipment();
 });
 }
 
-// REGISTER
 function register(){
 db.ref('Users/'+regId.value).set({name:regName.value});
 alert("Registered");toggle(false);
@@ -206,7 +221,7 @@ if(t==='history') loadHistory();
 
 function logout(){location.reload();}
 
-// TRAY SCAN
+// TRAY
 scanBox.onkeydown=e=>{
 if(e.key==='Enter'){
 let v=scanBox.value.toUpperCase().trim();
@@ -222,7 +237,7 @@ scanBox.value="";
 }
 };
 
-// SHIPMENT SCAN
+// SHIPMENT
 shipBox.onkeydown=e=>{
 if(e.key==='Enter'){
 let v=shipBox.value.trim();
@@ -264,7 +279,7 @@ shipTable.innerHTML=d.map((x,i)=>`
 });
 }
 
-// HISTORY LOAD
+// HISTORY
 function loadHistory(){
 historyData=[];
 db.ref('LiveScans').once('value',s=>{
@@ -282,7 +297,6 @@ renderHistory(historyData);
 });
 }
 
-// RENDER
 function renderHistory(d){
 historyTable.innerHTML=d.map(x=>`
 <tr>
@@ -291,17 +305,15 @@ historyTable.innerHTML=d.map(x=>`
 </tr>`).join('');
 }
 
-// FILTER
 function applyHistoryFilter(){
-let f=fromDate.value,t=toDate.value,tp=typeFilter.value,s=searchBox.value.toUpperCase();
+let f=parseDate(fromDate.value),t=parseDate(toDate.value),tp=typeFilter.value,s=searchBox.value.toUpperCase();
 renderHistory(historyData.filter(x=>{
-let p=x.date.split('/'),dt=new Date(p[2],p[1]-1,p[0]);
-return (!f||dt>=new Date(f))&&(!t||dt<=new Date(t))&&(tp==='ALL'||x.type===tp)&&
+let dt=parseDate(x.date);
+return (!f||dt>=f)&&(!t||dt<=t)&&(tp==='ALL'||x.type===tp)&&
 (x.id.toUpperCase().includes(s)||x.user.toUpperCase().includes(s));
 }));
 }
 
-// EXPORT
 function exportHistory(){
 let csv="Type,Date,Time,ID,Location,User,UserID\n";
 historyData.forEach(x=>csv+=`${x.type},${x.date},${x.time},${x.id},${x.loc},${x.user},${x.uid}\n`);
@@ -309,17 +321,14 @@ let a=document.createElement('a');
 a.href=URL.createObjectURL(new Blob([csv]));a.download="History.csv";a.click();
 }
 
-// DELETE
 function deleteHistory(){
 if(!confirm("⚠️ Permanent Delete?")) return;
-let f=fromDate.value,t=toDate.value,tp=typeFilter.value,s=searchBox.value.toUpperCase();
-
+let f=parseDate(fromDate.value),t=parseDate(toDate.value),tp=typeFilter.value,s=searchBox.value.toUpperCase();
 historyData.filter(x=>{
-let p=x.date.split('/'),dt=new Date(p[2],p[1]-1,p[0]);
-return (!f||dt>=new Date(f))&&(!t||dt<=new Date(t))&&(tp==='ALL'||x.type===tp)&&
+let dt=parseDate(x.date);
+return (!f||dt>=f)&&(!t||dt<=t)&&(tp==='ALL'||x.type===tp)&&
 (x.id.toUpperCase().includes(s)||x.user.toUpperCase().includes(s));
 }).forEach(x=>db.ref(x.path+"/"+x.key).remove());
-
 alert("Deleted");
 loadHistory();
 }
