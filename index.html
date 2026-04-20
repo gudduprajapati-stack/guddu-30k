@@ -13,8 +13,8 @@ body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex}
 /* LOGIN */
 #auth{position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center}
 .card{background:#161616;padding:30px;border-radius:10px;width:300px;text-align:center}
-input,select{width:100%;padding:10px;margin:10px 0;background:#000;border:1px solid #444;color:#fff}
-button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-weight:bold}
+input,select{padding:10px;background:#000;border:1px solid #444;color:#fff}
+button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-weight:bold;margin-top:10px}
 
 /* MAIN */
 .sidebar{width:220px;background:#000;height:100vh;padding:20px}
@@ -23,6 +23,15 @@ button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-we
 .main{flex:1;padding:20px}
 .tab{display:none}
 .tab.active{display:block}
+
+/* ONE LINE FIX */
+.row{
+display:flex;
+gap:10px;
+align-items:center;
+}
+#loc{flex:1;}
+#scanBox{width:260px;}
 </style>
 
 </head>
@@ -66,6 +75,8 @@ button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-we
 <div id="tray" class="tab active">
 
 <h2>Tray Scan</h2>
+
+<div class="row">
 
 <select id="loc">
 <option>ICU ENTRY</option>
@@ -117,11 +128,13 @@ button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-we
 
 <input id="scanBox" placeholder="Scan Tray (MT76921)" maxlength="7">
 
+</div>
+
 <p id="msg" style="color:red"></p>
 
 </div>
 
-<!-- बाकी खाली -->
+<!-- EMPTY TABS -->
 <div id="shipment" class="tab"><h2>Shipment Page</h2></div>
 <div id="history" class="tab"><h2>History Page</h2></div>
 <div id="dashboard" class="tab"><h2>Dashboard</h2></div>
@@ -167,7 +180,7 @@ alert("Registered");
 toggle(false);
 }
 
-// SWITCH LOGIN
+// SWITCH
 function toggle(v){
 document.getElementById('loginBox').style.display=v?'none':'block';
 document.getElementById('regBox').style.display=v?'block':'none';
@@ -191,7 +204,6 @@ if(e.key==='Enter'){
 let val=e.target.value.toUpperCase().trim();
 let msg=document.getElementById('msg');
 
-// VALIDATION
 if(!/^[A-Z]{2}[0-9]{5}$/.test(val)){
 msg.innerText="Invalid Format!";
 return;
@@ -199,7 +211,6 @@ return;
 
 msg.innerText="";
 
-// SAVE
 db.ref('LiveScans').push({
 barcode:val,
 location:document.getElementById('loc').value,
