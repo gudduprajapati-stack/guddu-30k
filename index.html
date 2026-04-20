@@ -22,35 +22,15 @@ button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-we
 .row{display:flex;gap:10px;align-items:center}
 #loc{flex:1}
 #scanBox{width:260px}
-
-/* 🔥 TABLE FIX */
-table{
-width:100%;
-margin-top:20px;
-border-collapse:collapse;
-table-layout:fixed; /* equal column width */
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #333;
-text-align:center; /* center align */
-word-wrap:break-word;
-}
-
-th{
-color:#00d4ff;
-}
-
-.highlight{
-background:#003300;
-}
+table{width:100%;margin-top:20px;border-collapse:collapse;table-layout:fixed}
+th,td{padding:10px;border-bottom:1px solid #333;text-align:center}
+th{color:#00d4ff}
+.highlight{background:#003300}
 </style>
 
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="auth">
 <div class="card" id="loginBox">
 <h2>Login</h2>
@@ -68,7 +48,6 @@ background:#003300;
 </div>
 </div>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none">
 <h3 id="userName">---</h3>
 <div class="nav active" onclick="openTab('tray',this)">📦 Tray Scan</div>
@@ -78,7 +57,6 @@ background:#003300;
 <div class="nav" onclick="logout()">🔓 Logout</div>
 </div>
 
-<!-- MAIN -->
 <div class="main" id="main" style="display:none">
 
 <div id="tray" class="tab active">
@@ -155,15 +133,10 @@ background:#003300;
 
 </div>
 
-<div id="shipment" class="tab"><h2>Shipment Page</h2></div>
-<div id="history" class="tab"><h2>History Page</h2></div>
-<div id="dashboard" class="tab"><h2>Dashboard</h2></div>
-
 </div>
 
 <script>
 
-// FIREBASE
 firebase.initializeApp({
 apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
 authDomain: "nexs-guddu-30k.firebaseapp.com",
@@ -177,7 +150,6 @@ appId: "1:634684833271:web:31a25a2c5301fa108142f2"
 const db = firebase.database();
 let user={};
 
-// LOGIN
 function login(){
 let id=document.getElementById('loginId').value.trim();
 db.ref('Users/'+id).once('value',snap=>{
@@ -196,7 +168,6 @@ startLive();
 });
 }
 
-// REGISTER
 function register(){
 let n=document.getElementById('regName').value;
 let i=document.getElementById('regId').value;
@@ -219,7 +190,6 @@ el.classList.add('active');
 
 function logout(){location.reload();}
 
-// SCAN
 document.getElementById('scanBox').addEventListener('keydown',e=>{
 if(e.key==='Enter'){
 let val=e.target.value.toUpperCase().trim();
@@ -246,23 +216,39 @@ e.target.value="";
 }
 });
 
-// LIVE
+// 🔥 FIXED LIVE DATA
 function startLive(){
 db.ref('LiveScans').on('value',snap=>{
 let data=[];
-snap.forEach(c=>data.push(c.val()));
 
-data.sort((a,b)=>b.timestamp-a.timestamp);
+snap.forEach(c=>{
+let d=c.val();
+
+if(!d || (!d.barcode && !d.date)) return; // skip garbage
+
+data.push({
+date:d.date || "-",
+time:d.time || "-",
+barcode:d.barcode || "-",
+location:d.location || "-",
+user:d.user || "-",
+userId:d.userId || "-",
+ts:d.timestamp || 0
+});
+});
+
+// sort safe
+data.sort((a,b)=>b.ts - a.ts);
 
 let html="";
 data.forEach((d,i)=>{
 html+=`<tr class="${i==0?'highlight':''}">
-<td>${d.date||"-"}</td>
-<td>${d.time||"-"}</td>
-<td>${d.barcode||"-"}</td>
-<td>${d.location||"-"}</td>
-<td>${d.user||"-"}</td>
-<td>${d.userId||"-"}</td>
+<td>${d.date}</td>
+<td>${d.time}</td>
+<td>${d.barcode}</td>
+<td>${d.location}</td>
+<td>${d.user}</td>
+<td>${d.userId}</td>
 </tr>`;
 });
 
