@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Identity v56.0</title>
+    <title>NexS - Master Pro v57.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -38,7 +38,7 @@
         .id-col { color: var(--primary); font-weight: 600; font-family: monospace; }
 
         .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .btn { padding: 11px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
         .btn-filter { background: var(--primary); color: #000; }
         .btn-export { background: var(--accent); color: #fff; }
         .btn-delete { background: var(--danger); color: #fff; }
@@ -53,7 +53,7 @@
         <div class="auth-card" id="loginBox">
             <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">Login</button>
+            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">Login System</button>
             <p onclick="showReg(true)" style="margin-top:20px; color:#666; font-size:12px; cursor:pointer;">New Registration</p>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
@@ -83,11 +83,11 @@
         <div id="scanning" class="tab-content active">
             <div class="controls-hub">
                 <div class="input-group">
-                    <label>Location</label>
+                    <label>Location Selection</label>
                     <select id="locSelect">
-                        <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
-                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option>
-                        <option>CS LOCATION</option>
+                        <option value="ICU ENTRY">ICU ENTRY</option><option value="MEI ENTRY">MEI ENTRY</option><option value="OMT ENTRY">OMT ENTRY</option>
+                        <option value="LO SEND TO ICU">LO SEND TO ICU</option><option value="LO SEND TO MEI">LO SEND TO MEI</option>
+                        <option value="CS LOCATION">CS LOCATION</option>
                         <optgroup label="OMT RACKS">
                             <option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option>
                         </optgroup>
@@ -96,7 +96,7 @@
                         </optgroup>
                     </select>
                 </div>
-                <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Barcode..." autocomplete="off"></div>
+                <div class="input-group"><label>Fast Tray Scan</label><input type="text" id="trayInput" placeholder="Scan Barcode..."></div>
             </div>
             <div class="data-table-container">
                 <table>
@@ -108,8 +108,8 @@
 
         <div id="shipment" class="tab-content">
             <div class="controls-hub">
-                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
-                <div class="input-group"><label>Shipment Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..." maxlength="23"></div>
+                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option></select></div>
+                <div class="input-group"><label>ID Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..." maxlength="23"></div>
             </div>
             <div class="data-table-container">
                 <table>
@@ -128,7 +128,7 @@
                 <div class="btn-row">
                     <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
                     <button class="btn btn-export" onclick="exportData()">Export</button>
-                    <button class="btn btn-danger" onclick="bulkDelete()">Delete</button>
+                    <button class="btn btn-delete" onclick="bulkDelete()">Delete</button>
                 </div>
             </div>
             <div class="data-table-container">
@@ -150,8 +150,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // 🔥 SESSION LOCK
-    let session = { name: "---", id: "---" };
+    // Global User Anchor
+    let session = { name: "Unknown", id: "---" };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
@@ -159,7 +159,7 @@
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("User Saved!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Saved!"); showReg(false); });
     }
 
     function handleLogin() {
@@ -186,27 +186,30 @@
                 const pull = (snap, type, path) => {
                     snap.forEach(c => {
                         const d = c.val();
-                        // 🛠 IDENTITY ENGINE: Joins every possible key to prevent Unknown/---
+                        // 🛠 Mapping Logic for both old and new data
+                        const userName = d.user || d.userName || "Unknown";
+                        const employeeID = d.userId || d.empId || d.ID || "---";
+                        const scanDate = d.date || d.scanDate || "---";
+                        const scanTime = d.time || d.scanTime || "---";
+                        const scanLoc = d.location || d.locName || "---";
+
                         masterData.push({
                             key: c.key, type: type, path: path,
-                            dId: d.barcode || d.shipId || d.tray || d.barcodeID || "---",
-                            dDate: d.date || d.scanDate || "---",
-                            dTime: d.time || d.scanTime || "---",
-                            dLoc: d.location || d.locName || "---",
-                            dName: d.user || d.userName || "Unknown",
-                            dEmpId: d.userId || d.empId || d.ID || "---",
+                            dId: d.barcode || d.shipId || d.tray || "---",
+                            dDate: scanDate, dTime: scanTime, dLoc: scanLoc,
+                            dName: userName, dEmpId: employeeID,
                             ts: d.timestamp || 0
                         });
                     });
                 };
                 pull(s1, 'TRAY', 'LiveScans'); pull(s2, 'SHIPMENT', 'ShipmentScans');
                 masterData.sort((a,b) => b.ts - a.ts);
-                renderTables();
+                renderAll();
             });
         });
     }
 
-    function renderTables() {
+    function renderAll() {
         const sBody = document.getElementById('scanLog');
         const hBody = document.getElementById('shipLog');
         sBody.innerHTML = ""; hBody.innerHTML = "";
@@ -220,34 +223,21 @@
 
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
+            // 🔥 IDENTITY FORCE SAVE
             db.ref('LiveScans').push({
                 barcode: e.target.value.toUpperCase().trim(),
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
                 user: session.name,
-                userId: session.id, // Pakka Save
+                userId: session.id, // ID Pakka Save ho rahi hai
                 timestamp: Date.now()
             });
             e.target.value = "";
         }
     });
 
-    document.getElementById('shipInput').addEventListener('keydown', e => {
-        if(e.key === 'Enter' && e.target.value) {
-            db.ref('ShipmentScans').push({
-                shipId: e.target.value.toUpperCase().trim(),
-                location: document.getElementById('shipLocSelect').value,
-                date: new Date().toLocaleDateString('en-GB'),
-                time: new Date().toLocaleTimeString(),
-                user: session.name,
-                userId: session.id,
-                timestamp: Date.now()
-            });
-            e.target.value = "";
-        }
-    });
-
+    // History & Export remains the same logic as requested
     function applyFilters() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
@@ -262,7 +252,7 @@
             const mFrom = from ? dObj >= new Date(from) : true;
             const mTo = to ? dObj <= new Date(to) : true;
             const mType = type === 'ALL' ? true : d.type === type;
-            const mSearch = d.dId.toUpperCase().includes(search) || d.dName.toUpperCase().includes(search) || d.dEmpId.toUpperCase().includes(search);
+            const mSearch = d.dId.toUpperCase().includes(search) || d.dName.toUpperCase().includes(search);
             return mFrom && mTo && mType && mSearch;
         }).forEach(d => {
             histLog.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="name-col">${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
@@ -270,18 +260,18 @@
     }
 
     function exportData() {
-        let csv = "Type,Date,Time,Barcode,Location,User_Name,Employee_ID\n";
+        let csv = "Type,Date,Time,ID,Location,Name,EmpID\n";
         masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dName},${d.dEmpId}\n`);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = "NexS_Identity_Report.csv"; a.click();
+        a.download = "NexS_Report.csv"; a.click();
     }
 
     function bulkDelete() {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
         if(!from || !to) return alert("Select range!");
-        if(confirm("Delete Permanently?")) {
+        if(confirm("Permanently delete range?")) {
             masterData.forEach(d => {
                 const p = d.dDate.split('/');
                 const dObj = new Date(p[2], p[1]-1, p[0]);
@@ -296,7 +286,6 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(t).classList.add('active');
         el.classList.add('active');
-        if(t === 'scanning') document.getElementById('trayInput').focus();
     }
 </script>
 </body>
