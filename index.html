@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Final v65.0</title>
+    <title>NexS - Final Force v66.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -26,10 +26,9 @@
         th { background: #111; color: #888; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
         .id-col { color: var(--primary); font-weight: bold; font-family: monospace; }
         .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .btn { padding: 11px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .btn { padding: 12px 20px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.2s; }
         .btn-filter { background: var(--primary); color: #000; }
         .btn-export { background: var(--accent); color: #fff; }
-        .btn-delete { background: var(--danger); color: #fff; }
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; }
     </style>
@@ -38,15 +37,16 @@
 
     <div id="authSection">
         <div class="auth-card" id="loginBox">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">Login System</button>
-            <p onclick="showReg(true)" style="margin-top:20px; color:#666; font-size:12px; cursor:pointer;">Register New User</p>
+            <h2 style="color:var(--primary); margin-bottom: 10px;">NexS LOGIN</h2>
+            <p style="color:#666; font-size: 12px; margin-bottom: 20px;">Enter ID to Access Hub</p>
+            <input type="text" id="loginId" placeholder="Employee ID (e.g. 138663)">
+            <button id="loginBtn" class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">LOGIN SYSTEM</button>
+            <p onclick="showReg(true)" style="margin-top:20px; color:#888; font-size:12px; cursor:pointer;">Register New ID</p>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
             <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTRATION</h2>
             <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:12px;"><input type="text" id="regId" placeholder="Employee ID">
-            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save User</button>
+            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">SAVE USER</button>
             <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer;">Back</p>
         </div>
     </div>
@@ -62,16 +62,14 @@
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
-        
         <div id="scanning" class="tab-content active">
             <div class="controls-grid">
                 <div class="input-group">
-                    <label>Location Selection</label>
+                    <label>Location Selection (45+)</label>
                     <select id="locSelect">
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
-                        <optgroup label="TROLLEYS & RACKS">
-                            <option>ICU TROLLEY 1</option><option>OMT RACK 01</option>
-                        </optgroup>
+                        <option>CS LOCATION</option>
+                        <optgroup label="TROLLEYS"><option>ICU TROLLEY 1</option><option>OMT TROLLEY 1</option></optgroup>
                     </select>
                 </div>
                 <div class="input-group"><label>Fast Scan</label><input type="text" id="trayInput" placeholder="Scan Barcode..."></div>
@@ -83,8 +81,8 @@
 
         <div id="shipment" class="tab-content">
             <div class="controls-grid">
-                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
-                <div class="input-group"><label>ID Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..."></div>
+                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option></select></div>
+                <div class="input-group"><label>Shipment ID</label><input type="text" id="shipInput" placeholder="Max 23 digit..."></div>
             </div>
             <div class="data-table-container">
                 <table><thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Agency</th><th>User Name</th><th>Employee ID</th></tr></thead><tbody id="shipLog"></tbody></table>
@@ -95,12 +93,11 @@
             <div class="controls-grid">
                 <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
                 <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
-                <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
-                <div class="input-group"><label>Search ID</label><input type="text" id="histSearch" placeholder="Search ID..."></div>
+                <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIP">SHIPMENT</option></select></div>
+                <div class="input-group"><label>Search Barcode</label><input type="text" id="histSearch" placeholder="Search ID..."></div>
                 <div class="btn-row">
                     <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
                     <button class="btn btn-export" onclick="exportData()">Export</button>
-                    <button class="btn btn-delete" onclick="bulkDelete()">Delete</button>
                 </div>
             </div>
             <div class="data-table-container">
@@ -119,30 +116,41 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    let activeSession = { name: "Unknown", id: "---" };
+    let activeSession = { name: "---", id: "---" };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
+    
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Saved!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Registration Done!"); showReg(false); });
     }
 
+    // 🔥 FORCE LOGIN LOGIC
     function handleLogin() {
         const id = document.getElementById('loginId').value.trim();
-        if(!id) return alert("Enter ID!");
+        const btn = document.getElementById('loginBtn');
+        if(!id) return alert("Please Enter ID!");
+        
+        btn.innerText = "VERIFYING...";
+        btn.disabled = true;
+
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 const d = snap.val();
                 activeSession.name = d.name; activeSession.id = id;
                 document.getElementById('authSection').style.display = 'none';
-                document.getElementById('mainSidebar').style.display = 'block';
+                document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
                 document.getElementById('sideName').innerText = activeSession.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("ID Not Found!"); }
+            } else { 
+                alert("ID " + id + " not found!");
+                btn.innerText = "LOGIN SYSTEM";
+                btn.disabled = false;
+            }
         });
     }
 
@@ -153,28 +161,31 @@
             db.ref(p).on('value', snap => {
                 snap.forEach(c => {
                     const d = c.val();
+                    // 🛠 THE UNIVERSAL DECODER (Matches any key)
                     masterData.push({
-                        key: c.key, type: p.includes('Ship') ? 'SHIPMENT' : 'TRAY', path: p,
+                        key: c.key, type: p.includes('Ship') ? 'SHIP' : 'TRAY', path: p,
                         dId: d.barcode || d.shipId || d.tray || "---",
-                        dDate: d.date || "---", dTime: d.time || "---", dLoc: d.location || "---",
-                        dName: d.user || d.userName || "---", dEmpId: d.userId || d.empId || "---",
+                        dDate: d.date || "---", dTime: d.time || "---",
+                        dLoc: d.location || "---",
+                        dName: d.user || d.userName || "---",
+                        dEmpId: d.userId || d.empId || d.ID || "---",
                         ts: d.timestamp || 0
                     });
                 });
                 masterData.sort((a,b) => b.ts - a.ts);
-                renderAll();
+                renderTables();
             });
         });
     }
 
-    function renderAll() {
+    function renderTables() {
         const sBody = document.getElementById('scanLog');
         const shBody = document.getElementById('shipLog');
         sBody.innerHTML = ""; shBody.innerHTML = "";
         masterData.forEach(d => {
             const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
             if(d.type === 'TRAY') sBody.innerHTML += row;
-            else if(d.type === 'SHIPMENT') shBody.innerHTML += row;
+            else shBody.innerHTML += row;
         });
         applyFilters();
     }
@@ -186,7 +197,8 @@
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: activeSession.name, userId: activeSession.id,
+                user: activeSession.name,
+                userId: activeSession.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -200,11 +212,51 @@
                 location: document.getElementById('shipLocSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: activeSession.name, userId: activeSession.id,
+                user: activeSession.name,
+                userId: activeSession.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
         }
     });
 
-    function
+    function applyFilters() {
+        const from = document.getElementById('fromDate').value;
+        const to = document.getElementById('toDate').value;
+        const type = document.getElementById('typeFilter').value;
+        const search = document.getElementById('histSearch').value.toUpperCase();
+        const histLog = document.getElementById('historyTableBody');
+        histLog.innerHTML = "";
+
+        masterData.filter(d => {
+            const p = d.dDate.split('/');
+            const dObj = new Date(p[2], p[1]-1, p[0]);
+            const mFrom = from ? dObj >= new Date(from) : true;
+            const mTo = to ? dObj <= new Date(to) : true;
+            const mType = type === 'ALL' ? true : d.type === type;
+            const mSearch = d.dId.toUpperCase().includes(search) || d.dName.toUpperCase().includes(search);
+            return mFrom && mTo && mType && mSearch;
+        }).forEach(d => {
+            histLog.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
+        });
+    }
+
+    function exportData() {
+        let csv = "Type,Date,Time,ID,Location,Name,EmpID\n";
+        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dName},${d.dEmpId}\n`);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = "NexS_Report.csv"; a.click();
+    }
+
+    function switchTab(t, el) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(t).classList.add('active');
+        el.classList.add('active');
+        if(t === 'scanning') document.getElementById('trayInput').focus();
+        if(t === 'shipment') document.getElementById('shipInput').focus();
+    }
+</script>
+</body>
+</html>
