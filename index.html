@@ -9,29 +9,21 @@
 
 <style>
 body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex}
-
-/* LOGIN */
 #auth{position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center}
 .card{background:#161616;padding:30px;border-radius:10px;width:300px;text-align:center}
 input,select{padding:10px;background:#000;border:1px solid #444;color:#fff}
 button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-weight:bold;margin-top:10px}
-
-/* MAIN */
 .sidebar{width:220px;background:#000;height:100vh;padding:20px}
 .nav{padding:12px;cursor:pointer;color:#888}
 .nav.active{color:#00d4ff;background:#111}
 .main{flex:1;padding:20px}
 .tab{display:none}
 .tab.active{display:block}
-
-/* ROW */
 .row{display:flex;gap:10px;align-items:center}
 #loc{flex:1}
 #scanBox{width:260px}
-
-/* TABLE */
 table{width:100%;margin-top:20px;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #333;text-align:left}
+th,td{padding:10px;border-bottom:1px solid #333}
 th{color:#00d4ff}
 .highlight{background:#003300}
 </style>
@@ -70,7 +62,6 @@ th{color:#00d4ff}
 <!-- MAIN -->
 <div class="main" id="main" style="display:none">
 
-<!-- TRAY -->
 <div id="tray" class="tab active">
 
 <h2>Tray Scan</h2>
@@ -129,7 +120,6 @@ th{color:#00d4ff}
 
 <p id="msg" style="color:red"></p>
 
-<!-- 🔥 LIVE TABLE -->
 <table>
 <thead>
 <tr>
@@ -138,6 +128,7 @@ th{color:#00d4ff}
 <th>Tray</th>
 <th>Location</th>
 <th>User</th>
+<th>User ID</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -145,7 +136,6 @@ th{color:#00d4ff}
 
 </div>
 
-<!-- EMPTY -->
 <div id="shipment" class="tab"><h2>Shipment Page</h2></div>
 <div id="history" class="tab"><h2>History Page</h2></div>
 <div id="dashboard" class="tab"><h2>Dashboard</h2></div>
@@ -173,11 +163,15 @@ function login(){
 let id=document.getElementById('loginId').value.trim();
 db.ref('Users/'+id).once('value',snap=>{
 if(snap.exists()){
-user=snap.val();
-document.getElementById('userName').innerText=user.name;
+user.id = id;
+user.name = snap.val().name;
+
+document.getElementById('userName').innerText=user.name + " ("+id+")";
+
 document.getElementById('auth').style.display='none';
 document.getElementById('sidebar').style.display='block';
 document.getElementById('main').style.display='block';
+
 startLive();
 }else alert("User not found");
 });
@@ -225,6 +219,7 @@ location:document.getElementById('loc').value,
 time:new Date().toLocaleTimeString(),
 date:new Date().toLocaleDateString(),
 user:user.name,
+userId:user.id,
 timestamp:Date.now()
 });
 
@@ -232,12 +227,23 @@ e.target.value="";
 }
 });
 
-// 🔥 LIVE TABLE SYNC
+// LIVE TABLE
 function startLive(){
 db.ref('LiveScans').on('value',snap=>{
 let data=[];
 snap.forEach(c=>{
-data.push(c.val());
+let d=c.val();
+
+// undefined fix
+data.push({
+date: d.date || "-",
+time: d.time || "-",
+barcode: d.barcode || "-",
+location: d.location || "-",
+user: d.user || "-",
+userId: d.userId || "-"
+});
+
 });
 
 data.sort((a,b)=>b.timestamp-a.timestamp);
@@ -250,6 +256,7 @@ html+=`<tr class="${i==0?'highlight':''}">
 <td>${d.barcode}</td>
 <td>${d.location}</td>
 <td>${d.user}</td>
+<td>${d.userId}</td>
 </tr>`;
 });
 
