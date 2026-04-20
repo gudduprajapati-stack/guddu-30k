@@ -22,10 +22,29 @@ button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-we
 .row{display:flex;gap:10px;align-items:center}
 #loc{flex:1}
 #scanBox{width:260px}
-table{width:100%;margin-top:20px;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #333}
-th{color:#00d4ff}
-.highlight{background:#003300}
+
+/* 🔥 TABLE FIX */
+table{
+width:100%;
+margin-top:20px;
+border-collapse:collapse;
+table-layout:fixed; /* equal column width */
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #333;
+text-align:center; /* center align */
+word-wrap:break-word;
+}
+
+th{
+color:#00d4ff;
+}
+
+.highlight{
+background:#003300;
+}
 </style>
 
 </head>
@@ -163,10 +182,10 @@ function login(){
 let id=document.getElementById('loginId').value.trim();
 db.ref('Users/'+id).once('value',snap=>{
 if(snap.exists()){
-user.id = id;
-user.name = snap.val().name;
+user.id=id;
+user.name=snap.val().name;
 
-document.getElementById('userName').innerText=user.name + " ("+id+")";
+document.getElementById('userName').innerText=user.name+" ("+id+")";
 
 document.getElementById('auth').style.display='none';
 document.getElementById('sidebar').style.display='block';
@@ -227,36 +246,23 @@ e.target.value="";
 }
 });
 
-// LIVE TABLE
+// LIVE
 function startLive(){
 db.ref('LiveScans').on('value',snap=>{
 let data=[];
-snap.forEach(c=>{
-let d=c.val();
-
-// undefined fix
-data.push({
-date: d.date || "-",
-time: d.time || "-",
-barcode: d.barcode || "-",
-location: d.location || "-",
-user: d.user || "-",
-userId: d.userId || "-"
-});
-
-});
+snap.forEach(c=>data.push(c.val()));
 
 data.sort((a,b)=>b.timestamp-a.timestamp);
 
 let html="";
 data.forEach((d,i)=>{
 html+=`<tr class="${i==0?'highlight':''}">
-<td>${d.date}</td>
-<td>${d.time}</td>
-<td>${d.barcode}</td>
-<td>${d.location}</td>
-<td>${d.user}</td>
-<td>${d.userId}</td>
+<td>${d.date||"-"}</td>
+<td>${d.time||"-"}</td>
+<td>${d.barcode||"-"}</td>
+<td>${d.location||"-"}</td>
+<td>${d.user||"-"}</td>
+<td>${d.userId||"-"}</td>
 </tr>`;
 });
 
