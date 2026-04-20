@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Mega Hub v64.0</title>
+    <title>NexS - Master Final v65.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -16,7 +16,7 @@
         .main-content { margin-left: 260px; padding: 25px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: end; }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; align-items: end; }
         .input-group { display: flex; flex-direction: column; gap: 8px; }
         label { font-size: 11px; color: var(--primary); text-transform: uppercase; font-weight: bold; }
         input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
@@ -25,10 +25,11 @@
         th, td { text-align: left; padding: 14px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: #888; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
         .id-col { color: var(--primary); font-weight: bold; font-family: monospace; }
-        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .btn { padding: 11px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
         .btn-filter { background: var(--primary); color: #000; }
         .btn-export { background: var(--accent); color: #fff; }
+        .btn-delete { background: var(--danger); color: #fff; }
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; }
     </style>
@@ -39,11 +40,11 @@
         <div class="auth-card" id="loginBox">
             <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
-            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">Login</button>
-            <p onclick="showReg(true)" style="margin-top:20px; color:#666; font-size:12px; cursor:pointer;">New Registration</p>
+            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px;" onclick="handleLogin()">Login System</button>
+            <p onclick="showReg(true)" style="margin-top:20px; color:#666; font-size:12px; cursor:pointer;">Register New User</p>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER</h2>
+            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTRATION</h2>
             <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:12px;"><input type="text" id="regId" placeholder="Employee ID">
             <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save User</button>
             <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer;">Back</p>
@@ -54,32 +55,22 @@
         <div class="user-profile"><h4 id="sideName" style="color:var(--primary); margin:0;">---</h4><small id="sideId" style="color:#888;">ID: ---</small></div>
         <div class="nav-list" style="flex: 1;">
             <div class="nav-item active" onclick="switchTab('scanning', this)">📦 Scanning Page</div>
+            <div class="nav-item" onclick="switchTab('shipment', this)">🚛 Shipment Page</div>
             <div class="nav-item" onclick="switchTab('history', this)">🕒 History Hub</div>
         </div>
         <div onclick="location.reload()" style="padding:20px; color:var(--danger); cursor:pointer; text-align:center; font-weight:bold; border-top:1px solid #222;">LOGOUT</div>
     </div>
 
     <div class="main-content" id="mainContent" style="display:none;">
+        
         <div id="scanning" class="tab-content active">
             <div class="controls-grid">
                 <div class="input-group">
-                    <label>Location Selection (45+)</label>
+                    <label>Location Selection</label>
                     <select id="locSelect">
                         <option>ICU ENTRY</option><option>MEI ENTRY</option><option>OMT ENTRY</option>
-                        <option>LO SEND TO ICU</option><option>LO SEND TO MEI</option><option>LO SEND TO OMT</option>
-                        <option>CS LOCATION</option>
-                        <optgroup label="OMT RACKS (00-15)">
-                            <option>OMT RACK 00</option><option>OMT RACK 01</option><option>OMT RACK 02</option><option>OMT RACK 03</option><option>OMT RACK 04</option>
-                            <option>OMT RACK 05</option><option>OMT RACK 06</option><option>OMT RACK 07</option><option>OMT RACK 08</option><option>OMT RACK 09</option>
-                            <option>OMT RACK 10</option><option>OMT RACK 11</option><option>OMT RACK 12</option><option>OMT RACK 13</option><option>OMT RACK 14</option><option>OMT RACK 15</option>
-                        </optgroup>
-                        <optgroup label="ICU TROLLEYS (01-10)">
-                            <option>ICU TROLLEY 1</option><option>ICU TROLLEY 2</option><option>ICU TROLLEY 3</option><option>ICU TROLLEY 4</option><option>ICU TROLLEY 5</option>
-                            <option>ICU TROLLEY 6</option><option>ICU TROLLEY 7</option><option>ICU TROLLEY 8</option><option>ICU TROLLEY 9</option><option>ICU TROLLEY 10</option>
-                        </optgroup>
-                        <optgroup label="OMT TROLLEYS (01-10)">
-                            <option>OMT TROLLEY 1</option><option>OMT TROLLEY 2</option><option>OMT TROLLEY 3</option><option>OMT TROLLEY 4</option><option>OMT TROLLEY 5</option>
-                            <option>OMT TROLLEY 6</option><option>OMT TROLLEY 7</option><option>OMT TROLLEY 8</option><option>OMT TROLLEY 9</option><option>OMT TROLLEY 10</option>
+                        <optgroup label="TROLLEYS & RACKS">
+                            <option>ICU TROLLEY 1</option><option>OMT RACK 01</option>
                         </optgroup>
                     </select>
                 </div>
@@ -90,11 +81,27 @@
             </div>
         </div>
 
+        <div id="shipment" class="tab-content">
+            <div class="controls-grid">
+                <div class="input-group"><label>Agency</label><select id="shipLocSelect"><option>DHL SHIPMENT</option><option>GPSUPPLY</option><option>SREERAJXPRESS</option></select></div>
+                <div class="input-group"><label>ID Scan</label><input type="text" id="shipInput" placeholder="Max 23 digit..."></div>
+            </div>
+            <div class="data-table-container">
+                <table><thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Agency</th><th>User Name</th><th>Employee ID</th></tr></thead><tbody id="shipLog"></tbody></table>
+            </div>
+        </div>
+
         <div id="history" class="tab-content">
             <div class="controls-grid">
                 <div class="input-group"><label>From</label><input type="date" id="fromDate"></div>
                 <div class="input-group"><label>To</label><input type="date" id="toDate"></div>
-                <div class="btn-row"><button class="btn btn-filter" onclick="applyFilters()">Filter</button><button class="btn btn-export" onclick="exportData()">Export Report</button></div>
+                <div class="input-group"><label>Type</label><select id="typeFilter"><option value="ALL">ALL</option><option value="TRAY">TRAY</option><option value="SHIPMENT">SHIPMENT</option></select></div>
+                <div class="input-group"><label>Search ID</label><input type="text" id="histSearch" placeholder="Search ID..."></div>
+                <div class="btn-row">
+                    <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
+                    <button class="btn btn-export" onclick="exportData()">Export</button>
+                    <button class="btn btn-delete" onclick="bulkDelete()">Delete</button>
+                </div>
             </div>
             <div class="data-table-container">
                 <table><thead><tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User Name</th><th>Employee ID</th></tr></thead><tbody id="historyTableBody"></tbody></table>
@@ -140,23 +147,18 @@
     }
 
     function startSync() {
-        const paths = ['LiveScans', 'ShipmentScans', 'Scans'];
+        const paths = ['LiveScans', 'ShipmentScans'];
         masterData = [];
         paths.forEach(p => {
             db.ref(p).on('value', snap => {
                 snap.forEach(c => {
                     const d = c.val();
-                    // 🔥 THE UNIVERSAL MAPPING ENGINE
-                    const u_name = d.user || d.userName || d.scannedBy || "---";
-                    const u_id = d.userId || d.empId || d.ID || d.EmployeeID || "---";
-                    const b_code = d.barcode || d.tray || d.shipId || d.barcodeID || "---";
-                    const s_loc = d.location || d.locName || "---";
-
                     masterData.push({
-                        key: c.key, type: p.includes('Ship') ? 'SHIP' : 'TRAY',
-                        dId: b_code, dDate: d.date || d.scanDate || "---",
-                        dTime: d.time || d.scanTime || "---", dLoc: s_loc,
-                        dName: u_name, dEmpId: u_id, ts: d.timestamp || 0
+                        key: c.key, type: p.includes('Ship') ? 'SHIPMENT' : 'TRAY', path: p,
+                        dId: d.barcode || d.shipId || d.tray || "---",
+                        dDate: d.date || "---", dTime: d.time || "---", dLoc: d.location || "---",
+                        dName: d.user || d.userName || "---", dEmpId: d.userId || d.empId || "---",
+                        ts: d.timestamp || 0
                     });
                 });
                 masterData.sort((a,b) => b.ts - a.ts);
@@ -167,13 +169,14 @@
 
     function renderAll() {
         const sBody = document.getElementById('scanLog');
-        const hBody = document.getElementById('historyTableBody');
-        sBody.innerHTML = ""; hBody.innerHTML = "";
+        const shBody = document.getElementById('shipLog');
+        sBody.innerHTML = ""; shBody.innerHTML = "";
         masterData.forEach(d => {
             const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
             if(d.type === 'TRAY') sBody.innerHTML += row;
-            hBody.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td>${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
+            else if(d.type === 'SHIPMENT') shBody.innerHTML += row;
         });
+        applyFilters();
     }
 
     document.getElementById('trayInput').addEventListener('keydown', e => {
@@ -183,20 +186,25 @@
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: activeSession.name,
-                userId: activeSession.id,
+                user: activeSession.name, userId: activeSession.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
         }
     });
 
-    function switchTab(t, el) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(t).classList.add('active');
-        el.classList.add('active');
-    }
-</script>
-</body>
-</html>
+    document.getElementById('shipInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && e.target.value) {
+            db.ref('ShipmentScans').push({
+                shipId: e.target.value.toUpperCase().trim(),
+                location: document.getElementById('shipLocSelect').value,
+                date: new Date().toLocaleDateString('en-GB'),
+                time: new Date().toLocaleTimeString(),
+                user: activeSession.name, userId: activeSession.id,
+                timestamp: Date.now()
+            });
+            e.target.value = "";
+        }
+    });
+
+    function
