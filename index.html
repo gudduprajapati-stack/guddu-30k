@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexS - Master Split v54.0</title>
+    <title>NexS - Master Identity v55.0</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -16,15 +16,14 @@
         .nav-item { padding: 14px 20px; cursor: pointer; color: #888; transition: 0.2s; font-size: 14px; border-left: 4px solid transparent; }
         .nav-item.active { background: #1a1a1a; color: var(--primary); border-left: 4px solid var(--primary); }
         
-        /* Layout Fixes */
+        /* Layout Grid - Fixes Overlapping */
         .main-content { margin-left: 260px; padding: 25px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Controls Hub: Grid layout to prevent overlapping */
         .controls-hub { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
             gap: 15px; 
             background: var(--card); 
             padding: 20px; 
@@ -38,24 +37,25 @@
         label { font-size: 11px; color: var(--primary); text-transform: uppercase; font-weight: bold; }
         input, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
         
-        /* Table Structure - Split Columns */
+        /* Table Structure */
         .data-table-container { background: var(--card); border-radius: 12px; border: 1px solid #333; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th, td { text-align: left; padding: 14px; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #111; color: #888; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; }
         
         .name-col { color: var(--text); font-weight: 500; }
-        .id-col { color: var(--primary); font-weight: 600; font-family: monospace; }
+        .id-col { color: var(--primary); font-weight: 600; font-family: 'Courier New', monospace; }
 
-        /* Buttons Row */
-        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
-        .btn { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        /* History Buttons Row */
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .btn { padding: 11px 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
         .btn-filter { background: var(--primary); color: #000; }
         .btn-export { background: var(--accent); color: #fff; }
         .btn-delete { background: var(--danger); color: #fff; }
 
         #authSection { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; }
+        .auth-card { background: var(--card); padding: 40px; border-radius: 15px; border: 1px solid #333; width: 360px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
     </style>
 </head>
 <body>
@@ -63,16 +63,16 @@
     <div id="authSection">
         <div class="auth-card" id="loginBox">
             <h2 style="color:var(--primary); margin-bottom: 25px;">NexS LOGIN</h2>
-            <input type="text" id="loginId" placeholder="Enter Employee ID">
-            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 45px;" onclick="handleLogin()">Login</button>
-            <p onclick="showReg(true)" style="margin-top:20px; color:#666; font-size:12px; cursor:pointer;">New Registration</p>
+            <input type="text" id="loginId" placeholder="Employee ID (Enter First)">
+            <button class="btn btn-filter" style="width:100%; margin-top:20px; height: 50px; font-size: 14px;" onclick="handleLogin()">Login</button>
+            <p onclick="showReg(true)" style="margin-top:20px; color:#666; font-size:12px; cursor:pointer;">Register New User</p>
         </div>
         <div class="auth-card" id="regBox" style="display:none;">
-            <h2 style="color:var(--primary); margin-bottom: 25px;">REGISTER</h2>
+            <h2 style="color:var(--primary); margin-bottom: 25px;">ID REGISTRATION</h2>
             <input type="text" id="regName" placeholder="Full Name" style="margin-bottom:12px;">
-            <input type="text" id="regId" placeholder="Assign Employee ID">
-            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save User</button>
-            <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer; font-size:12px;">Back to Login</p>
+            <input type="text" id="regId" placeholder="Assign ID">
+            <button class="btn btn-export" style="width:100%; margin-top:20px;" onclick="handleRegister()">Save Details</button>
+            <p onclick="showReg(false)" style="margin-top:15px; cursor:pointer; font-size: 12px;">Back to Login</p>
         </div>
     </div>
 
@@ -131,7 +131,7 @@
                 <div class="btn-row">
                     <button class="btn btn-filter" onclick="applyFilters()">Filter</button>
                     <button class="btn btn-export" onclick="exportData()">Export</button>
-                    <button class="btn btn-danger" onclick="bulkDelete()">Delete</button>
+                    <button class="btn btn-delete" onclick="bulkDelete()">Delete</button>
                 </div>
             </div>
             <div class="data-table-container">
@@ -153,30 +153,34 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    let activeSession = { name: null, id: null };
+    // 🔥 IDENTITY SESSION LOCK
+    let session = { name: null, id: null };
     let masterData = [];
 
     function showReg(v) { document.getElementById('loginBox').style.display = v ? 'none' : 'block'; document.getElementById('regBox').style.display = v ? 'block' : 'none'; }
     function handleRegister() {
         const n = document.getElementById('regName').value.trim();
         const i = document.getElementById('regId').value.trim();
-        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("Saved!"); showReg(false); });
+        if(n && i) db.ref('Users/' + i).set({ name: n, empId: i }).then(() => { alert("User Saved!"); showReg(false); });
     }
 
+    // 🔥 STRICT LOGIN: NO EMPTY ID
     function handleLogin() {
         const id = document.getElementById('loginId').value.trim();
-        if(!id) return alert("Enter ID");
+        if(!id) return alert("Error: Please Enter ID to Login!");
+        
         db.ref('Users/' + id).once('value', snap => {
             if(snap.exists()) {
                 const d = snap.val();
-                activeSession.name = d.name; activeSession.id = id;
+                session.name = d.name; 
+                session.id = id;
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('mainSidebar').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('sideName').innerText = activeSession.name;
+                document.getElementById('sideName').innerText = session.name;
                 document.getElementById('sideId').innerText = "ID: " + id;
                 startSync();
-            } else { alert("ID Not Registered!"); }
+            } else { alert("ID Not Registered! Please register your ID first."); }
         });
     }
 
@@ -187,32 +191,32 @@
                 const pull = (snap, type, path) => {
                     snap.forEach(c => {
                         const d = c.val();
-                        // 🛠 Identity Logic: Separating Name and ID
+                        // 🛠 Identity Pull: Ensures both name and ID columns work
                         masterData.push({
                             key: c.key, type: type, path: path,
                             dId: d.barcode || d.shipId || d.tray || "---",
-                            dDate: d.date || d.scanDate || "---",
-                            dTime: d.time || d.scanTime || "---",
-                            dLoc: d.location || d.locName || "---",
-                            dUserName: d.user || d.userName || "Unknown",
-                            dUserId: d.userId || d.empId || d.ID || "---",
+                            dDate: d.date || "---",
+                            dTime: d.time || "---",
+                            dLoc: d.location || "---",
+                            dName: d.user || d.userName || "Unknown",
+                            dEmpId: d.userId || d.empId || d.ID || "---",
                             ts: d.timestamp || 0
                         });
                     });
                 };
                 pull(s1, 'TRAY', 'LiveScans'); pull(s2, 'SHIPMENT', 'ShipmentScans');
                 masterData.sort((a,b) => b.ts - a.ts);
-                renderAll();
+                renderTables();
             });
         });
     }
 
-    function renderAll() {
+    function renderTables() {
         const sBody = document.getElementById('scanLog');
         const hBody = document.getElementById('shipLog');
         sBody.innerHTML = ""; hBody.innerHTML = "";
         masterData.forEach(d => {
-            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="name-col">${d.dUserName}</td><td class="id-col">${d.dUserId}</td></tr>`;
+            const row = `<tr><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="name-col">${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
             if(d.type === 'TRAY') sBody.innerHTML += row;
             else hBody.innerHTML += row;
         });
@@ -221,13 +225,14 @@
 
     document.getElementById('trayInput').addEventListener('keydown', e => {
         if(e.key === 'Enter' && e.target.value) {
+            if(!session.id) return alert("Session Error: Please Re-login!");
             db.ref('LiveScans').push({
                 barcode: e.target.value.toUpperCase().trim(),
                 location: document.getElementById('locSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: activeSession.name,
-                userId: activeSession.id, // Pakka save
+                user: session.name,
+                userId: session.id, // 🔥 Pakka Save
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -241,8 +246,8 @@
                 location: document.getElementById('shipLocSelect').value,
                 date: new Date().toLocaleDateString('en-GB'),
                 time: new Date().toLocaleTimeString(),
-                user: activeSession.name,
-                userId: activeSession.id,
+                user: session.name,
+                userId: session.id,
                 timestamp: Date.now()
             });
             e.target.value = "";
@@ -263,19 +268,19 @@
             const mFrom = from ? dObj >= new Date(from) : true;
             const mTo = to ? dObj <= new Date(to) : true;
             const mType = type === 'ALL' ? true : d.type === type;
-            const mSearch = d.dId.toUpperCase().includes(search) || d.dUserName.toUpperCase().includes(search) || d.dUserId.toUpperCase().includes(search);
+            const mSearch = d.dId.toUpperCase().includes(search) || d.dName.toUpperCase().includes(search);
             return mFrom && mTo && mType && mSearch;
         }).forEach(d => {
-            histLog.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="name-col">${d.dUserName}</td><td class="id-col">${d.dUserId}</td></tr>`;
+            histLog.innerHTML += `<tr><td>${d.type}</td><td>${d.dDate}</td><td>${d.dTime}</td><td>${d.dId}</td><td>${d.dLoc}</td><td class="name-col">${d.dName}</td><td class="id-col">${d.dEmpId}</td></tr>`;
         });
     }
 
     function exportData() {
-        let csv = "Type,Date,Time,ID,Location,User_Name,Employee_ID\n";
-        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dUserName},${d.dUserId}\n`);
+        let csv = "Type,Date,Time,Barcode,Location,User_Name,Employee_ID\n";
+        masterData.forEach(d => csv += `${d.type},${d.dDate},${d.dTime},${d.dId},${d.dLoc},${d.dName},${d.dEmpId}\n`);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = "NexS_Report.csv"; a.click();
+        a.download = "NexS_Identity_Report.csv"; a.click();
     }
 
     function bulkDelete() {
