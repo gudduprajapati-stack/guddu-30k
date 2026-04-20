@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS System</title>
+<title>NexS Final System</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -13,24 +13,29 @@ body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff;display:flex}
 .card{background:#161616;padding:30px;border-radius:10px;width:300px;text-align:center}
 input,select{padding:10px;background:#000;border:1px solid #444;color:#fff}
 button{padding:10px;width:100%;background:#00d4ff;border:none;color:#000;font-weight:bold;margin-top:10px}
+
 .sidebar{width:220px;background:#000;height:100vh;padding:20px}
 .nav{padding:12px;cursor:pointer;color:#888}
 .nav.active{color:#00d4ff;background:#111}
+
 .main{flex:1;padding:20px}
 .tab{display:none}
 .tab.active{display:block}
+
 .row{display:flex;gap:10px;align-items:center}
-#loc{flex:1}
-#scanBox{width:260px}
+#loc,#shipLoc{flex:1}
+#scanBox,#shipBox{width:260px}
+
 table{width:100%;margin-top:20px;border-collapse:collapse;table-layout:fixed}
 th,td{padding:10px;border-bottom:1px solid #333;text-align:center}
 th{color:#00d4ff}
 .highlight{background:#003300}
 </style>
-
 </head>
+
 <body>
 
+<!-- LOGIN -->
 <div id="auth">
 <div class="card" id="loginBox">
 <h2>Login</h2>
@@ -48,6 +53,7 @@ th{color:#00d4ff}
 </div>
 </div>
 
+<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none">
 <h3 id="userName">---</h3>
 <div class="nav active" onclick="openTab('tray',this)">📦 Tray Scan</div>
@@ -57,10 +63,11 @@ th{color:#00d4ff}
 <div class="nav" onclick="logout()">🔓 Logout</div>
 </div>
 
+<!-- MAIN -->
 <div class="main" id="main" style="display:none">
 
+<!-- TRAY -->
 <div id="tray" class="tab active">
-
 <h2>Tray Scan</h2>
 
 <div class="row">
@@ -130,45 +137,64 @@ th{color:#00d4ff}
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
-
 </div>
+
+<!-- SHIPMENT -->
+<div id="shipment" class="tab">
+<h2>Shipment Scan</h2>
+
+<div class="row">
+<select id="shipLoc">
+<option>DHL SHIPMENT</option>
+<option>GPSUPPLY</option>
+<option>SREERAJXPRESS</option>
+<option>OTHER SHIPMENT</option>
+</select>
+
+<input id="shipBox" placeholder="Scan Shipment (Min 23 Digit)">
+</div>
+
+<p id="shipMsg" style="color:red"></p>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Time</th>
+<th>Shipment ID</th>
+<th>Location</th>
+<th>User</th>
+<th>User ID</th>
+</tr>
+</thead>
+<tbody id="shipTable"></tbody>
+</table>
+</div>
+
+<div id="history" class="tab"><h2>History</h2></div>
+<div id="dashboard" class="tab"><h2>Dashboard</h2></div>
 
 </div>
 
 <script>
 
+// FIREBASE
 firebase.initializeApp({
-apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
-authDomain: "nexs-guddu-30k.firebaseapp.com",
-databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
-projectId: "nexs-guddu-30k",
-storageBucket: "nexs-guddu-30k.firebasestorage.app",
-messagingSenderId: "634684833271",
-appId: "1:634684833271:web:31a25a2c5301fa108142f2"
+apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+authDomain:"nexs-guddu-30k.firebaseapp.com",
+databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com",
+projectId:"nexs-guddu-30k"
 });
 
-const db = firebase.database();
+const db=firebase.database();
 let user={};
 
-// 🔥 DATE FORMAT FIX
+// DATE FIX
 function formatDate(d){
-if(!d) return "-";
-
-let parts = d.split('/');
-
-// detect format
-if(parts[0].length === 4){ 
-// yyyy/mm/dd (rare)
-return parts[2]+"/"+parts[1]+"/"+parts[0];
-}
-else if(parseInt(parts[0]) > 12){
-// already dd/mm/yyyy
-return d;
-}
-else{
-// mm/dd/yyyy → convert
-return parts[1]+"/"+parts[0]+"/"+parts[2];
-}
+if(!d)return "-";
+let p=d.split('/');
+if(p[0]>12)return d;
+return p[1]+"/"+p[0]+"/"+p[2];
 }
 
 // LOGIN
@@ -178,14 +204,12 @@ db.ref('Users/'+id).once('value',snap=>{
 if(snap.exists()){
 user.id=id;
 user.name=snap.val().name;
-
 document.getElementById('userName').innerText=user.name+" ("+id+")";
-
 document.getElementById('auth').style.display='none';
 document.getElementById('sidebar').style.display='block';
 document.getElementById('main').style.display='block';
-
-startLive();
+startTray();
+startShipment();
 }else alert("User not found");
 });
 }
@@ -200,8 +224,8 @@ toggle(false);
 }
 
 function toggle(v){
-document.getElementById('loginBox').style.display=v?'none':'block';
-document.getElementById('regBox').style.display=v?'block':'none';
+loginBox.style.display=v?'none':'block';
+regBox.style.display=v?'block':'none';
 }
 
 function openTab(t,el){
@@ -213,68 +237,69 @@ el.classList.add('active');
 
 function logout(){location.reload();}
 
-// SCAN
-document.getElementById('scanBox').addEventListener('keydown',e=>{
+// TRAY SCAN
+scanBox.addEventListener('keydown',e=>{
 if(e.key==='Enter'){
-let val=e.target.value.toUpperCase().trim();
-let msg=document.getElementById('msg');
-
-if(!/^[A-Z]{2}[0-9]{5}$/.test(val)){
-msg.innerText="Invalid Format!";
-return;
-}
-
+let v=e.target.value.toUpperCase().trim();
+if(!/^[A-Z]{2}[0-9]{5}$/.test(v)) return msg.innerText="Invalid!";
 msg.innerText="";
-
 db.ref('LiveScans').push({
-barcode:val,
-location:document.getElementById('loc').value,
+barcode:v,location:loc.value,
 time:new Date().toLocaleTimeString(),
 date:new Date().toLocaleDateString(),
-user:user.name,
-userId:user.id,
-timestamp:Date.now()
+user:user.name,userId:user.id,timestamp:Date.now()
 });
-
 e.target.value="";
 }
 });
 
-// LIVE
-function startLive(){
+// SHIPMENT SCAN
+shipBox.addEventListener('keydown',e=>{
+if(e.key==='Enter'){
+let v=e.target.value.trim();
+if(v.length<23) return shipMsg.innerText="Min 23 Digit!";
+shipMsg.innerText="";
+db.ref('ShipmentScans').push({
+shipId:v.toUpperCase(),location:shipLoc.value,
+time:new Date().toLocaleTimeString(),
+date:new Date().toLocaleDateString(),
+user:user.name,userId:user.id,timestamp:Date.now()
+});
+e.target.value="";
+}
+});
+
+// LIVE TRAY
+function startTray(){
 db.ref('LiveScans').on('value',snap=>{
 let data=[];
-
 snap.forEach(c=>{
-let d=c.val();
-if(!d || !d.barcode) return;
-
-data.push({
-date:formatDate(d.date),
-time:d.time||"-",
-barcode:d.barcode,
-location:d.location||"-",
-user:d.user||"-",
-userId:d.userId||"-",
-ts:d.timestamp||0
+let d=c.val(); if(!d||!d.barcode)return;
+data.push({...d,date:formatDate(d.date)});
 });
+data.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+tableBody.innerHTML=data.map((d,i)=>`
+<tr class="${i==0?'highlight':''}">
+<td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td>
+<td>${d.location}</td><td>${d.user}</td><td>${d.userId}</td>
+</tr>`).join('');
 });
+}
 
-data.sort((a,b)=>b.ts-a.ts);
-
-let html="";
-data.forEach((d,i)=>{
-html+=`<tr class="${i==0?'highlight':''}">
-<td>${d.date}</td>
-<td>${d.time}</td>
-<td>${d.barcode}</td>
-<td>${d.location}</td>
-<td>${d.user}</td>
-<td>${d.userId}</td>
-</tr>`;
+// LIVE SHIPMENT
+function startShipment(){
+db.ref('ShipmentScans').on('value',snap=>{
+let data=[];
+snap.forEach(c=>{
+let d=c.val(); if(!d||!d.shipId)return;
+data.push({...d,date:formatDate(d.date)});
 });
-
-document.getElementById('tableBody').innerHTML=html;
+data.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+shipTable.innerHTML=data.map((d,i)=>`
+<tr class="${i==0?'highlight':''}">
+<td>${d.date}</td><td>${d.time}</td><td>${d.shipId}</td>
+<td>${d.location}</td><td>${d.user}</td><td>${d.userId}</td>
+</tr>`).join('');
 });
 }
 
