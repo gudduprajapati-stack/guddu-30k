@@ -150,6 +150,28 @@ appId: "1:634684833271:web:31a25a2c5301fa108142f2"
 const db = firebase.database();
 let user={};
 
+// 🔥 DATE FORMAT FIX
+function formatDate(d){
+if(!d) return "-";
+
+let parts = d.split('/');
+
+// detect format
+if(parts[0].length === 4){ 
+// yyyy/mm/dd (rare)
+return parts[2]+"/"+parts[1]+"/"+parts[0];
+}
+else if(parseInt(parts[0]) > 12){
+// already dd/mm/yyyy
+return d;
+}
+else{
+// mm/dd/yyyy → convert
+return parts[1]+"/"+parts[0]+"/"+parts[2];
+}
+}
+
+// LOGIN
 function login(){
 let id=document.getElementById('loginId').value.trim();
 db.ref('Users/'+id).once('value',snap=>{
@@ -168,6 +190,7 @@ startLive();
 });
 }
 
+// REGISTER
 function register(){
 let n=document.getElementById('regName').value;
 let i=document.getElementById('regId').value;
@@ -190,6 +213,7 @@ el.classList.add('active');
 
 function logout(){location.reload();}
 
+// SCAN
 document.getElementById('scanBox').addEventListener('keydown',e=>{
 if(e.key==='Enter'){
 let val=e.target.value.toUpperCase().trim();
@@ -216,29 +240,27 @@ e.target.value="";
 }
 });
 
-// 🔥 FIXED LIVE DATA
+// LIVE
 function startLive(){
 db.ref('LiveScans').on('value',snap=>{
 let data=[];
 
 snap.forEach(c=>{
 let d=c.val();
-
-if(!d || (!d.barcode && !d.date)) return; // skip garbage
+if(!d || !d.barcode) return;
 
 data.push({
-date:d.date || "-",
-time:d.time || "-",
-barcode:d.barcode || "-",
-location:d.location || "-",
-user:d.user || "-",
-userId:d.userId || "-",
-ts:d.timestamp || 0
+date:formatDate(d.date),
+time:d.time||"-",
+barcode:d.barcode,
+location:d.location||"-",
+user:d.user||"-",
+userId:d.userId||"-",
+ts:d.timestamp||0
 });
 });
 
-// sort safe
-data.sort((a,b)=>b.ts - a.ts);
+data.sort((a,b)=>b.ts-a.ts);
 
 let html="";
 data.forEach((d,i)=>{
