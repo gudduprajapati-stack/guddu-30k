@@ -2,45 +2,37 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS ULTRA FINAL</title>
+<title>NexS Stable Final</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#0a0a0a;color:#fff;display:flex}
-.sidebar{width:230px;background:#000;height:100vh;padding:20px}
-.nav{padding:12px;margin-bottom:6px;color:#888;cursor:pointer}
-.nav.active{background:#111;color:#00d4ff}
+body{margin:0;font-family:Arial;background:#0a0a0a;color:#fff;display:flex}
+.sidebar{width:220px;background:#000;padding:20px;height:100vh}
+.nav{padding:10px;margin-bottom:5px;color:#888;cursor:pointer}
+.nav.active{color:#00d4ff}
 .main{flex:1;padding:20px}
 .tab{display:none}
 .tab.active{display:block}
-input,select{padding:10px;background:#000;border:1px solid #444;color:#fff}
-button{padding:10px;background:#00d4ff;border:none;color:#000}
-table{width:100%;margin-top:15px;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #333;text-align:center}
-th{color:#00d4ff}
+input,select{padding:8px;margin:5px;background:#000;color:#fff;border:1px solid #444}
+button{padding:8px;background:#00d4ff;border:none}
+table{width:100%;margin-top:10px;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid #333;text-align:center}
 </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
-<div id="auth" style="position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center">
-<div style="background:#111;padding:30px">
+<div id="auth" style="position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center">
+<div style="background:#111;padding:20px">
 <h2>Login</h2>
-<input id="loginId" placeholder="Employee ID"><br><br>
+<input id="loginId" placeholder="Employee ID"><br>
 <button onclick="login()">Login</button>
-<p onclick="regBox.style.display='block'" style="cursor:pointer">Register</p>
-<div id="regBox" style="display:none">
-<input id="regName" placeholder="Name">
-<input id="regId" placeholder="ID">
-<button onclick="register()">Save</button>
-</div>
 </div>
 </div>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none">
 <h3 id="userName"></h3>
 <div class="nav active" onclick="openTab('tray',this)">Tray</div>
@@ -54,228 +46,219 @@ th{color:#00d4ff}
 
 <!-- TRAY -->
 <div id="tray" class="tab active">
-<h2>Tray Scan</h2>
-<select id="loc"></select>
-<input id="scanBox" placeholder="MT76921">
-
-<table>
-<thead><tr><th>Date</th><th>Time</th><th>Tray</th><th>Location</th><th>User</th></tr></thead>
-<tbody id="trayTable"></tbody>
-</table>
+<h2>Tray</h2>
+<select id="loc">
+<option>ICU ENTRY</option>
+<option>MEI ENTRY</option>
+<option>OMT ENTRY</option>
+</select>
+<input id="trayBox" placeholder="Scan Tray">
+<table id="trayTable"></table>
 </div>
 
 <!-- SHIPMENT -->
 <div id="shipment" class="tab">
 <h2>Shipment</h2>
 <select id="shipLoc">
-<option>DHL SHIPMENT</option>
+<option>DHL</option>
 <option>GPSUPPLY</option>
-<option>SREERAJXPRESS</option>
-<option>OTHER SHIPMENT</option>
 </select>
-<input id="shipBox">
-
-<table>
-<thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
-<tbody id="shipTable"></tbody>
-</table>
+<input id="shipBox" placeholder="Scan Shipment">
+<table id="shipTable"></table>
 </div>
 
 <!-- HISTORY -->
 <div id="history" class="tab">
 <h2>History</h2>
-<input id="fromDate"><input id="toDate">
-<select id="typeFilter">
-<option value="ALL">ALL</option>
-<option value="TRAY">TRAY</option>
-<option value="SHIPMENT">SHIPMENT</option>
-</select>
-<input id="searchBox">
-<button onclick="applyHistory()">Filter</button>
-<button onclick="exportHistory()">Export</button>
-<button onclick="deleteHistory()">Delete</button>
-
-<table>
-<thead><tr><th>Type</th><th>Date</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
-<tbody id="historyTable"></tbody>
-</table>
+<button onclick="loadHistory()">Refresh</button>
+<table id="historyTable"></table>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="tab">
 <h2>Dashboard</h2>
-<div id="dashContent"></div>
+<div id="dash"></div>
 </div>
 
 </div>
 
 <script>
 
-// FIREBASE
 firebase.initializeApp({
-apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+apiKey:"AIzaSy...",
 databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 });
 const db=firebase.database();
 
-// LOCATIONS
-const locations=["ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION"];
-loc.innerHTML=locations.map(x=>`<option>${x}</option>`).join('');
+let user={};
 
-// LOGIN
-let user={}
+// LOGIN FIX
 function login(){
 let id=loginId.value.trim();
 if(!id) return alert("Enter ID");
 
-db.ref('Users/'+id).once('value',s=>{
-if(s.exists()){
-user.name=s.val().name;
+db.ref("Users/"+id).once("value",snap=>{
+if(!snap.exists()) return alert("User not found");
+
+user.name=snap.val().name;
 user.id=id;
-auth.style.display='none';
-sidebar.style.display='block';
-main.style.display='block';
+
+auth.style.display="none";
+sidebar.style.display="block";
+main.style.display="block";
+
 userName.innerText=user.name+" ("+id+")";
+
 startRealtime();
-}else alert("User not found");
 });
 }
 
-function register(){db.ref('Users/'+regId.value).set({name:regName.value})}
-function logout(){location.reload()}
+function logout(){location.reload();}
 
 // TAB
 function openTab(t,el){
-document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
-document.getElementById(t).classList.add('active');
-el.classList.add('active');
+document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+document.getElementById(t).classList.add("active");
+el.classList.add("active");
 
-if(t==='history') loadHistory();
-if(t==='dashboard') loadDashboard();
+if(t==="history") loadHistory();
+if(t==="dashboard") loadDashboard();
 }
 
-// REALTIME
+// 🔥 SAFE TIME PARSER
+function getHour(t){
+if(!t) return null;
+let h=parseInt(t.split(":")[0]);
+if(t.includes("PM") && h<12) h+=12;
+if(t.includes("AM") && h===12) h=0;
+return h;
+}
+
+// 🔥 REALTIME FIXED
 function startRealtime(){
 
-db.ref('LiveScans').on('value',s=>{
-let arr=[];s.forEach(c=>arr.push(c.val()));
-trayTable.innerHTML=arr.reverse().map(x=>`
-<tr><td>${x.date}</td><td>${x.time}</td><td>${x.barcode}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+db.ref("LiveScans").on("value",snap=>{
+let html="<tr><th>Date</th><th>Time</th><th>ID</th><th>Loc</th><th>User</th></tr>";
+snap.forEach(c=>{
+let d=c.val();
+if(!d) return;
+html+=`<tr><td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+});
+trayTable.innerHTML=html;
 });
 
-db.ref('ShipmentScans').on('value',s=>{
-let arr=[];s.forEach(c=>arr.push(c.val()));
-shipTable.innerHTML=arr.reverse().map(x=>`
-<tr><td>${x.date}</td><td>${x.time}</td><td>${x.shipId}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+db.ref("ShipmentScans").on("value",snap=>{
+let html="<tr><th>Date</th><th>Time</th><th>ID</th><th>Loc</th><th>User</th></tr>";
+snap.forEach(c=>{
+let d=c.val();
+if(!d) return;
+html+=`<tr><td>${d.date}</td><td>${d.time}</td><td>${d.shipId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
 });
-
+shipTable.innerHTML=html;
+});
 }
 
 // SCAN
-scanBox.onkeydown=e=>{
-if(e.key==='Enter'){
-db.ref('LiveScans').push({
-barcode:scanBox.value,
+trayBox.onkeydown=e=>{
+if(e.key==="Enter"){
+db.ref("LiveScans").push({
+barcode:trayBox.value,
 location:loc.value,
-date:new Date().toLocaleDateString('en-GB'),
+date:new Date().toLocaleDateString("en-GB"),
 time:new Date().toLocaleTimeString(),
-user:user.name,
-timestamp:Date.now()
+user:user.name
 });
-scanBox.value="";
+trayBox.value="";
 }
 };
 
 shipBox.onkeydown=e=>{
-if(e.key==='Enter'){
-db.ref('ShipmentScans').push({
+if(e.key==="Enter"){
+db.ref("ShipmentScans").push({
 shipId:shipBox.value,
 location:shipLoc.value,
-date:new Date().toLocaleDateString('en-GB'),
+date:new Date().toLocaleDateString("en-GB"),
 time:new Date().toLocaleTimeString(),
-user:user.name,
-timestamp:Date.now()
+user:user.name
 });
 shipBox.value="";
 }
 };
 
-// HISTORY
-let hist=[]
+// HISTORY FIX
 function loadHistory(){
-hist=[];
-db.ref('LiveScans').once('value',s=>{
-s.forEach(c=>hist.push({...c.val(),type:'TRAY',key:c.key,path:'LiveScans'}));
-db.ref('ShipmentScans').once('value',s2=>{
-s2.forEach(c=>hist.push({...c.val(),type:'SHIPMENT',key:c.key,path:'ShipmentScans'}));
-renderHistory(hist);
+let html="<tr><th>Type</th><th>ID</th><th>Loc</th><th>User</th></tr>";
+
+db.ref("LiveScans").once("value",s=>{
+s.forEach(c=>{
+let d=c.val();
+html+=`<tr><td>TRAY</td><td>${d.barcode}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+});
+
+db.ref("ShipmentScans").once("value",s2=>{
+s2.forEach(c=>{
+let d=c.val();
+html+=`<tr><td>SHIP</td><td>${d.shipId}</td><td>${d.location}</td><td>${d.user}</td></tr>`;
+});
+
+historyTable.innerHTML=html;
 });
 });
 }
 
-function renderHistory(d){
-historyTable.innerHTML=d.map(x=>`
-<tr><td>${x.type}</td><td>${x.date}</td><td>${x.barcode||x.shipId}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
-}
-
-function applyHistory(){renderHistory(hist)}
-
-function exportHistory(){
-let csv="Type,Date,ID,Location,User\n";
-hist.forEach(x=>csv+=`${x.type},${x.date},${x.barcode||x.shipId},${x.location},${x.user}\n`);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="history.csv";a.click();
-}
-
-function deleteHistory(){
-if(!confirm("Delete ALL history?")) return;
-hist.forEach(x=>db.ref(x.path+"/"+x.key).remove());
-alert("Deleted");
-}
-
-// DASHBOARD
+// DASHBOARD FINAL FIX
 function loadDashboard(){
 
-db.ref('LiveScans').once('value',s=>{
 let data=[];
-s.forEach(c=>data.push(c.val()));
 
-let hours=[...Array(24).keys()].map(i=>(i%12||12)+(i<12?'AM':'PM'));
+db.ref("LiveScans").once("value",s=>{
+s.forEach(c=>data.push({...c.val(),type:"TRAY"}));
 
-// USER MATRIX
-let uMatrix={};
-let lMatrix={};
+db.ref("ShipmentScans").once("value",s2=>{
+s2.forEach(c=>data.push({...c.val(),type:"SHIP"}));
 
-data.forEach(x=>{
-let hr=parseInt(x.time.split(':')[0]);
-let label=(hr%12||12)+(hr<12?'AM':'PM');
+// TOTAL
+let total=data.length;
+
+// USER MAP
+let uMap={};
+let lMap={};
+
+data.forEach(d=>{
+let hr=getHour(d.time);
+if(hr===null) return;
+
+let label=(hr%12||12)+(hr<12?"AM":"PM");
 
 // USER
-if(!uMatrix[x.user]) uMatrix[x.user]={};
-uMatrix[x.user][label]=(uMatrix[x.user][label]||0)+1;
+if(!uMap[d.user]) uMap[d.user]={};
+uMap[d.user][label]=(uMap[d.user][label]||0)+1;
 
 // LOCATION
-if(!lMatrix[x.location]) lMatrix[x.location]={};
-lMatrix[x.location][label]=(lMatrix[x.location][label]||0)+1;
-
+if(!lMap[d.location]) lMap[d.location]={};
+lMap[d.location][label]=(lMap[d.location][label]||0)+1;
 });
 
-// BUILD TABLE
-function buildTable(matrix,title){
-let header="<tr><th>"+title+"</th>"+hours.map(h=>`<th>${h}</th>`).join('')+"</tr>";
-let body=Object.keys(matrix).map(k=>`
-<tr><td>${k}</td>${hours.map(h=>`<td>${matrix[k][h]||0}</td>`).join('')}</tr>`).join('');
-return `<h3>${title}</h3><table><thead>${header}</thead><tbody>${body}</tbody></table>`;
+// HOURS
+let hours=[...Array(24).keys()].map(i=>(i%12||12)+(i<12?"AM":"PM"));
+
+// TABLE BUILDER
+function build(map,title){
+let h="<tr><th>"+title+"</th>"+hours.map(x=>"<th>"+x+"</th>").join("")+"</tr>";
+let b=Object.keys(map).map(k=>{
+return "<tr><td>"+k+"</td>"+hours.map(x=>"<td>"+(map[k][x]||0)+"</td>").join("")+"</tr>";
+}).join("");
+return "<h3>"+title+"</h3><table>"+h+b+"</table>";
 }
 
-dashContent.innerHTML=`
-<h3>Total: ${data.length}</h3>
-${buildTable(uMatrix,"User")}
-${buildTable(lMatrix,"Location")}
+dash.innerHTML=`
+<h3>Total: ${total}</h3>
+${build(uMap,"User")}
+${build(lMap,"Location")}
 `;
 
+});
 });
 }
 
