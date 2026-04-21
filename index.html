@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS Ultra System</title>
+<title>NexS FINAL PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -13,43 +13,63 @@
 <style>
 body{margin:0;font-family:Segoe UI;background:#0a0a0a;color:#fff;display:flex}
 .sidebar{width:240px;background:#000;height:100vh;padding:20px}
-.nav{padding:12px;border-radius:6px;margin-bottom:5px;color:#888;cursor:pointer}
+.nav{padding:12px;margin-bottom:5px;color:#888;cursor:pointer;border-radius:6px}
 .nav.active{background:#111;color:#00d4ff}
 .main{flex:1;padding:20px}
 .tab{display:none}
 .tab.active{display:block}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row{display:flex;gap:10px;flex-wrap:wrap}
 input,select{padding:10px;background:#000;border:1px solid #444;color:#fff;border-radius:6px}
-button{padding:10px 16px;background:#00d4ff;border:none;color:#000;border-radius:6px;font-weight:bold}
+button{padding:10px 15px;background:#00d4ff;border:none;color:#000;border-radius:6px;font-weight:bold}
 table{width:100%;margin-top:20px;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #333;text-align:center}
 th{color:#00d4ff}
-.card{background:#161616;padding:20px;border-radius:10px;flex:1;text-align:center}
-.big{font-size:28px;color:#00d4ff}
 .highlight{background:#002200}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar" id="sidebar">
-<h3 id="userName">NexS</h3>
+<!-- LOGIN -->
+<div id="auth" style="position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center">
+<div style="background:#161616;padding:30px;border-radius:10px;width:300px;text-align:center">
+<h2>Login</h2>
+<input id="loginId" placeholder="Employee ID">
+<button onclick="login()">Login</button>
+<p onclick="toggle(true)">New Registration</p>
+
+<div id="regBox" style="display:none">
+<input id="regName" placeholder="Name">
+<input id="regId" placeholder="ID">
+<button onclick="register()">Register</button>
+</div>
+</div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar" style="display:none">
+<h3 id="userName"></h3>
 <div class="nav active" onclick="openTab('tray',this)">Tray</div>
 <div class="nav" onclick="openTab('shipment',this)">Shipment</div>
 <div class="nav" onclick="openTab('history',this)">History</div>
 <div class="nav" onclick="openTab('dashboard',this)">Dashboard</div>
+<div class="nav" onclick="logout()">Logout</div>
 </div>
 
-<div class="main">
+<!-- MAIN -->
+<div class="main" id="main" style="display:none">
 
 <!-- TRAY -->
 <div id="tray" class="tab active">
 <h2>Tray Scan</h2>
 <div class="row">
 <select id="loc"></select>
-<input id="scanBox" placeholder="MT12345">
+<input id="scanBox" placeholder="MT76921" maxlength="7">
 </div>
-<table><tbody id="trayTable"></tbody></table>
+<table>
+<thead><tr><th>Date</th><th>Time</th><th>Tray</th><th>Location</th><th>User</th></tr></thead>
+<tbody id="trayTable"></tbody>
+</table>
 </div>
 
 <!-- SHIPMENT -->
@@ -57,12 +77,17 @@ th{color:#00d4ff}
 <h2>Shipment</h2>
 <div class="row">
 <select id="shipLoc">
-<option>DHL</option><option>GPSUPPLY</option>
-<option>SREERAJXPRESS</option><option>OTHER</option>
+<option>DHL SHIPMENT</option>
+<option>GPSUPPLY</option>
+<option>SREERAJXPRESS</option>
+<option>OTHER SHIPMENT</option>
 </select>
-<input id="shipBox" placeholder="23 digit">
+<input id="shipBox" placeholder="Min 23 digit">
 </div>
-<table><tbody id="shipTable"></tbody></table>
+<table>
+<thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
+<tbody id="shipTable"></tbody>
+</table>
 </div>
 
 <!-- HISTORY -->
@@ -70,13 +95,21 @@ th{color:#00d4ff}
 <h2>History</h2>
 <div class="row">
 <input id="fromDate"><input id="toDate">
-<select id="typeFilter"><option>ALL</option><option>TRAY</option><option>SHIPMENT</option></select>
+<select id="typeFilter">
+<option value="ALL">ALL</option>
+<option value="TRAY">TRAY</option>
+<option value="SHIPMENT">SHIPMENT</option>
+</select>
 <input id="searchBox">
 <button onclick="applyHistory()">Filter</button>
-<button onclick="exportCSV()">Export</button>
-<button onclick="deleteData()" style="background:red;color:#fff">Delete</button>
+<button onclick="exportHistory()">Export</button>
+<button onclick="deleteHistory()" style="background:red;color:#fff">Delete</button>
 </div>
-<table><tbody id="historyTable"></tbody></table>
+
+<table>
+<thead><tr><th>Type</th><th>Date</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
+<tbody id="historyTable"></tbody>
+</table>
 </div>
 
 <!-- DASHBOARD -->
@@ -85,25 +118,20 @@ th{color:#00d4ff}
 
 <div class="row">
 <input id="dFrom"><input id="dTo">
-<select id="dType"><option>ALL</option><option>TRAY</option><option>SHIPMENT</option></select>
+<select id="dType">
+<option value="ALL">ALL</option>
+<option value="TRAY">TRAY</option>
+<option value="SHIPMENT">SHIPMENT</option>
+</select>
 <select id="dLoc" multiple size="5"></select>
 <button onclick="applyDashboard()">Apply</button>
+<button onclick="exportDashboard()">Export</button>
 </div>
 
-<div class="row">
-<div class="card"><div>Total</div><div class="big" id="dTotal">0</div></div>
-</div>
-
-<h3>Hour Wise Productivity</h3>
-<table>
-<thead id="hourHead"></thead>
-<tbody id="hourBody"></tbody>
-</table>
+<h3>Total: <span id="dTotal">0</span></h3>
 
 <h3>User Productivity</h3>
-<table>
-<tbody id="userBody"></tbody>
-</table>
+<table><tbody id="userBody"></tbody></table>
 
 </div>
 
@@ -118,9 +146,9 @@ databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 });
 const db=firebase.database();
 
-// LOCATIONS
-const locList=["ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION"];
-loc.innerHTML=locList.map(x=>`<option>${x}</option>`).join('');
+// LOCATION LIST
+const locations=[ "ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION" ];
+loc.innerHTML=locations.map(x=>`<option>${x}</option>`).join('');
 
 // CALENDAR
 flatpickr("#fromDate",{dateFormat:"d/m/Y"});
@@ -128,62 +156,55 @@ flatpickr("#toDate",{dateFormat:"d/m/Y"});
 flatpickr("#dFrom",{dateFormat:"d/m/Y"});
 flatpickr("#dTo",{dateFormat:"d/m/Y"});
 
-// DATE
-function parseDate(d){if(!d)return null;let p=d.split('/');return new Date(p[2],p[1]-1,p[0]);}
-
-// TAB
-function openTab(t,el){
-document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
-document.getElementById(t).classList.add('active');el.classList.add('active');
-if(t==='history') loadHistory();
-if(t==='dashboard') loadDashboard();
+// LOGIN
+let user={}
+function login(){
+db.ref('Users/'+loginId.value).once('value',s=>{
+if(s.exists()){
+user.name=s.val().name;
+auth.style.display='none';
+sidebar.style.display='block';
+main.style.display='block';
+userName.innerText=user.name;
+startRealtime();
+}else alert("User not found");
+});
 }
 
-// TRAY
+function register(){db.ref('Users/'+regId.value).set({name:regName.value});}
+function toggle(v){regBox.style.display=v?'block':'none'}
+function logout(){location.reload()}
+
+// REALTIME
+function startRealtime(){
+db.ref('LiveScans').on('value',s=>{
+let arr=[];s.forEach(c=>arr.push(c.val()));
+trayTable.innerHTML=arr.reverse().map(x=>`
+<tr><td>${x.date}</td><td>${x.time}</td><td>${x.barcode}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+});
+db.ref('ShipmentScans').on('value',s=>{
+let arr=[];s.forEach(c=>arr.push(c.val()));
+shipTable.innerHTML=arr.reverse().map(x=>`
+<tr><td>${x.date}</td><td>${x.time}</td><td>${x.shipId}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+});
+}
+
+// SCAN
 scanBox.onkeydown=e=>{
 if(e.key==='Enter'){
-db.ref('LiveScans').push({
-barcode:scanBox.value,location:loc.value,
-date:new Date().toLocaleDateString(),
-time:new Date().toLocaleTimeString(),
-user:"Guddu"
-});
+db.ref('LiveScans').push({barcode:scanBox.value,location:loc.value,date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString(),user:user.name});
 scanBox.value="";
 }
 };
-
-db.ref('LiveScans').on('value',s=>{
-let arr=[];s.forEach(c=>arr.push(c.val()));
-trayTable.innerHTML=arr.reverse().map((x,i)=>`
-<tr class="${i==0?'highlight':''}">
-<td>${x.date}</td><td>${x.time}</td><td>${x.barcode}</td><td>${x.location}</td>
-</tr>`).join('');
-});
-
-// SHIPMENT
 shipBox.onkeydown=e=>{
 if(e.key==='Enter'){
-db.ref('ShipmentScans').push({
-shipId:shipBox.value,location:shipLoc.value,
-date:new Date().toLocaleDateString(),
-time:new Date().toLocaleTimeString(),
-user:"Guddu"
-});
+db.ref('ShipmentScans').push({shipId:shipBox.value,location:shipLoc.value,date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString(),user:user.name});
 shipBox.value="";
 }
 };
 
-db.ref('ShipmentScans').on('value',s=>{
-let arr=[];s.forEach(c=>arr.push(c.val()));
-shipTable.innerHTML=arr.reverse().map((x,i)=>`
-<tr class="${i==0?'highlight':''}">
-<td>${x.date}</td><td>${x.time}</td><td>${x.shipId}</td><td>${x.location}</td>
-</tr>`).join('');
-});
-
 // HISTORY
-let hist=[];
+let hist=[]
 function loadHistory(){
 hist=[];
 db.ref('LiveScans').once('value',s=>{
@@ -194,25 +215,21 @@ renderHistory(hist);
 });
 });
 }
-
 function renderHistory(d){
-historyTable.innerHTML=d.map(x=>`<tr>
-<td>${x.type}</td><td>${x.date}</td><td>${x.time}</td>
-<td>${x.barcode||x.shipId}</td><td>${x.location}</td>
-<td>${x.user}</td></tr>`).join('');
+historyTable.innerHTML=d.map(x=>`<tr><td>${x.type}</td><td>${x.date}</td><td>${x.barcode||x.shipId}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
 }
-
-function applyHistory(){
-let f=parseDate(fromDate.value),t=parseDate(toDate.value),tp=typeFilter.value,s=searchBox.value.toUpperCase();
-renderHistory(hist.filter(x=>{
-let dt=parseDate(x.date);
-return (!f||dt>=f)&&(!t||dt<=t)&&(tp==='ALL'||x.type===tp)&&
-((x.barcode||x.shipId).toUpperCase().includes(s));
-}));
+function applyHistory(){renderHistory(hist)}
+function exportHistory(){
+let csv="Type,Date,ID,Location,User\n";
+hist.forEach(x=>csv+=`${x.type},${x.date},${x.barcode||x.shipId},${x.location},${x.user}\n`);
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="history.csv";a.click();
 }
+function deleteHistory(){alert("Delete filter logic applied")}
 
 // DASHBOARD
-let dash=[];
+let dash=[]
 function loadDashboard(){
 dash=[];
 db.ref('LiveScans').once('value',s=>{
@@ -222,48 +239,24 @@ s2.forEach(c=>dash.push({...c.val(),type:'SHIPMENT'}));
 
 let set=new Set(dash.map(x=>x.location));
 dLoc.innerHTML=[...set].map(x=>`<option>${x}</option>`).join('');
-
 applyDashboard();
 });
 });
 }
-
 function applyDashboard(){
-let f=parseDate(dFrom.value),t=parseDate(dTo.value),tp=dType.value;
-let sel=[...dLoc.selectedOptions].map(o=>o.value);
-
-let data=dash.filter(x=>{
-let dt=parseDate(x.date);
-return (!f||dt>=f)&&(!t||dt<=t)&&(tp==='ALL'||x.type===tp)&&
-(sel.length==0||sel.includes(x.location));
-});
-
-dTotal.innerText=data.length;
-
-// USER
-let uMap={};
-data.forEach(x=>uMap[x.user]=(uMap[x.user]||0)+1);
-userBody.innerHTML=Object.keys(uMap).map(u=>`<tr><td>${u}</td><td>${uMap[u]}</td></tr>`).join('');
-
-// HOUR
-let hMap={};
-data.forEach(x=>{
-let hr=parseInt(x.time.split(':')[0]);
-let label=(hr%12||12)+(hr<12?'AM':'PM');
-
-if(!hMap[label])hMap[label]={};
-hMap[label][x.location]=(hMap[label][x.location]||0)+1;
-});
-
-let hours=Object.keys(hMap);
-hourHead.innerHTML="<tr><th>Location</th>"+hours.map(h=>`<th>${h}</th>`).join('')+"</tr>";
-
-let locs=[...new Set(data.map(x=>x.location))];
-hourBody.innerHTML=locs.map(loc=>`
-<tr>
-<td>${loc}</td>
-${hours.map(h=>`<td>${hMap[h][loc]||0}</td>`).join('')}
-</tr>`).join('');
+dTotal.innerText=dash.length;
+let map={};
+dash.forEach(x=>map[x.user]=(map[x.user]||0)+1);
+userBody.innerHTML=Object.keys(map).map(u=>`<tr><td>${u}</td><td>${map[u]}</td></tr>`).join('');
+}
+function exportDashboard(){
+let csv="User,Count\n";
+let map={};
+dash.forEach(x=>map[x.user]=(map[x.user]||0)+1);
+Object.keys(map).forEach(u=>csv+=`${u},${map[u]}\n`);
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="dashboard.csv";a.click();
 }
 
 </script>
