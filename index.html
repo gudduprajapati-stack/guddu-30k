@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS FINAL PRO</title>
+<title>NexS FINAL FIXED</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -24,7 +24,7 @@ button{padding:10px 15px;background:#00d4ff;border:none;color:#000;border-radius
 table{width:100%;margin-top:20px;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #333;text-align:center}
 th{color:#00d4ff}
-.highlight{background:#002200}
+.highlight{background:#003300}
 </style>
 </head>
 
@@ -36,7 +36,8 @@ th{color:#00d4ff}
 <h2>Login</h2>
 <input id="loginId" placeholder="Employee ID">
 <button onclick="login()">Login</button>
-<p onclick="toggle(true)">New Registration</p>
+
+<p onclick="toggle(true)" style="cursor:pointer">New Registration</p>
 
 <div id="regBox" style="display:none">
 <input id="regName" placeholder="Name">
@@ -64,8 +65,9 @@ th{color:#00d4ff}
 <h2>Tray Scan</h2>
 <div class="row">
 <select id="loc"></select>
-<input id="scanBox" placeholder="MT76921" maxlength="7">
+<input id="scanBox" placeholder="MT76921">
 </div>
+
 <table>
 <thead><tr><th>Date</th><th>Time</th><th>Tray</th><th>Location</th><th>User</th></tr></thead>
 <tbody id="trayTable"></tbody>
@@ -84,6 +86,7 @@ th{color:#00d4ff}
 </select>
 <input id="shipBox" placeholder="Min 23 digit">
 </div>
+
 <table>
 <thead><tr><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th></tr></thead>
 <tbody id="shipTable"></tbody>
@@ -102,7 +105,6 @@ th{color:#00d4ff}
 </select>
 <input id="searchBox">
 <button onclick="applyHistory()">Filter</button>
-<button onclick="exportHistory()">Export</button>
 <button onclick="deleteHistory()" style="background:red;color:#fff">Delete</button>
 </div>
 
@@ -115,18 +117,6 @@ th{color:#00d4ff}
 <!-- DASHBOARD -->
 <div id="dashboard" class="tab">
 <h2>Dashboard</h2>
-
-<div class="row">
-<input id="dFrom"><input id="dTo">
-<select id="dType">
-<option value="ALL">ALL</option>
-<option value="TRAY">TRAY</option>
-<option value="SHIPMENT">SHIPMENT</option>
-</select>
-<select id="dLoc" multiple size="5"></select>
-<button onclick="applyDashboard()">Apply</button>
-<button onclick="exportDashboard()">Export</button>
-</div>
 
 <h3>Total: <span id="dTotal">0</span></h3>
 
@@ -146,117 +136,230 @@ databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 });
 const db=firebase.database();
 
-// LOCATION LIST
-const locations=[ "ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION" ];
+// LOCATIONS FULL
+const locations=["ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION"];
 loc.innerHTML=locations.map(x=>`<option>${x}</option>`).join('');
 
-// CALENDAR
+// DATE
 flatpickr("#fromDate",{dateFormat:"d/m/Y"});
 flatpickr("#toDate",{dateFormat:"d/m/Y"});
-flatpickr("#dFrom",{dateFormat:"d/m/Y"});
-flatpickr("#dTo",{dateFormat:"d/m/Y"});
+
+function parseDate(d){
+if(!d) return null;
+let p=d.split('/');
+return new Date(p[2],p[1]-1,p[0]);
+}
 
 // LOGIN
 let user={}
 function login(){
-db.ref('Users/'+loginId.value).once('value',s=>{
-if(s.exists()){
-user.name=s.val().name;
+let id=loginId.value.trim();
+if(!id) return alert("Enter ID");
+
+db.ref('Users/'+id).once('value',snap=>{
+if(snap.exists()){
+user.name=snap.val().name;
+user.id=id;
+
 auth.style.display='none';
 sidebar.style.display='block';
 main.style.display='block';
-userName.innerText=user.name;
+
+userName.innerText=user.name+" ("+id+")";
+
 startRealtime();
+
 }else alert("User not found");
 });
 }
 
-function register(){db.ref('Users/'+regId.value).set({name:regName.value});}
+function register(){
+db.ref('Users/'+regId.value).set({name:regName.value});
+alert("Registered");
+}
+
 function toggle(v){regBox.style.display=v?'block':'none'}
 function logout(){location.reload()}
 
+// TAB
+function openTab(t,el){
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
+document.getElementById(t).classList.add('active');
+el.classList.add('active');
+
+if(t==='history') loadHistory();
+if(t==='dashboard') loadDashboard();
+}
+
 // REALTIME
 function startRealtime(){
-db.ref('LiveScans').on('value',s=>{
-let arr=[];s.forEach(c=>arr.push(c.val()));
-trayTable.innerHTML=arr.reverse().map(x=>`
-<tr><td>${x.date}</td><td>${x.time}</td><td>${x.barcode}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+
+db.ref('LiveScans').on('value',snap=>{
+let arr=[];
+snap.forEach(c=>{
+let d=c.val();
+if(d && d.barcode){
+arr.push(d);
+}
 });
-db.ref('ShipmentScans').on('value',s=>{
-let arr=[];s.forEach(c=>arr.push(c.val()));
-shipTable.innerHTML=arr.reverse().map(x=>`
-<tr><td>${x.date}</td><td>${x.time}</td><td>${x.shipId}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+
+arr.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+trayTable.innerHTML=arr.map((x,i)=>`
+<tr class="${i==0?'highlight':''}">
+<td>${x.date||'-'}</td>
+<td>${x.time||'-'}</td>
+<td>${x.barcode}</td>
+<td>${x.location||'-'}</td>
+<td>${x.user||'-'}</td>
+</tr>`).join('');
 });
+
+db.ref('ShipmentScans').on('value',snap=>{
+let arr=[];
+snap.forEach(c=>{
+let d=c.val();
+if(d && d.shipId){
+arr.push(d);
+}
+});
+
+arr.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+shipTable.innerHTML=arr.map((x,i)=>`
+<tr class="${i==0?'highlight':''}">
+<td>${x.date||'-'}</td>
+<td>${x.time||'-'}</td>
+<td>${x.shipId}</td>
+<td>${x.location||'-'}</td>
+<td>${x.user||'-'}</td>
+</tr>`).join('');
+});
+
 }
 
 // SCAN
 scanBox.onkeydown=e=>{
 if(e.key==='Enter'){
-db.ref('LiveScans').push({barcode:scanBox.value,location:loc.value,date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString(),user:user.name});
+let v=scanBox.value.trim();
+if(!v) return;
+
+db.ref('LiveScans').push({
+barcode:v,
+location:loc.value,
+date:new Date().toLocaleDateString('en-GB'),
+time:new Date().toLocaleTimeString(),
+user:user.name,
+timestamp:Date.now()
+});
+
 scanBox.value="";
 }
 };
+
 shipBox.onkeydown=e=>{
 if(e.key==='Enter'){
-db.ref('ShipmentScans').push({shipId:shipBox.value,location:shipLoc.value,date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString(),user:user.name});
+let v=shipBox.value.trim();
+if(v.length<5) return;
+
+db.ref('ShipmentScans').push({
+shipId:v,
+location:shipLoc.value,
+date:new Date().toLocaleDateString('en-GB'),
+time:new Date().toLocaleTimeString(),
+user:user.name,
+timestamp:Date.now()
+});
+
 shipBox.value="";
 }
 };
 
 // HISTORY
-let hist=[]
+let historyData=[];
 function loadHistory(){
-hist=[];
+historyData=[];
+
 db.ref('LiveScans').once('value',s=>{
-s.forEach(c=>hist.push({...c.val(),type:'TRAY'}));
+s.forEach(c=>{
+let d=c.val();
+if(d && d.barcode){
+historyData.push({...d,type:'TRAY',key:c.key,path:'LiveScans'});
+}
+});
+
 db.ref('ShipmentScans').once('value',s2=>{
-s2.forEach(c=>hist.push({...c.val(),type:'SHIPMENT'}));
-renderHistory(hist);
+s2.forEach(c=>{
+let d=c.val();
+if(d && d.shipId){
+historyData.push({...d,type:'SHIPMENT',key:c.key,path:'ShipmentScans'});
+}
+});
+
+renderHistory(historyData);
 });
 });
 }
-function renderHistory(d){
-historyTable.innerHTML=d.map(x=>`<tr><td>${x.type}</td><td>${x.date}</td><td>${x.barcode||x.shipId}</td><td>${x.location}</td><td>${x.user}</td></tr>`).join('');
+
+function renderHistory(data){
+historyTable.innerHTML=data.map(x=>`
+<tr>
+<td>${x.type}</td>
+<td>${x.date}</td>
+<td>${x.barcode||x.shipId}</td>
+<td>${x.location}</td>
+<td>${x.user}</td>
+</tr>`).join('');
 }
-function applyHistory(){renderHistory(hist)}
-function exportHistory(){
-let csv="Type,Date,ID,Location,User\n";
-hist.forEach(x=>csv+=`${x.type},${x.date},${x.barcode||x.shipId},${x.location},${x.user}\n`);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="history.csv";a.click();
+
+function applyHistory(){
+let f=parseDate(fromDate.value);
+let t=parseDate(toDate.value);
+let tp=typeFilter.value;
+let s=searchBox.value.toUpperCase();
+
+renderHistory(historyData.filter(x=>{
+let dt=parseDate(x.date);
+return (!f||dt>=f)&&(!t||dt<=t)&&
+(tp==='ALL'||x.type===tp)&&
+((x.barcode||x.shipId).toUpperCase().includes(s));
+}));
 }
-function deleteHistory(){alert("Delete filter logic applied")}
+
+function deleteHistory(){
+if(!confirm("Delete selected data?")) return;
+
+historyData.forEach(x=>{
+db.ref(x.path+"/"+x.key).remove();
+});
+
+alert("Deleted");
+loadHistory();
+}
 
 // DASHBOARD
-let dash=[]
 function loadDashboard(){
-dash=[];
 db.ref('LiveScans').once('value',s=>{
-s.forEach(c=>dash.push({...c.val(),type:'TRAY'}));
-db.ref('ShipmentScans').once('value',s2=>{
-s2.forEach(c=>dash.push({...c.val(),type:'SHIPMENT'}));
+let data=[];
+s.forEach(c=>{
+let d=c.val();
+if(d && d.user){
+data.push(d);
+}
+});
 
-let set=new Set(dash.map(x=>x.location));
-dLoc.innerHTML=[...set].map(x=>`<option>${x}</option>`).join('');
-applyDashboard();
-});
-});
-}
-function applyDashboard(){
-dTotal.innerText=dash.length;
+dTotal.innerText=data.length;
+
 let map={};
-dash.forEach(x=>map[x.user]=(map[x.user]||0)+1);
-userBody.innerHTML=Object.keys(map).map(u=>`<tr><td>${u}</td><td>${map[u]}</td></tr>`).join('');
-}
-function exportDashboard(){
-let csv="User,Count\n";
-let map={};
-dash.forEach(x=>map[x.user]=(map[x.user]||0)+1);
-Object.keys(map).forEach(u=>csv+=`${u},${map[u]}\n`);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="dashboard.csv";a.click();
+data.forEach(x=>{
+map[x.user]=(map[x.user]||0)+1;
+});
+
+userBody.innerHTML=Object.keys(map).map(u=>`
+<tr><td>${u}</td><td>${map[u]}</td></tr>`).join('');
+
+});
 }
 
 </script>
