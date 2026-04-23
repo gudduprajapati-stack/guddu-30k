@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS Step 3 Final</title>
+<title>NexS FINAL STEP 3</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -61,7 +61,7 @@ td,th{padding:10px;border-bottom:1px solid #333;text-align:center}
 
 <div class="main">
 
-<!-- TRAY PAGE -->
+<!-- TRAY -->
 <div id="tray" class="tab active">
 <h2>📦 Tray Scan</h2>
 
@@ -78,7 +78,7 @@ td,th{padding:10px;border-bottom:1px solid #333;text-align:center}
 </table>
 </div>
 
-<!-- SHIPMENT PAGE -->
+<!-- SHIPMENT -->
 <div id="shipment" class="tab">
 <h2>🚛 Shipment Scan</h2>
 
@@ -89,7 +89,7 @@ td,th{padding:10px;border-bottom:1px solid #333;text-align:center}
 <option>OTHER SHIPMENT</option>
 </select>
 
-<input id="shipBox" placeholder="Enter 23 Digit ID">
+<input id="shipBox" placeholder="Enter Shipment ID (Max 23 digit)">
 
 <table>
 <thead>
@@ -113,13 +113,26 @@ databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 });
 const db=firebase.database();
 
-// LOCATIONS
-const LOCATIONS=["ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION"];
+// LOCATION LIST (FULL)
+const LOCATIONS=[
+"ICU ENTRY","MEI ENTRY","OMT ENTRY","LO SEND TO ICU","LO SEND TO MEI",
+"ORDER SEND TO MAIN LINE FOR FT","ORDER SEND TO MAIN LINE FOR QC",
+"ORDER SEND TO MAIN LINE FOR PACKING","TLP SEND TO MEI","QC FAIL SEND TO MEI",
+"FRAME QC FAIL SEND TO MAIN LINE","SEND TO MEI FOR REVIEW","CS LOCATION",
+"SMALL DIA LOCATION","LO QC FAIL LOCATION (JIT)",
+"OMT RACK 00","OMT RACK 01","OMT RACK 02","OMT RACK 03","OMT RACK 04",
+"OMT RACK 05","OMT RACK 06","OMT RACK 07","OMT RACK 08","OMT RACK 09",
+"ICU TROLLEY 1","ICU TROLLEY 2","ICU TROLLEY 3","ICU TROLLEY 4","ICU TROLLEY 5",
+"ICU TROLLEY 6","ICU TROLLEY 7","ICU TROLLEY 8","ICU TROLLEY 9","ICU TROLLEY 10",
+"OMT TROLLEY 1","OMT TROLLEY 2","OMT TROLLEY 3","OMT TROLLEY 4","OMT TROLLEY 5",
+"OMT TROLLEY 6","OMT TROLLEY 7","OMT TROLLEY 8","OMT TROLLEY 9","OMT TROLLEY 10"
+];
+
 loc.innerHTML=LOCATIONS.map(x=>`<option>${x}</option>`).join('');
 
 let user={};
 
-// SWITCH LOGIN
+// LOGIN SWITCH
 function showReg(){loginBox.style.display="none";regBox.style.display="flex"}
 function showLogin(){regBox.style.display="none";loginBox.style.display="flex"}
 
@@ -148,7 +161,7 @@ user.id=id;
 loginBox.style.display="none";
 app.style.display="flex";
 
-document.getElementById("user").innerText=user.name+" ("+user.id+")";
+document.getElementById("user").innerText=user.name+" ("+user.id);
 
 startRealtime();
 });
@@ -216,13 +229,19 @@ trayBox.value="";
 }
 };
 
-// SHIPMENT SCAN
+// SHIPMENT SCAN (UPDATED RULE)
 shipBox.onkeydown=e=>{
 if(e.key==="Enter"){
+
 let val=shipBox.value.trim().toUpperCase();
 
-if(val.length!==23){
-alert("Enter 23 digit shipment ID");
+if(!val){
+alert("Enter Shipment ID");
+return;
+}
+
+if(val.length>23){
+alert("Shipment ID max 23 digit allowed");
 return;
 }
 
