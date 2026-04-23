@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS FINAL PRO</title>
+<title>NexS ULTRA FINAL</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff}
+body{margin:0;background:#0a0a0a;color:#fff;font-family:sans-serif}
 .sidebar{width:230px;height:100vh;background:#000;position:fixed}
 .sidebar div{padding:15px;cursor:pointer}
 .sidebar div:hover{background:#111}
@@ -26,25 +26,27 @@ button{padding:8px 12px;cursor:pointer}
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginPage">
 <h2>Login</h2>
-<input id="loginId" placeholder="ID">
+<input id="loginId" placeholder="Enter ID">
 <button onclick="login()">Login</button>
 
-<h3>Register</h3>
+<h3>New Registration</h3>
 <input id="regName" placeholder="Name">
 <input id="regId" placeholder="ID">
 <button onclick="register()">Save</button>
 </div>
 
+<!-- APP -->
 <div id="app" style="display:none">
 
 <div class="sidebar">
-<div onclick="showTab('tray')">Tray</div>
-<div onclick="showTab('ship')">Shipment</div>
-<div onclick="showTab('history')">History</div>
-<div onclick="showTab('dash')">Dashboard</div>
-<div onclick="location.reload()">Logout</div>
+<div onclick="showTab('tray')">📦 Tray</div>
+<div onclick="showTab('ship')">🚛 Shipment</div>
+<div onclick="showTab('history')">🕒 History</div>
+<div onclick="showTab('dash')">📊 Dashboard</div>
+<div onclick="location.reload()">🚪 Logout</div>
 </div>
 
 <div class="main">
@@ -116,23 +118,31 @@ button{padding:8px 12px;cursor:pointer}
 <input type="date" id="dto">
 
 <select id="dtype">
-<option>ALL</option><option>TRAY</option><option>SHIPMENT</option>
+<option>ALL</option>
+<option>TRAY</option>
+<option>SHIPMENT</option>
 </select>
-
-<select id="dloc" multiple></select>
 </div>
+
+<!-- LOCATION FILTER -->
+<div style="background:#111;padding:10px;border:1px solid #333">
+<label><input type="checkbox" id="selectAll"> SELECT ALL</label>
+<div id="locCheckboxes" style="max-height:150px;overflow:auto;margin-top:10px"></div>
+</div>
+
+<br>
 
 <button onclick="exportTable('locTable')">Export Location</button>
 <button onclick="exportTable('personTable')">Export Person</button>
 <button onclick="exportTable('personHourTable')">Export Person Hourly</button>
 
-<h3>Location Hourly</h3>
+<h3>📦 Location Hourly</h3>
 <table id="locTable"></table>
 
-<h3>Person Wise</h3>
+<h3>👤 Person Wise</h3>
 <table id="personTable"></table>
 
-<h3>Person + Hourly</h3>
+<h3>⏱ Person + Hourly</h3>
 <table id="personHourTable"></table>
 
 </div>
@@ -141,31 +151,47 @@ button{padding:8px 12px;cursor:pointer}
 </div>
 
 <script>
-const firebaseConfig={
-apiKey:"YOUR_KEY",
+
+// 🔥 FIREBASE CONFIG
+firebase.initializeApp({
+apiKey:"YOUR_API_KEY",
 databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
-};
-firebase.initializeApp(firebaseConfig);
+});
+
 const db=firebase.database();
 
-let user={},allData=[];
+let user={},allData=[],trayData=[],shipData=[];
 
-// FULL LOCATION LIST
-const locations=[`ICU ENTRY`,`MEI ENTRY`,`OMT ENTRY`,`LO SEND TO ICU`,`LO SEND TO MEI`,
-`ORDER SEND TO MAIN LINE FOR FT`,`ORDER SEND TO MAIN LINE FOR QC`,
-`ORDER SEND TO MAIN LINE FOR PACKING`,`TLP SEND TO MEI`,`QC FAIL SEND TO MEI`,
-`FRAME QC FAIL SEND TO MAIN LINE`,`SEND TO MEI FOR REVIEW`,`CS LOCATION`,
-`SMALL DIA LOCATION`,`LO QC FAIL LOCATION (JIT)`,
+// 🔥 FULL LOCATION LIST
+const locations=[
+"ICU ENTRY","MEI ENTRY","OMT ENTRY","LO SEND TO ICU","LO SEND TO MEI",
+"ORDER SEND TO MAIN LINE FOR FT","ORDER SEND TO MAIN LINE FOR QC",
+"ORDER SEND TO MAIN LINE FOR PACKING","TLP SEND TO MEI","QC FAIL SEND TO MEI",
+"FRAME QC FAIL SEND TO MAIN LINE","SEND TO MEI FOR REVIEW","CS LOCATION",
+"SMALL DIA LOCATION","LO QC FAIL LOCATION (JIT)",
 ...Array.from({length:10},(_,i)=>`OMT RACK 0${i}`),
 ...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
 ...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
 ];
 
+// LOAD LOCATIONS
 locations.forEach(l=>{
 loc.innerHTML+=`<option>${l}</option>`;
-dloc.innerHTML+=`<option>${l}</option>`;
+locCheckboxes.innerHTML+=`<label style="display:block">
+<input type="checkbox" class="locChk" value="${l}" checked> ${l}
+</label>`;
 });
 
+// SELECT ALL
+selectAll.onclick=()=>{
+document.querySelectorAll(".locChk").forEach(c=>c.checked=selectAll.checked);
+};
+
+function getSelectedLocations(){
+return [...document.querySelectorAll(".locChk:checked")].map(c=>c.value);
+}
+
+// LOGIN
 function register(){
 db.ref("Users/"+regId.value).set({name:regName.value});
 alert("Saved");
@@ -179,38 +205,47 @@ user.id=loginId.value;
 loginPage.style.display="none";
 app.style.display="block";
 loadData();
-}else alert("Not found");
+}else alert("ID not found");
 });
 }
 
+// TAB SWITCH
 function showTab(t){
 document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
 document.getElementById(t).classList.add("active");
 }
 
+// 🔥 SYNC FIX
 function loadData(){
-allData=[];
 
-db.ref("tray").on("value",s=>{
+db.ref("tray").on("value",snap=>{
+trayData=[];
 trayTable.innerHTML="";
-allData=[];
-s.forEach(c=>{
+snap.forEach(c=>{
 let d=c.val(); d.type="TRAY";
-allData.push(d);
+trayData.push(d);
 trayTable.innerHTML+=row(d);
 });
+merge();
 });
 
-db.ref("ship").on("value",s=>{
+db.ref("ship").on("value",snap=>{
+shipData=[];
 shipTable.innerHTML="";
-s.forEach(c=>{
+snap.forEach(c=>{
 let d=c.val(); d.type="SHIPMENT";
-allData.push(d);
+shipData.push(d);
 shipTable.innerHTML+=row(d);
 });
+merge();
 });
 }
 
+function merge(){
+allData=[...trayData,...shipData];
+}
+
+// ROW
 function row(d){
 return `<tr>
 <td>${d.date}</td>
@@ -251,9 +286,7 @@ shipInput.value="";
 // HISTORY
 function applyHistory(){
 histData.innerHTML="";
-allData.forEach(d=>{
-histData.innerHTML+=row(d);
-});
+allData.forEach(d=>histData.innerHTML+=row(d));
 }
 
 // EXPORT
@@ -281,14 +314,37 @@ a.download="export.csv";
 a.click();
 }
 
+// DELETE
+function deleteData(){
+if(confirm("Delete ALL data?")){
+db.ref("tray").remove();
+db.ref("ship").remove();
+}
+}
+
 // DASHBOARD
 setInterval(()=>{
+
+let from=dfrom.value?new Date(dfrom.value):null;
+let to=dto.value?new Date(dto.value):null;
+let type=dtype.value;
+let selectedLoc=getSelectedLocations();
+
 let map={},person={},personH={};
+
 const hours=["12AM","1AM","2AM","3AM","4AM","5AM","6AM","7AM","8AM","9AM","10AM","11AM",
 "12PM","1PM","2PM","3PM","4PM","5PM","6PM","7PM","8PM","9PM","10PM","11PM"];
 
 allData.forEach(d=>{
-let h=new Date(d.timestamp).getHours();
+
+let dt=new Date(d.timestamp);
+
+if(from && dt<from) return;
+if(to && dt>to) return;
+if(type!=="ALL" && d.type!==type) return;
+if(selectedLoc.length && !selectedLoc.includes(d.location)) return;
+
+let h=dt.getHours();
 let loc=d.location,u=d.userId;
 
 if(!map[loc]) map[loc]=Array(24).fill(0);
@@ -301,7 +357,7 @@ personH[u][h]++;
 });
 
 // LOCATION
-locTable.innerHTML="<tr><th>Loc</th>"+hours.map(h=>`<th>${h}</th>`).join("")+"</tr>";
+locTable.innerHTML="<tr><th>Location</th>"+hours.map(h=>`<th>${h}</th>`).join("")+"</tr>";
 Object.entries(map).sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
 .forEach(([l,v])=>{
 locTable.innerHTML+=`<tr><td>${l}</td>${v.map(x=>`<td>${x}</td>`).join("")}</tr>`;
@@ -314,13 +370,15 @@ Object.entries(person).sort((a,b)=>b[1]-a[1])
 personTable.innerHTML+=`<tr><td>${u}</td><td>${v}</td></tr>`;
 });
 
-// PERSON HOURLY
+// PERSON + HOURLY
 personHourTable.innerHTML="<tr><th>User</th>"+hours.map(h=>`<th>${h}</th>`).join("")+"</tr>";
-Object.entries(personH).forEach(([u,v])=>{
+Object.entries(personH).sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
+.forEach(([u,v])=>{
 personHourTable.innerHTML+=`<tr><td>${u}</td>${v.map(x=>`<td>${x}</td>`).join("")}</tr>`;
 });
 
 },2000);
+
 </script>
 
 </body>
