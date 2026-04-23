@@ -2,22 +2,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS FINAL SYSTEM</title>
+<title>NexS FINAL PRO</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
 body{margin:0;font-family:sans-serif;background:#0a0a0a;color:#fff}
-.sidebar{width:220px;position:fixed;height:100%;background:#000;padding:10px}
-.sidebar div{padding:12px;cursor:pointer}
+.sidebar{width:230px;height:100vh;background:#000;position:fixed}
+.sidebar div{padding:15px;cursor:pointer}
 .sidebar div:hover{background:#111}
-.main{margin-left:230px;padding:15px}
+.main{margin-left:240px;padding:15px}
 .tab{display:none}
 .active{display:block}
-.row{display:flex;gap:10px;margin-bottom:10px;align-items:center}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 input,select{padding:10px;background:#000;color:#fff;border:1px solid #444}
-table{width:100%;border-collapse:collapse;margin-top:10px}
+table{width:100%;border-collapse:collapse}
 th,td{border-bottom:1px solid #333;padding:8px;text-align:center}
 th{color:#00d4ff}
 button{padding:8px 12px;cursor:pointer}
@@ -26,19 +26,17 @@ button{padding:8px 12px;cursor:pointer}
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage">
 <h2>Login</h2>
-<input id="loginId" placeholder="Enter ID">
+<input id="loginId" placeholder="ID">
 <button onclick="login()">Login</button>
 
-<h3>New Registration</h3>
+<h3>Register</h3>
 <input id="regName" placeholder="Name">
 <input id="regId" placeholder="ID">
 <button onclick="register()">Save</button>
 </div>
 
-<!-- MAIN -->
 <div id="app" style="display:none">
 
 <div class="sidebar">
@@ -46,7 +44,7 @@ button{padding:8px 12px;cursor:pointer}
 <div onclick="showTab('ship')">Shipment</div>
 <div onclick="showTab('history')">History</div>
 <div onclick="showTab('dash')">Dashboard</div>
-<div onclick="logout()">Logout</div>
+<div onclick="location.reload()">Logout</div>
 </div>
 
 <div class="main">
@@ -54,15 +52,8 @@ button{padding:8px 12px;cursor:pointer}
 <!-- TRAY -->
 <div id="tray" class="tab active">
 <div class="row">
-<select id="loc">
-<option>ICU ENTRY</option>
-<option>MEI ENTRY</option>
-<option>OMT ENTRY</option>
-<option>ICU TROLLEY 1</option>
-<option>OMT TROLLEY 1</option>
-</select>
-
-<input id="trayInput" placeholder="Scan Tray (MT76921)">
+<select id="loc"></select>
+<input id="trayInput" placeholder="Scan Tray (7 digit)">
 </div>
 
 <table>
@@ -82,7 +73,6 @@ button{padding:8px 12px;cursor:pointer}
 <option>SREERAJXPRESS</option>
 <option>OTHER SHIPMENT</option>
 </select>
-
 <input id="shipInput" placeholder="Max 23 Digit">
 </div>
 
@@ -97,18 +87,13 @@ button{padding:8px 12px;cursor:pointer}
 <!-- HISTORY -->
 <div id="history" class="tab">
 
-<div class="row" style="flex-wrap:nowrap;overflow-x:auto">
+<div class="row" style="flex-wrap:nowrap;overflow:auto">
 <input type="date" id="from">
 <input type="date" id="to">
-
 <select id="type">
-<option value="ALL">ALL</option>
-<option value="TRAY">TRAY</option>
-<option value="SHIPMENT">SHIPMENT</option>
+<option>ALL</option><option>TRAY</option><option>SHIPMENT</option>
 </select>
-
 <input id="search" placeholder="Search">
-
 <button onclick="applyHistory()">Filter</button>
 <button onclick="exportCSV()">Export</button>
 <button onclick="deleteData()">Delete</button>
@@ -116,9 +101,7 @@ button{padding:8px 12px;cursor:pointer}
 
 <table>
 <thead>
-<tr>
-<th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th>
-</tr>
+<tr><th>Type</th><th>Date</th><th>Time</th><th>ID</th><th>Location</th><th>User</th></tr>
 </thead>
 <tbody id="histData"></tbody>
 </table>
@@ -127,6 +110,21 @@ button{padding:8px 12px;cursor:pointer}
 
 <!-- DASHBOARD -->
 <div id="dash" class="tab">
+
+<div class="row">
+<input type="date" id="dfrom">
+<input type="date" id="dto">
+
+<select id="dtype">
+<option>ALL</option><option>TRAY</option><option>SHIPMENT</option>
+</select>
+
+<select id="dloc" multiple></select>
+</div>
+
+<button onclick="exportTable('locTable')">Export Location</button>
+<button onclick="exportTable('personTable')">Export Person</button>
+<button onclick="exportTable('personHourTable')">Export Person Hourly</button>
 
 <h3>Location Hourly</h3>
 <table id="locTable"></table>
@@ -144,7 +142,7 @@ button{padding:8px 12px;cursor:pointer}
 
 <script>
 const firebaseConfig={
-apiKey:"AIzaSy...",
+apiKey:"YOUR_KEY",
 databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 };
 firebase.initializeApp(firebaseConfig);
@@ -152,18 +150,32 @@ const db=firebase.database();
 
 let user={},allData=[];
 
+// FULL LOCATION LIST
+const locations=[`ICU ENTRY`,`MEI ENTRY`,`OMT ENTRY`,`LO SEND TO ICU`,`LO SEND TO MEI`,
+`ORDER SEND TO MAIN LINE FOR FT`,`ORDER SEND TO MAIN LINE FOR QC`,
+`ORDER SEND TO MAIN LINE FOR PACKING`,`TLP SEND TO MEI`,`QC FAIL SEND TO MEI`,
+`FRAME QC FAIL SEND TO MAIN LINE`,`SEND TO MEI FOR REVIEW`,`CS LOCATION`,
+`SMALL DIA LOCATION`,`LO QC FAIL LOCATION (JIT)`,
+...Array.from({length:10},(_,i)=>`OMT RACK 0${i}`),
+...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
+...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
+];
+
+locations.forEach(l=>{
+loc.innerHTML+=`<option>${l}</option>`;
+dloc.innerHTML+=`<option>${l}</option>`;
+});
+
 function register(){
-let n=regName.value,i=regId.value;
-db.ref("Users/"+i).set({name:n});
+db.ref("Users/"+regId.value).set({name:regName.value});
 alert("Saved");
 }
 
 function login(){
-let id=loginId.value;
-db.ref("Users/"+id).once("value",s=>{
+db.ref("Users/"+loginId.value).once("value",s=>{
 if(s.exists()){
 user.name=s.val().name;
-user.id=id;
+user.id=loginId.value;
 loginPage.style.display="none";
 app.style.display="block";
 loadData();
@@ -171,51 +183,19 @@ loadData();
 });
 }
 
-function logout(){location.reload()}
-
 function showTab(t){
 document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
 document.getElementById(t).classList.add("active");
 }
 
-trayInput.addEventListener("keydown",e=>{
-if(e.key==="Enter"){
-db.ref("tray").push({
-barcode:trayInput.value,
-location:loc.value,
-date:new Date().toLocaleDateString('en-GB'),
-time:new Date().toLocaleTimeString(),
-user:user.name,
-userId:user.id,
-timestamp:Date.now(),
-type:"TRAY"
-});
-trayInput.value="";
-}
-});
-
-shipInput.addEventListener("keydown",e=>{
-if(e.key==="Enter" && e.target.value.length<=23){
-db.ref("ship").push({
-shipId:shipInput.value,
-location:agency.value,
-date:new Date().toLocaleDateString('en-GB'),
-time:new Date().toLocaleTimeString(),
-user:user.name,
-userId:user.id,
-timestamp:Date.now(),
-type:"SHIPMENT"
-});
-shipInput.value="";
-}
-});
-
 function loadData(){
-db.ref("tray").on("value",s=>{
 allData=[];
+
+db.ref("tray").on("value",s=>{
 trayTable.innerHTML="";
+allData=[];
 s.forEach(c=>{
-let d=c.val();
+let d=c.val(); d.type="TRAY";
 allData.push(d);
 trayTable.innerHTML+=row(d);
 });
@@ -224,7 +204,7 @@ trayTable.innerHTML+=row(d);
 db.ref("ship").on("value",s=>{
 shipTable.innerHTML="";
 s.forEach(c=>{
-let d=c.val();
+let d=c.val(); d.type="SHIPMENT";
 allData.push(d);
 shipTable.innerHTML+=row(d);
 });
@@ -241,6 +221,34 @@ return `<tr>
 </tr>`;
 }
 
+// SCAN
+trayInput.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+db.ref("tray").push({
+barcode:trayInput.value,
+location:loc.value,
+date:new Date().toLocaleDateString('en-GB'),
+time:new Date().toLocaleTimeString(),
+user:user.name,userId:user.id,timestamp:Date.now()
+});
+trayInput.value="";
+}
+});
+
+shipInput.addEventListener("keydown",e=>{
+if(e.key==="Enter" && e.target.value.length<=23){
+db.ref("ship").push({
+shipId:shipInput.value,
+location:agency.value,
+date:new Date().toLocaleDateString('en-GB'),
+time:new Date().toLocaleTimeString(),
+user:user.name,userId:user.id,timestamp:Date.now()
+});
+shipInput.value="";
+}
+});
+
+// HISTORY
 function applyHistory(){
 histData.innerHTML="";
 allData.forEach(d=>{
@@ -248,50 +256,68 @@ histData.innerHTML+=row(d);
 });
 }
 
+// EXPORT
 function exportCSV(){
 let csv="Date,Time,ID,Location,User\n";
 allData.forEach(d=>{
 csv+=`${d.date},${d.time},${d.barcode||d.shipId},${d.location},${d.user}\n`;
 });
-let a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="data.csv";
-a.click();
+download(csv);
 }
 
-function deleteData(){
-if(confirm("Delete all?")){
-db.ref("tray").remove();
-db.ref("ship").remove();
+function exportTable(id){
+let rows=document.querySelectorAll("#"+id+" tr");
+let csv="";
+rows.forEach(r=>{
+csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
+});
+download(csv);
 }
+
+function download(csv){
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="export.csv";
+a.click();
 }
 
 // DASHBOARD
 setInterval(()=>{
-let locMap={},personMap={};
+let map={},person={},personH={};
+const hours=["12AM","1AM","2AM","3AM","4AM","5AM","6AM","7AM","8AM","9AM","10AM","11AM",
+"12PM","1PM","2PM","3PM","4PM","5PM","6PM","7PM","8PM","9PM","10PM","11PM"];
 
 allData.forEach(d=>{
 let h=new Date(d.timestamp).getHours();
-let loc=d.location;
-let u=d.userId;
+let loc=d.location,u=d.userId;
 
-if(!locMap[loc]) locMap[loc]=Array(24).fill(0);
-locMap[loc][h]++;
+if(!map[loc]) map[loc]=Array(24).fill(0);
+map[loc][h]++;
 
-personMap[u]=(personMap[u]||0)+1;
+person[u]=(person[u]||0)+1;
+
+if(!personH[u]) personH[u]=Array(24).fill(0);
+personH[u][h]++;
 });
 
-const hours=[...Array(24).keys()].map(h=>h);
-
-locTable.innerHTML="<tr><th>Loc</th>"+hours.map(h=>`<th>${h}</th>`).join('')+"</tr>";
-
-Object.entries(locMap).forEach(([l,v])=>{
-locTable.innerHTML+=`<tr><td>${l}</td>${v.map(x=>`<td>${x}</td>`).join('')}</tr>`;
+// LOCATION
+locTable.innerHTML="<tr><th>Loc</th>"+hours.map(h=>`<th>${h}</th>`).join("")+"</tr>";
+Object.entries(map).sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
+.forEach(([l,v])=>{
+locTable.innerHTML+=`<tr><td>${l}</td>${v.map(x=>`<td>${x}</td>`).join("")}</tr>`;
 });
 
+// PERSON
 personTable.innerHTML="<tr><th>User</th><th>Total</th></tr>";
-Object.entries(personMap).forEach(([u,v])=>{
+Object.entries(person).sort((a,b)=>b[1]-a[1])
+.forEach(([u,v])=>{
 personTable.innerHTML+=`<tr><td>${u}</td><td>${v}</td></tr>`;
+});
+
+// PERSON HOURLY
+personHourTable.innerHTML="<tr><th>User</th>"+hours.map(h=>`<th>${h}</th>`).join("")+"</tr>";
+Object.entries(personH).forEach(([u,v])=>{
+personHourTable.innerHTML+=`<tr><td>${u}</td>${v.map(x=>`<td>${x}</td>`).join("")}</tr>`;
 });
 
 },2000);
