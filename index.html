@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS Step 2 - Tray Scan</title>
+<title>NexS Step 3</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -17,6 +17,7 @@ button{width:100%;padding:10px;background:#00d4ff;border:none}
 #app{display:none;padding:20px}
 table{width:100%;border-collapse:collapse;margin-top:20px}
 td,th{padding:10px;border-bottom:1px solid #333;text-align:center}
+.section{margin-bottom:40px}
 </style>
 </head>
 
@@ -45,25 +46,47 @@ td,th{padding:10px;border-bottom:1px solid #333;text-align:center}
 
 <!-- APP -->
 <div id="app">
+
 <h2 id="user"></h2>
 
+<!-- 📦 TRAY -->
+<div class="section">
 <h3>📦 Tray Scan</h3>
-
 <select id="loc"></select>
 <input id="tray" placeholder="MT76921">
 
 <table>
 <thead>
 <tr>
-<th>Date</th>
-<th>Time</th>
-<th>Tray</th>
-<th>Location</th>
-<th>User</th>
+<th>Date</th><th>Time</th><th>Tray</th><th>Location</th><th>User</th>
 </tr>
 </thead>
-<tbody id="data"></tbody>
+<tbody id="trayData"></tbody>
 </table>
+</div>
+
+<!-- 🚛 SHIPMENT -->
+<div class="section">
+<h3>🚛 Shipment Scan</h3>
+
+<select id="agency">
+<option>DHL SHIPMENT</option>
+<option>GPSUPPLY</option>
+<option>SREERAJXPRESS</option>
+<option>OTHER SHIPMENT</option>
+</select>
+
+<input id="shipment" placeholder="SNXS2270000056697905">
+
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Time</th><th>Shipment ID</th><th>Agency</th><th>User</th>
+</tr>
+</thead>
+<tbody id="shipData"></tbody>
+</table>
+</div>
 
 <button onclick="logout()">Logout</button>
 
@@ -78,26 +101,9 @@ databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 });
 const db=firebase.database();
 
-// LOCATION LIST (FULL)
-const LOCATIONS = [
-"ICU ENTRY","MEI ENTRY","OMT ENTRY",
-"LO SEND TO ICU","LO SEND TO MEI",
-"ORDER SEND TO MAIN LINE FOR FT",
-"ORDER SEND TO MAIN LINE FOR QC",
-"ORDER SEND TO MAIN LINE FOR PACKING",
-"TLP SEND TO MEI","QC FAIL SEND TO MEI",
-"FRAME QC FAIL SEND TO MAIN LINE",
-"SEND TO MEI FOR REVIEW","CS LOCATION",
-"SMALL DIA LOCATION","LO QC FAIL LOCATION (JIT)",
-"OMT RACK 00","OMT RACK 01","OMT RACK 02","OMT RACK 03","OMT RACK 04",
-"OMT RACK 05","OMT RACK 06","OMT RACK 07","OMT RACK 08","OMT RACK 09",
-"ICU TROLLEY 1","ICU TROLLEY 2","ICU TROLLEY 3","ICU TROLLEY 4","ICU TROLLEY 5",
-"ICU TROLLEY 6","ICU TROLLEY 7","ICU TROLLEY 8","ICU TROLLEY 9","ICU TROLLEY 10",
-"OMT TROLLEY 1","OMT TROLLEY 2","OMT TROLLEY 3","OMT TROLLEY 4","OMT TROLLEY 5",
-"OMT TROLLEY 6","OMT TROLLEY 7","OMT TROLLEY 8","OMT TROLLEY 9","OMT TROLLEY 10"
-];
-
-loc.innerHTML = LOCATIONS.map(x=>`<option>${x}</option>`).join('');
+// LOCATION LIST
+const LOCATIONS=[ "ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION" ];
+loc.innerHTML=LOCATIONS.map(x=>`<option>${x}</option>`).join('');
 
 let user={};
 
@@ -111,9 +117,8 @@ let name=regName.value.trim();
 let id=regId.value.trim();
 if(!name||!id) return alert("Fill all");
 
-db.ref("Users/"+id).set({name:name,empId:id}).then(()=>{
-alert("Done");
-showLogin();
+db.ref("Users/"+id).set({name,empId:id}).then(()=>{
+alert("Done"); showLogin();
 });
 }
 
@@ -140,29 +145,44 @@ startRealtime();
 // LOGOUT
 function logout(){location.reload()}
 
-// REALTIME TABLE
+// REALTIME
 function startRealtime(){
+
+// TRAY
 db.ref("LiveScans").on("value",snap=>{
-data.innerHTML="";
+trayData.innerHTML="";
 snap.forEach(c=>{
 let d=c.val();
-
-let row = `
+trayData.innerHTML = `
 <tr>
 <td>${d.date}</td>
 <td>${d.time}</td>
 <td>${d.barcode}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>
-`;
+</tr>` + trayData.innerHTML;
+});
+});
 
-data.innerHTML = row + data.innerHTML;
+// SHIPMENT
+db.ref("ShipmentScans").on("value",snap=>{
+shipData.innerHTML="";
+snap.forEach(c=>{
+let d=c.val();
+shipData.innerHTML = `
+<tr>
+<td>${d.date}</td>
+<td>${d.time}</td>
+<td>${d.shipId}</td>
+<td>${d.location}</td>
+<td>${d.user} (${d.userId})</td>
+</tr>` + shipData.innerHTML;
 });
 });
+
 }
 
-// SCAN
+// TRAY SCAN
 tray.onkeydown=e=>{
 if(e.key==="Enter" && tray.value){
 db.ref("LiveScans").push({
@@ -175,6 +195,22 @@ userId:user.id,
 timestamp:Date.now()
 });
 tray.value="";
+}
+};
+
+// SHIPMENT SCAN
+shipment.onkeydown=e=>{
+if(e.key==="Enter" && shipment.value.length>=10){
+db.ref("ShipmentScans").push({
+shipId:shipment.value.toUpperCase(),
+location:agency.value,
+date:new Date().toLocaleDateString("en-GB"),
+time:new Date().toLocaleTimeString(),
+user:user.name,
+userId:user.id,
+timestamp:Date.now()
+});
+shipment.value="";
 }
 };
 
