@@ -2,96 +2,70 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>NexS FINAL LOGIN FIX</title>
+<title>NexS Step 2 - Tray Scan</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#0a0a0a;color:#fff;display:flex}
-.sidebar{width:230px;background:#000;height:100vh;padding:20px}
-.nav{padding:12px;color:#888;cursor:pointer}
-.nav.active{color:#00d4ff}
-.main{flex:1;padding:20px}
-.tab{display:none}
-.tab.active{display:block}
-input,select{padding:8px;margin:5px;background:#000;color:#fff;border:1px solid #444}
-button{padding:8px;background:#00d4ff;border:none;margin:5px}
-table{width:100%;margin-top:10px;border-collapse:collapse}
-td,th{padding:8px;border-bottom:1px solid #333;text-align:center}
-.link{color:#00d4ff;cursor:pointer;font-size:12px}
+body{margin:0;font-family:Segoe UI;background:#0a0a0a;color:#fff}
+.center{display:flex;justify-content:center;align-items:center;height:100vh}
+.box{background:#111;padding:25px;width:320px}
+input,select{width:100%;padding:10px;margin:8px 0;background:#000;color:#fff;border:1px solid #444}
+button{width:100%;padding:10px;background:#00d4ff;border:none}
+.link{color:#00d4ff;font-size:12px;cursor:pointer}
+#app{display:none;padding:20px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+td,th{padding:10px;border-bottom:1px solid #333;text-align:center}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN / REGISTER -->
-<div id="auth" style="position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center">
-<div style="background:#111;padding:25px;width:300px">
-
-<!-- LOGIN BOX -->
-<div id="loginBox">
+<!-- LOGIN -->
+<div id="loginBox" class="center">
+<div class="box">
 <h2>Login</h2>
 <input id="loginId" placeholder="Employee ID">
 <button onclick="login()">Login</button>
-<p class="link" onclick="showRegister()">New Registration</p>
+<p class="link" onclick="showReg()">New Registration</p>
+</div>
 </div>
 
-<!-- REGISTER BOX -->
-<div id="regBox" style="display:none">
+<!-- REGISTER -->
+<div id="regBox" class="center" style="display:none">
+<div class="box">
 <h2>Register</h2>
 <input id="regName" placeholder="Full Name">
 <input id="regId" placeholder="Employee ID">
 <button onclick="register()">Save</button>
-<p class="link" onclick="showLogin()">Back to Login</p>
-</div>
-
+<p class="link" onclick="showLogin()">Back</p>
 </div>
 </div>
 
-<div class="sidebar" id="sidebar" style="display:none">
-<h3 id="userName"></h3>
-<div class="nav active" onclick="openTab('tray',this)">Tray</div>
-<div class="nav" onclick="openTab('shipment',this)">Shipment</div>
-<div class="nav" onclick="openTab('history',this)">History</div>
-<div class="nav" onclick="openTab('dashboard',this)">Dashboard</div>
-<div class="nav" onclick="logout()">Logout</div>
-</div>
+<!-- APP -->
+<div id="app">
+<h2 id="user"></h2>
 
-<div class="main" id="main" style="display:none">
+<h3>📦 Tray Scan</h3>
 
-<!-- TRAY -->
-<div id="tray" class="tab active">
-<h2>Tray Scan</h2>
 <select id="loc"></select>
-<input id="trayBox" placeholder="MT76921">
-<table id="trayTable"></table>
-</div>
+<input id="tray" placeholder="MT76921">
 
-<!-- SHIPMENT -->
-<div id="shipment" class="tab">
-<h2>Shipment</h2>
-<select id="shipLoc">
-<option>DHL SHIPMENT</option>
-<option>GPSUPPLY</option>
-<option>SREERAJXPRESS</option>
-<option>OTHER SHIPMENT</option>
-</select>
-<input id="shipBox">
-<table id="shipTable"></table>
-</div>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Time</th>
+<th>Tray</th>
+<th>Location</th>
+<th>User</th>
+</tr>
+</thead>
+<tbody id="data"></tbody>
+</table>
 
-<!-- HISTORY -->
-<div id="history" class="tab">
-<h2>History</h2>
-<p>Coming next step (already ready to plug)</p>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard" class="tab">
-<h2>Dashboard</h2>
-<p>Coming next step (already ready to plug)</p>
-</div>
+<button onclick="logout()">Logout</button>
 
 </div>
 
@@ -104,39 +78,41 @@ databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com"
 });
 const db=firebase.database();
 
-// LOCATION LIST
-const LOCATIONS=[
-"ICU ENTRY","MEI ENTRY","OMT ENTRY","CS LOCATION"
+// LOCATION LIST (FULL)
+const LOCATIONS = [
+"ICU ENTRY","MEI ENTRY","OMT ENTRY",
+"LO SEND TO ICU","LO SEND TO MEI",
+"ORDER SEND TO MAIN LINE FOR FT",
+"ORDER SEND TO MAIN LINE FOR QC",
+"ORDER SEND TO MAIN LINE FOR PACKING",
+"TLP SEND TO MEI","QC FAIL SEND TO MEI",
+"FRAME QC FAIL SEND TO MAIN LINE",
+"SEND TO MEI FOR REVIEW","CS LOCATION",
+"SMALL DIA LOCATION","LO QC FAIL LOCATION (JIT)",
+"OMT RACK 00","OMT RACK 01","OMT RACK 02","OMT RACK 03","OMT RACK 04",
+"OMT RACK 05","OMT RACK 06","OMT RACK 07","OMT RACK 08","OMT RACK 09",
+"ICU TROLLEY 1","ICU TROLLEY 2","ICU TROLLEY 3","ICU TROLLEY 4","ICU TROLLEY 5",
+"ICU TROLLEY 6","ICU TROLLEY 7","ICU TROLLEY 8","ICU TROLLEY 9","ICU TROLLEY 10",
+"OMT TROLLEY 1","OMT TROLLEY 2","OMT TROLLEY 3","OMT TROLLEY 4","OMT TROLLEY 5",
+"OMT TROLLEY 6","OMT TROLLEY 7","OMT TROLLEY 8","OMT TROLLEY 9","OMT TROLLEY 10"
 ];
 
-loc.innerHTML=LOCATIONS.map(x=>`<option>${x}</option>`).join('');
+loc.innerHTML = LOCATIONS.map(x=>`<option>${x}</option>`).join('');
 
-// USER
 let user={};
 
-// SWITCH LOGIN/REGISTER
-function showRegister(){
-loginBox.style.display="none";
-regBox.style.display="block";
-}
-
-function showLogin(){
-regBox.style.display="none";
-loginBox.style.display="block";
-}
+// SWITCH
+function showReg(){loginBox.style.display="none";regBox.style.display="flex"}
+function showLogin(){regBox.style.display="none";loginBox.style.display="flex"}
 
 // REGISTER
 function register(){
 let name=regName.value.trim();
 let id=regId.value.trim();
+if(!name||!id) return alert("Fill all");
 
-if(!name || !id) return alert("Fill all fields");
-
-db.ref("Users/"+id).set({
-name:name,
-empId:id
-}).then(()=>{
-alert("Registered Successfully");
+db.ref("Users/"+id).set({name:name,empId:id}).then(()=>{
+alert("Done");
 showLogin();
 });
 }
@@ -144,88 +120,61 @@ showLogin();
 // LOGIN
 function login(){
 let id=loginId.value.trim();
-
 if(!id) return alert("Enter ID");
 
 db.ref("Users/"+id).once("value",s=>{
-if(!s.exists()) return alert("User not found");
+if(!s.exists()) return alert("Not found");
 
 user.name=s.val().name;
 user.id=id;
 
-auth.style.display="none";
-sidebar.style.display="block";
-main.style.display="block";
+loginBox.style.display="none";
+app.style.display="block";
 
-userName.innerText=user.name+" ("+id+")";
+user.innerText=user.name+" ("+user.id+")";
 
 startRealtime();
 });
 }
 
 // LOGOUT
-function logout(){
-location.reload();
-}
+function logout(){location.reload()}
 
-// TAB SWITCH
-function openTab(t,el){
-document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
-document.getElementById(t).classList.add("active");
-el.classList.add("active");
-}
-
-// REALTIME
+// REALTIME TABLE
 function startRealtime(){
-
 db.ref("LiveScans").on("value",snap=>{
-let html="<tr><th>Date</th><th>Time</th><th>ID</th><th>Loc</th><th>User</th></tr>";
-
+data.innerHTML="";
 snap.forEach(c=>{
 let d=c.val();
 
-html+=`<tr>
+let row = `
+<tr>
 <td>${d.date}</td>
 <td>${d.time}</td>
 <td>${d.barcode}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>`;
-});
+</tr>
+`;
 
-trayTable.innerHTML=html;
+data.innerHTML = row + data.innerHTML;
 });
-
+});
 }
 
-// TRAY SCAN
-trayBox.onkeydown=e=>{
-if(e.key==="Enter"){
+// SCAN
+tray.onkeydown=e=>{
+if(e.key==="Enter" && tray.value){
 db.ref("LiveScans").push({
-barcode:trayBox.value,
+barcode:tray.value.toUpperCase(),
 location:loc.value,
 date:new Date().toLocaleDateString("en-GB"),
 time:new Date().toLocaleTimeString(),
 user:user.name,
-userId:user.id
+userId:user.id,
+timestamp:Date.now()
 });
-trayBox.value="";
-}
-};
-
-// SHIPMENT SCAN
-shipBox.onkeydown=e=>{
-if(e.key==="Enter"){
-db.ref("ShipmentScans").push({
-shipId:shipBox.value,
-location:shipLoc.value,
-date:new Date().toLocaleDateString("en-GB"),
-time:new Date().toLocaleTimeString(),
-user:user.name,
-userId:user.id
-});
-shipBox.value="";
+tray.value="";
 }
 };
 
