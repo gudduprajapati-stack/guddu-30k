@@ -200,7 +200,14 @@ TOTAL SCANS : 0
 
 <select id="loc"></select>
 
-<input id="trayInput" placeholder="Scan Tray (7 Digit)" autofocus>
+<input
+id="trayInput"
+placeholder="Scan Tray (7 Digit)"
+maxlength="7"
+inputmode="numeric"
+autocomplete="off"
+autofocus
+>
 
 </div>
 
@@ -426,16 +433,6 @@ const locations=[
 "OMT ENTRY",
 "LO SEND TO ICU",
 "LO SEND TO MEI",
-"ORDER SEND TO MAIN LINE FOR FT",
-"ORDER SEND TO MAIN LINE FOR QC",
-"ORDER SEND TO MAIN LINE FOR PACKING",
-"TLP SEND TO MEI",
-"QC FAIL SEND TO MEI",
-"FRAME QC FAIL SEND TO MAIN LINE",
-"SEND TO MEI FOR REVIEW",
-"CS LOCATION",
-"SMALL DIA LOCATION",
-"LO QC FAIL LOCATION (JIT)",
 
 ...Array.from({length:10},(_,i)=>`OMT RACK ${String(i+1).padStart(2,'0')}`),
 
@@ -471,13 +468,6 @@ document.querySelectorAll(".locChk")
 .forEach(c=>c.checked=selectAll.checked);
 
 };
-
-function getSelectedLocations(){
-
-return [...document.querySelectorAll(".locChk:checked")]
-.map(c=>c.value);
-
-}
 
 /* REGISTER */
 
@@ -602,8 +592,6 @@ snap.forEach(c=>{
 
 let d=c.val();
 
-d.type="TRAY";
-
 trayData.unshift(d);
 
 });
@@ -621,8 +609,6 @@ shipData=[];
 snap.forEach(c=>{
 
 let d=c.val();
-
-d.type="SHIPMENT";
 
 shipData.unshift(d);
 
@@ -698,51 +684,85 @@ function mergeData(){
 
 allData=[...trayData,...shipData];
 
-allData.sort((a,b)=>b.timestamp-a.timestamp);
-
 liveTotal.innerHTML="TOTAL SCANS : "+allData.length;
 
 }
 
-/* TRAY SCAN */
+/* FINAL 7 DIGIT TRAY */
 
-trayInput.addEventListener("keydown",e=>{
+trayInput.addEventListener("keydown", function(e){
 
-if(e.key==="Enter"){
+if(e.key !== "Enter") return;
 
-const code=trayInput.value.trim();
+let code = trayInput.value
+.replace(/\s/g,"")
+.trim();
 
-if(!/^\d{7}$/.test(code)){
+if(code.length !== 7){
 
 alert("Tray must be exactly 7 digit");
+
+trayInput.focus();
+trayInput.select();
+
+return;
+
+}
+
+if(!/^[0-9]+$/.test(code)){
+
+alert("Only numbers allowed");
+
+trayInput.focus();
+trayInput.select();
+
 return;
 
 }
 
 db.ref("tray").push({
 
-barcode:code,
+barcode: code,
 
-location:loc.value,
+location: loc.value,
 
-date:new Date().toLocaleDateString("en-GB"),
+date: new Date().toLocaleDateString("en-GB"),
 
-time:new Date().toLocaleTimeString(),
+time: new Date().toLocaleTimeString(),
 
-user:user.name,
+user: user.name,
 
-userId:user.id,
+userId: user.id,
 
-timestamp:Date.now()
+timestamp: Date.now()
 
-}).then(()=>{
+})
+
+.then(()=>{
 
 trayInput.value="";
+
 trayInput.focus();
+
+})
+
+.catch(err=>{
+
+console.log(err);
+
+alert("Save Failed");
 
 });
 
-}
+});
+
+/* AUTO SCANNER SUPPORT */
+
+trayInput.addEventListener("change",()=>{
+
+trayInput.dispatchEvent(
+new KeyboardEvent("keydown",{key:"Enter"})
+);
 
 });
 
@@ -753,13 +773,6 @@ shipInput.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
 
 const code=shipInput.value.trim();
-
-if(code.length<3 || code.length>23){
-
-alert("Shipment ID invalid");
-return;
-
-}
 
 db.ref("ship").push({
 
@@ -808,17 +821,17 @@ histData.innerHTML+=`
 
 <tr>
 
-<td>${d.type}</td>
+<td>${d.type||""}</td>
 
-<td>${d.date}</td>
+<td>${d.date||""}</td>
 
-<td>${d.time}</td>
+<td>${d.time||""}</td>
 
-<td>${d.barcode||d.shipId}</td>
+<td>${d.barcode||d.shipId||""}</td>
 
-<td>${d.location}</td>
+<td>${d.location||""}</td>
 
-<td>${d.user}</td>
+<td>${d.user||""}</td>
 
 </tr>
 
@@ -836,7 +849,7 @@ let csv="Type,Date,Time,ID,Location,User\n";
 
 allData.forEach(d=>{
 
-csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipId},${d.location},${d.user}\n`;
+csv+=`${d.type||""},${d.date||""},${d.time||""},${d.barcode||d.shipId||""},${d.location||""},${d.user||""}\n`;
 
 });
 
@@ -851,124 +864,6 @@ a.download="NexS_Export.csv";
 a.click();
 
 }
-
-/* DASHBOARD */
-
-setInterval(()=>{
-
-const hours=[
-"12AM","1AM","2AM","3AM","4AM","5AM",
-"6AM","7AM","8AM","9AM","10AM","11AM",
-"12PM","1PM","2PM","3PM","4PM","5PM",
-"6PM","7PM","8PM","9PM","10PM","11PM"
-];
-
-let map={};
-let person={};
-let personH={};
-
-let type=document.getElementById("dtype").value;
-
-let selectedLoc=getSelectedLocations();
-
-allData.forEach(d=>{
-
-if(type!=="ALL" && d.type!==type) return;
-
-if(selectedLoc.length && !selectedLoc.includes(d.location)) return;
-
-let dt=new Date(d.timestamp);
-
-let h=dt.getHours();
-
-if(!map[d.location]) map[d.location]=Array(24).fill(0);
-
-map[d.location][h]++;
-
-person[d.userId]=(person[d.userId]||0)+1;
-
-if(!personH[d.userId]) personH[d.userId]=Array(24).fill(0);
-
-personH[d.userId][h]++;
-
-});
-
-/* LOCATION */
-
-locTable.innerHTML=`
-<tr>
-<th>Location</th>
-${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>
-`;
-
-Object.entries(map).forEach(([l,v])=>{
-
-locTable.innerHTML+=`
-
-<tr>
-
-<td>${l}</td>
-
-${v.map(x=>`<td>${x}</td>`).join("")}
-
-</tr>
-
-`;
-
-});
-
-/* PERSON */
-
-personTable.innerHTML=`
-<tr>
-<th>User</th>
-<th>Total</th>
-</tr>
-`;
-
-Object.entries(person).forEach(([u,v])=>{
-
-personTable.innerHTML+=`
-
-<tr>
-
-<td>${u}</td>
-
-<td>${v}</td>
-
-</tr>
-
-`;
-
-});
-
-/* PERSON HOURLY */
-
-personHourTable.innerHTML=`
-<tr>
-<th>User</th>
-${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>
-`;
-
-Object.entries(personH).forEach(([u,v])=>{
-
-personHourTable.innerHTML+=`
-
-<tr>
-
-<td>${u}</td>
-
-${v.map(x=>`<td>${x}</td>`).join("")}
-
-</tr>
-
-`;
-
-});
-
-},2000);
 
 </script>
 
