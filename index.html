@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -140,6 +141,7 @@ gap:5px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -308,10 +310,6 @@ TOTAL SCANS : 0
 
 <div class="row">
 
-<input type="date" id="dfrom">
-
-<input type="date" id="dto">
-
 <select id="dtype">
 
 <option>ALL</option>
@@ -362,23 +360,23 @@ SELECT ALL
 
 <script>
 
-/* FIREBASE CONFIG */
+/* FIREBASE */
 
 const firebaseConfig = {
 
-apiKey: "PASTE_API_KEY",
+apiKey: "AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
 
-authDomain: "PASTE_AUTH_DOMAIN",
+authDomain: "nexs-guddu-30k.firebaseapp.com",
 
-databaseURL: "PASTE_DATABASE_URL",
+databaseURL: "https://nexs-guddu-30k-default-rtdb.firebaseio.com",
 
-projectId: "PASTE_PROJECT_ID",
+projectId: "nexs-guddu-30k",
 
-storageBucket: "PASTE_STORAGE_BUCKET",
+storageBucket: "nexs-guddu-30k.firebasestorage.app",
 
-messagingSenderId: "PASTE_SENDER_ID",
+messagingSenderId: "634684833271",
 
-appId: "PASTE_APP_ID"
+appId: "1:634684833271:web:31a25a2c5301fa108142f2"
 
 };
 
@@ -439,23 +437,17 @@ const locations=[
 "SMALL DIA LOCATION",
 "LO QC FAIL LOCATION (JIT)",
 
-...Array.from({length:10},(_,i)=>
-`OMT RACK ${String(i+1).padStart(2,'0')}`
-),
+...Array.from({length:10},(_,i)=>`OMT RACK ${String(i+1).padStart(2,'0')}`),
 
-...Array.from({length:10},(_,i)=>
-`ICU TROLLEY ${i+1}`
-),
+...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
 
-...Array.from({length:10},(_,i)=>
-`OMT TROLLEY ${i+1}`
-)
+...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
 
 ];
 
 locations.forEach(l=>{
 
-const option=document.createElement("option");
+let option=document.createElement("option");
 
 option.value=l;
 option.textContent=l;
@@ -491,16 +483,19 @@ return [...document.querySelectorAll(".locChk:checked")]
 
 function register(){
 
-if(!regName.value || !regId.value){
+const name=regName.value.trim();
+const id=regId.value.trim();
+
+if(!name || !id){
 
 alert("Fill all fields");
 return;
 
 }
 
-db.ref("Users/"+regId.value).set({
+db.ref("Users/"+id).set({
 
-name:regName.value
+name:name
 
 }).then(()=>{
 
@@ -517,21 +512,27 @@ regId.value="";
 
 function login(){
 
-if(!loginId.value){
+const id=loginId.value.trim();
 
-alert("Enter ID");
+if(!id){
+
+alert("Enter Login ID");
 return;
 
 }
 
-db.ref("Users/"+loginId.value).once("value")
+db.ref("Users/"+id).once("value")
 
-.then(snap=>{
+.then(snapshot=>{
 
-if(snap.exists()){
+if(snapshot.exists()){
 
-user.name=snap.val().name;
-user.id=loginId.value;
+const data=snapshot.val();
+
+user={
+id:id,
+name:data.name
+};
 
 loginPage.style.display="none";
 
@@ -547,9 +548,17 @@ trayInput.focus();
 
 }else{
 
-alert("ID NOT FOUND");
+alert("User Not Found");
 
 }
+
+})
+
+.catch(err=>{
+
+console.log(err);
+
+alert("Firebase Error");
 
 });
 
@@ -647,7 +656,7 @@ trayTable.innerHTML+=`
 
 <td>${d.location||""}</td>
 
-<td>${d.user||""} (${d.userId||""})</td>
+<td>${d.user||""}</td>
 
 </tr>
 
@@ -675,7 +684,7 @@ shipTable.innerHTML+=`
 
 <td>${d.location||""}</td>
 
-<td>${d.user||""} (${d.userId||""})</td>
+<td>${d.user||""}</td>
 
 </tr>
 
@@ -784,8 +793,6 @@ function applyHistory(){
 
 histData.innerHTML="";
 
-let from=document.getElementById("from").value;
-let to=document.getElementById("to").value;
 let type=document.getElementById("type").value;
 let search=document.getElementById("search").value.toLowerCase();
 
