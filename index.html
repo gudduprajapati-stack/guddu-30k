@@ -202,9 +202,8 @@ TOTAL SCANS : 0
 
 <input
 id="trayInput"
-placeholder="Scan Tray (7 Digit)"
+placeholder="Scan Tray"
 maxlength="7"
-inputmode="numeric"
 autocomplete="off"
 autofocus
 >
@@ -272,10 +271,6 @@ autofocus
 
 <div class="row">
 
-<input type="date" id="from">
-
-<input type="date" id="to">
-
 <select id="type">
 
 <option>ALL</option>
@@ -314,18 +309,6 @@ autofocus
 <!-- DASHBOARD -->
 
 <div id="dash" class="tab">
-
-<div class="row">
-
-<select id="dtype">
-
-<option>ALL</option>
-<option>TRAY</option>
-<option>SHIPMENT</option>
-
-</select>
-
-</div>
 
 <div class="card">
 
@@ -592,6 +575,8 @@ snap.forEach(c=>{
 
 let d=c.val();
 
+d.type="TRAY";
+
 trayData.unshift(d);
 
 });
@@ -609,6 +594,8 @@ shipData=[];
 snap.forEach(c=>{
 
 let d=c.val();
+
+d.type="SHIPMENT";
 
 shipData.unshift(d);
 
@@ -688,7 +675,7 @@ liveTotal.innerHTML="TOTAL SCANS : "+allData.length;
 
 }
 
-/* FINAL 7 DIGIT TRAY */
+/* FINAL MT21345 TRAY SCAN */
 
 trayInput.addEventListener("keydown", function(e){
 
@@ -696,22 +683,14 @@ if(e.key !== "Enter") return;
 
 let code = trayInput.value
 .replace(/\s/g,"")
-.trim();
+.trim()
+.toUpperCase();
 
-if(code.length !== 7){
+/* VALIDATION */
 
-alert("Tray must be exactly 7 digit");
+if(!/^[A-Z0-9]{7}$/.test(code)){
 
-trayInput.focus();
-trayInput.select();
-
-return;
-
-}
-
-if(!/^[0-9]+$/.test(code)){
-
-alert("Only numbers allowed");
+alert("Tray must be exactly 7 characters");
 
 trayInput.focus();
 trayInput.select();
@@ -719,6 +698,8 @@ trayInput.select();
 return;
 
 }
+
+/* SAVE */
 
 db.ref("tray").push({
 
