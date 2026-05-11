@@ -675,18 +675,30 @@ liveTotal.innerHTML="TOTAL SCANS : "+allData.length;
 
 }
 
-/* FINAL MT21345 TRAY SCAN */
+/* FINAL SINGLE ENTRY TRAY */
+
+let trayLock = false;
 
 trayInput.addEventListener("keydown", function(e){
 
 if(e.key !== "Enter") return;
+
+if(trayLock) return;
+
+trayLock = true;
+
+setTimeout(()=>{
+
+trayLock = false;
+
+},1000);
 
 let code = trayInput.value
 .replace(/\s/g,"")
 .trim()
 .toUpperCase();
 
-/* VALIDATION */
+/* MT21345 TYPE VALIDATION */
 
 if(!/^[A-Z0-9]{7}$/.test(code)){
 
@@ -734,16 +746,6 @@ console.log(err);
 alert("Save Failed");
 
 });
-
-});
-
-/* AUTO SCANNER SUPPORT */
-
-trayInput.addEventListener("change",()=>{
-
-trayInput.dispatchEvent(
-new KeyboardEvent("keydown",{key:"Enter"})
-);
 
 });
 
