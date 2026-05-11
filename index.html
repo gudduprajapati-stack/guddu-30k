@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>NexS ULTRA FINAL</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -11,9 +13,9 @@
 <style>
 
 *{
-box-sizing:border-box;
 margin:0;
 padding:0;
+box-sizing:border-box;
 font-family:Arial,sans-serif;
 }
 
@@ -21,33 +23,6 @@ body{
 background:#0a0a0a;
 color:white;
 overflow-x:hidden;
-}
-
-#loginPage{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:10px;
-}
-
-#loginPage input{
-width:300px;
-padding:12px;
-background:#111;
-border:1px solid #333;
-color:white;
-border-radius:5px;
-}
-
-#loginPage button{
-padding:12px 20px;
-background:#00d4ff;
-border:none;
-cursor:pointer;
-font-weight:bold;
-border-radius:5px;
 }
 
 .sidebar{
@@ -65,7 +40,6 @@ border-right:1px solid #222;
 padding:16px;
 cursor:pointer;
 border-bottom:1px solid #111;
-font-size:15px;
 }
 
 .sidebar div:hover{
@@ -101,10 +75,10 @@ border-radius:5px;
 }
 
 button{
-cursor:pointer;
 background:#00d4ff;
 color:black;
 font-weight:bold;
+cursor:pointer;
 }
 
 table{
@@ -115,8 +89,8 @@ background:#111;
 }
 
 th,td{
-border-bottom:1px solid #333;
 padding:8px;
+border-bottom:1px solid #333;
 text-align:center;
 font-size:13px;
 }
@@ -124,19 +98,31 @@ font-size:13px;
 th{
 background:#000;
 color:#00d4ff;
-position:sticky;
-top:0;
 }
 
-h2,h3{
-margin-bottom:10px;
-margin-top:10px;
+.liveBox{
+background:#000;
+border:1px solid #00d4ff;
+padding:15px;
+margin-bottom:15px;
+font-size:22px;
+font-weight:bold;
+text-align:center;
+border-radius:10px;
+color:#00d4ff;
 }
 
-#locCheckboxes{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-gap:5px;
+#loginPage{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+gap:10px;
+}
+
+#loginPage input{
+width:300px;
 }
 
 .card{
@@ -147,25 +133,10 @@ border-radius:5px;
 margin-bottom:15px;
 }
 
-.liveBox{
-background:#000;
-padding:15px;
-border:1px solid #00d4ff;
-margin-bottom:15px;
-font-size:22px;
-font-weight:bold;
-color:#00d4ff;
-text-align:center;
-border-radius:10px;
-}
-
-::-webkit-scrollbar{
-width:6px;
-height:6px;
-}
-
-::-webkit-scrollbar-thumb{
-background:#00d4ff;
+#locCheckboxes{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+gap:5px;
 }
 
 </style>
@@ -174,6 +145,7 @@ background:#00d4ff;
 <body>
 
 <!-- LOGIN -->
+
 <div id="loginPage">
 
 <h2>NexS ULTRA LOGIN</h2>
@@ -184,24 +156,30 @@ background:#00d4ff;
 
 <br><br>
 
-<h3>NEW USER REGISTRATION</h3>
+<h3>NEW USER</h3>
 
-<input id="regName" placeholder="Enter Name">
-<input id="regId" placeholder="Enter ID">
+<input id="regName" placeholder="Name">
+
+<input id="regId" placeholder="ID">
 
 <button onclick="register()">SAVE USER</button>
 
 </div>
 
 <!-- APP -->
+
 <div id="app" style="display:none;">
 
 <div class="sidebar">
 
 <div onclick="showTab('tray')">📦 Tray Scan</div>
+
 <div onclick="showTab('ship')">🚛 Shipment</div>
+
 <div onclick="showTab('history')">🕒 History</div>
+
 <div onclick="showTab('dash')">📊 Dashboard</div>
+
 <div onclick="logout()">🚪 Logout</div>
 
 </div>
@@ -209,9 +187,12 @@ background:#00d4ff;
 <div class="main">
 
 <!-- TRAY -->
+
 <div id="tray" class="tab active">
 
-<div class="liveBox" id="liveTotal">TOTAL SCANS : 0</div>
+<div class="liveBox" id="liveTotal">
+TOTAL SCANS : 0
+</div>
 
 <div class="row">
 
@@ -240,18 +221,21 @@ background:#00d4ff;
 </div>
 
 <!-- SHIPMENT -->
+
 <div id="ship" class="tab">
 
 <div class="row">
 
 <select id="agency">
+
 <option>DHL SHIPMENT</option>
 <option>GPSUPPLY</option>
 <option>SREERAJXPRESS</option>
 <option>OTHER SHIPMENT</option>
+
 </select>
 
-<input id="shipInput" placeholder="Shipment ID Max 23 Digit">
+<input id="shipInput" placeholder="Shipment ID">
 
 </div>
 
@@ -274,26 +258,28 @@ background:#00d4ff;
 </div>
 
 <!-- HISTORY -->
+
 <div id="history" class="tab">
 
 <div class="row">
 
 <input type="date" id="from">
+
 <input type="date" id="to">
 
 <select id="type">
+
 <option>ALL</option>
 <option>TRAY</option>
 <option>SHIPMENT</option>
+
 </select>
 
-<input id="search" placeholder="Search Anything">
+<input id="search" placeholder="Search">
 
 <button onclick="applyHistory()">Filter</button>
 
-<button onclick="exportCSV()">Export CSV</button>
-
-<button onclick="deleteData()">Delete All</button>
+<button onclick="exportCSV()">Export</button>
 
 </div>
 
@@ -317,17 +303,21 @@ background:#00d4ff;
 </div>
 
 <!-- DASHBOARD -->
+
 <div id="dash" class="tab">
 
 <div class="row">
 
 <input type="date" id="dfrom">
+
 <input type="date" id="dto">
 
 <select id="dtype">
+
 <option>ALL</option>
 <option>TRAY</option>
 <option>SHIPMENT</option>
+
 </select>
 
 </div>
@@ -335,8 +325,11 @@ background:#00d4ff;
 <div class="card">
 
 <label>
+
 <input type="checkbox" id="selectAll" checked>
+
 SELECT ALL
+
 </label>
 
 <br><br>
@@ -345,27 +338,20 @@ SELECT ALL
 
 </div>
 
-<div class="row">
-
-<button onclick="exportTable('locTable')">Export Location</button>
-
-<button onclick="exportTable('personTable')">Export Person</button>
-
-<button onclick="exportTable('personHourTable')">Export Person Hourly</button>
-
-</div>
-
 <h3>📦 Location Hourly</h3>
+
 <table id="locTable"></table>
 
 <br>
 
 <h3>👤 Person Wise</h3>
+
 <table id="personTable"></table>
 
 <br>
 
 <h3>⏱ Person + Hourly</h3>
+
 <table id="personHourTable"></table>
 
 </div>
@@ -378,25 +364,54 @@ SELECT ALL
 
 /* FIREBASE CONFIG */
 
-firebase.initializeApp({
+const firebaseConfig = {
 
-apiKey:"YOUR_API_KEY",
+apiKey: "PASTE_API_KEY",
 
-authDomain:"YOUR_PROJECT.firebaseapp.com",
+authDomain: "PASTE_AUTH_DOMAIN",
 
-databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+databaseURL: "PASTE_DATABASE_URL",
 
-projectId:"YOUR_PROJECT",
+projectId: "PASTE_PROJECT_ID",
 
-storageBucket:"YOUR_PROJECT.appspot.com",
+storageBucket: "PASTE_STORAGE_BUCKET",
 
-messagingSenderId:"123456",
+messagingSenderId: "PASTE_SENDER_ID",
 
-appId:"YOUR_APP_ID"
+appId: "PASTE_APP_ID"
 
-});
+};
 
-const db=firebase.database();
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+/* ELEMENTS */
+
+const loginPage=document.getElementById("loginPage");
+const app=document.getElementById("app");
+
+const loginId=document.getElementById("loginId");
+
+const regName=document.getElementById("regName");
+const regId=document.getElementById("regId");
+
+const trayInput=document.getElementById("trayInput");
+const shipInput=document.getElementById("shipInput");
+
+const loc=document.getElementById("loc");
+const agency=document.getElementById("agency");
+
+const trayTable=document.getElementById("trayTable");
+const shipTable=document.getElementById("shipTable");
+
+const histData=document.getElementById("histData");
+
+const liveTotal=document.getElementById("liveTotal");
+
+const locCheckboxes=document.getElementById("locCheckboxes");
+
+const selectAll=document.getElementById("selectAll");
 
 let user={};
 
@@ -424,20 +439,31 @@ const locations=[
 "SMALL DIA LOCATION",
 "LO QC FAIL LOCATION (JIT)",
 
-...Array.from({length:10},(_,i)=>`OMT RACK ${String(i+1).padStart(2,'0')}`),
+...Array.from({length:10},(_,i)=>
+`OMT RACK ${String(i+1).padStart(2,'0')}`
+),
 
-...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
+...Array.from({length:10},(_,i)=>
+`ICU TROLLEY ${i+1}`
+),
 
-...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
+...Array.from({length:10},(_,i)=>
+`OMT TROLLEY ${i+1}`
+)
 
 ];
 
 locations.forEach(l=>{
 
-loc.innerHTML+=`<option>${l}</option>`;
+const option=document.createElement("option");
+
+option.value=l;
+option.textContent=l;
+
+loc.appendChild(option);
 
 locCheckboxes.innerHTML+=`
-<label style="display:block">
+<label style="display:block;">
 <input type="checkbox" class="locChk" value="${l}" checked>
 ${l}
 </label>
@@ -449,11 +475,8 @@ ${l}
 
 selectAll.onclick=()=>{
 
-document.querySelectorAll(".locChk").forEach(c=>{
-
-c.checked=selectAll.checked;
-
-});
+document.querySelectorAll(".locChk")
+.forEach(c=>c.checked=selectAll.checked);
 
 };
 
@@ -479,12 +502,14 @@ db.ref("Users/"+regId.value).set({
 
 name:regName.value
 
-});
+}).then(()=>{
 
 alert("User Saved");
 
 regName.value="";
 regId.value="";
+
+});
 
 }
 
@@ -499,7 +524,9 @@ return;
 
 }
 
-db.ref("Users/"+loginId.value).once("value",snap=>{
+db.ref("Users/"+loginId.value).once("value")
+
+.then(snap=>{
 
 if(snap.exists()){
 
@@ -507,11 +534,16 @@ user.name=snap.val().name;
 user.id=loginId.value;
 
 loginPage.style.display="none";
+
 app.style.display="block";
 
 loadData();
 
+setTimeout(()=>{
+
 trayInput.focus();
+
+},500);
 
 }else{
 
@@ -542,12 +574,10 @@ location.reload();
 function showTab(id){
 
 document.querySelectorAll(".tab")
-.forEach(t=>t.classList.remove("active"));
+.forEach(x=>x.classList.remove("active"));
 
 document.getElementById(id)
 .classList.add("active");
-
-if(id==="tray") trayInput.focus();
 
 }
 
@@ -569,9 +599,9 @@ trayData.unshift(d);
 
 });
 
-trayTable.innerHTML=trayData.map(row).join("");
+renderTray();
 
-merge();
+mergeData();
 
 });
 
@@ -589,15 +619,73 @@ shipData.unshift(d);
 
 });
 
-shipTable.innerHTML=shipData.map(row).join("");
+renderShip();
 
-merge();
+mergeData();
 
 });
 
 }
 
-function merge(){
+/* RENDER */
+
+function renderTray(){
+
+trayTable.innerHTML="";
+
+trayData.forEach(d=>{
+
+trayTable.innerHTML+=`
+
+<tr>
+
+<td>${d.date||""}</td>
+
+<td>${d.time||""}</td>
+
+<td>${d.barcode||""}</td>
+
+<td>${d.location||""}</td>
+
+<td>${d.user||""} (${d.userId||""})</td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+function renderShip(){
+
+shipTable.innerHTML="";
+
+shipData.forEach(d=>{
+
+shipTable.innerHTML+=`
+
+<tr>
+
+<td>${d.date||""}</td>
+
+<td>${d.time||""}</td>
+
+<td>${d.shipId||""}</td>
+
+<td>${d.location||""}</td>
+
+<td>${d.user||""} (${d.userId||""})</td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+function mergeData(){
 
 allData=[...trayData,...shipData];
 
@@ -607,49 +695,17 @@ liveTotal.innerHTML="TOTAL SCANS : "+allData.length;
 
 }
 
-/* ROW */
-
-function row(d){
-
-return `
-<tr>
-
-<td>${d.date||""}</td>
-
-<td>${d.time||""}</td>
-
-<td>${d.barcode||d.shipId||""}</td>
-
-<td>${d.location||""}</td>
-
-<td>${d.user||""} (${d.userId||""})</td>
-
-</tr>
-`;
-
-}
-
 /* TRAY SCAN */
 
 trayInput.addEventListener("keydown",e=>{
 
-if(e.key!=="Enter") return;
+if(e.key==="Enter"){
 
-let code=trayInput.value.trim();
+const code=trayInput.value.trim();
 
 if(!/^\d{7}$/.test(code)){
 
 alert("Tray must be exactly 7 digit");
-return;
-
-}
-
-let exists=trayData.find(x=>x.barcode===code);
-
-if(exists){
-
-alert("Duplicate Tray");
-trayInput.value="";
 return;
 
 }
@@ -660,7 +716,7 @@ barcode:code,
 
 location:loc.value,
 
-date:new Date().toLocaleDateString('en-GB'),
+date:new Date().toLocaleDateString("en-GB"),
 
 time:new Date().toLocaleTimeString(),
 
@@ -670,9 +726,14 @@ userId:user.id,
 
 timestamp:Date.now()
 
-});
+}).then(()=>{
 
 trayInput.value="";
+trayInput.focus();
+
+});
+
+}
 
 });
 
@@ -680,13 +741,13 @@ trayInput.value="";
 
 shipInput.addEventListener("keydown",e=>{
 
-if(e.key!=="Enter") return;
+if(e.key==="Enter"){
 
-let code=shipInput.value.trim();
+const code=shipInput.value.trim();
 
-if(code.length<5 || code.length>23){
+if(code.length<3 || code.length>23){
 
-alert("Shipment ID Invalid");
+alert("Shipment ID invalid");
 return;
 
 }
@@ -697,7 +758,7 @@ shipId:code,
 
 location:agency.value,
 
-date:new Date().toLocaleDateString('en-GB'),
+date:new Date().toLocaleDateString("en-GB"),
 
 time:new Date().toLocaleTimeString(),
 
@@ -707,9 +768,13 @@ userId:user.id,
 
 timestamp:Date.now()
 
-});
+}).then(()=>{
 
 shipInput.value="";
+
+});
+
+}
 
 });
 
@@ -719,29 +784,18 @@ function applyHistory(){
 
 histData.innerHTML="";
 
-let f=from.value ? new Date(from.value) : null;
-
-let t=to.value ? new Date(to.value) : null;
-
-if(t) t.setHours(23,59,59,999);
-
-let tp=type.value;
-
-let txt=search.value.toLowerCase();
+let from=document.getElementById("from").value;
+let to=document.getElementById("to").value;
+let type=document.getElementById("type").value;
+let search=document.getElementById("search").value.toLowerCase();
 
 allData.forEach(d=>{
 
-let dt=new Date(d.timestamp);
-
-if(f && dt<f) return;
-
-if(t && dt>t) return;
-
-if(tp!=="ALL" && d.type!==tp) return;
-
 let str=JSON.stringify(d).toLowerCase();
 
-if(txt && !str.includes(txt)) return;
+if(type!=="ALL" && d.type!==type) return;
+
+if(search && !str.includes(search)) return;
 
 histData.innerHTML+=`
 
@@ -757,7 +811,7 @@ histData.innerHTML+=`
 
 <td>${d.location}</td>
 
-<td>${d.user} (${d.userId})</td>
+<td>${d.user}</td>
 
 </tr>
 
@@ -779,75 +833,21 @@ csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipId},${d.location},${d.use
 
 });
 
-download(csv);
-
-}
-
-function exportTable(id){
-
-let rows=document.querySelectorAll("#"+id+" tr");
-
-let csv="";
-
-rows.forEach(r=>{
-
-csv+=[...r.children]
-.map(td=>td.innerText)
-.join(",")+"\n";
-
-});
-
-download(csv);
-
-}
-
-function download(csv){
+let blob=new Blob([csv]);
 
 let a=document.createElement("a");
 
-a.href=URL.createObjectURL(new Blob([csv]));
+a.href=URL.createObjectURL(blob);
 
-a.download="NexS_"+Date.now()+".csv";
+a.download="NexS_Export.csv";
 
 a.click();
-
-}
-
-/* DELETE */
-
-function deleteData(){
-
-let pass=prompt("Enter Admin Password");
-
-if(pass!=="1234"){
-
-alert("Wrong Password");
-return;
-
-}
-
-if(confirm("Delete ALL Data?")){
-
-db.ref("tray").remove();
-db.ref("ship").remove();
-
-}
 
 }
 
 /* DASHBOARD */
 
 setInterval(()=>{
-
-let fromDate=dfrom.value ? new Date(dfrom.value) : null;
-
-let toDate=dto.value ? new Date(dto.value) : null;
-
-if(toDate) toDate.setHours(23,59,59,999);
-
-let typeVal=dtype.value;
-
-let selectedLoc=getSelectedLocations();
 
 const hours=[
 "12AM","1AM","2AM","3AM","4AM","5AM",
@@ -860,33 +860,29 @@ let map={};
 let person={};
 let personH={};
 
+let type=document.getElementById("dtype").value;
+
+let selectedLoc=getSelectedLocations();
+
 allData.forEach(d=>{
 
-let dt=new Date(d.timestamp);
-
-if(fromDate && dt<fromDate) return;
-
-if(toDate && dt>toDate) return;
-
-if(typeVal!=="ALL" && d.type!==typeVal) return;
+if(type!=="ALL" && d.type!==type) return;
 
 if(selectedLoc.length && !selectedLoc.includes(d.location)) return;
 
+let dt=new Date(d.timestamp);
+
 let h=dt.getHours();
 
-let locName=d.location;
+if(!map[d.location]) map[d.location]=Array(24).fill(0);
 
-let usr=d.userId;
+map[d.location][h]++;
 
-if(!map[locName]) map[locName]=Array(24).fill(0);
+person[d.userId]=(person[d.userId]||0)+1;
 
-map[locName][h]++;
+if(!personH[d.userId]) personH[d.userId]=Array(24).fill(0);
 
-person[usr]=(person[usr]||0)+1;
-
-if(!personH[usr]) personH[usr]=Array(24).fill(0);
-
-personH[usr][h]++;
+personH[d.userId][h]++;
 
 });
 
@@ -899,13 +895,10 @@ ${hours.map(h=>`<th>${h}</th>`).join("")}
 </tr>
 `;
 
-Object.entries(map)
-.sort((a,b)=>
-b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y)
-)
-.forEach(([l,v])=>{
+Object.entries(map).forEach(([l,v])=>{
 
 locTable.innerHTML+=`
+
 <tr>
 
 <td>${l}</td>
@@ -913,6 +906,7 @@ locTable.innerHTML+=`
 ${v.map(x=>`<td>${x}</td>`).join("")}
 
 </tr>
+
 `;
 
 });
@@ -926,11 +920,10 @@ personTable.innerHTML=`
 </tr>
 `;
 
-Object.entries(person)
-.sort((a,b)=>b[1]-a[1])
-.forEach(([u,v])=>{
+Object.entries(person).forEach(([u,v])=>{
 
 personTable.innerHTML+=`
+
 <tr>
 
 <td>${u}</td>
@@ -938,6 +931,7 @@ personTable.innerHTML+=`
 <td>${v}</td>
 
 </tr>
+
 `;
 
 });
@@ -951,13 +945,10 @@ ${hours.map(h=>`<th>${h}</th>`).join("")}
 </tr>
 `;
 
-Object.entries(personH)
-.sort((a,b)=>
-b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y)
-)
-.forEach(([u,v])=>{
+Object.entries(personH).forEach(([u,v])=>{
 
 personHourTable.innerHTML+=`
+
 <tr>
 
 <td>${u}</td>
@@ -965,6 +956,7 @@ personHourTable.innerHTML+=`
 ${v.map(x=>`<td>${x}</td>`).join("")}
 
 </tr>
+
 `;
 
 });
