@@ -175,13 +175,9 @@ gap:5px;
 <div class="sidebar">
 
 <div onclick="showTab('tray')">📦 Tray Scan</div>
-
 <div onclick="showTab('ship')">🚛 Shipment</div>
-
 <div onclick="showTab('history')">🕒 History</div>
-
 <div onclick="showTab('dash')">📊 Dashboard</div>
-
 <div onclick="logout()">🚪 Logout</div>
 
 </div>
@@ -407,7 +403,7 @@ let trayData=[];
 let shipData=[];
 let allData=[];
 
-/* LOCATIONS */
+/* FULL 45 LOCATIONS */
 
 const locations=[
 
@@ -416,12 +412,25 @@ const locations=[
 "OMT ENTRY",
 "LO SEND TO ICU",
 "LO SEND TO MEI",
+"ORDER SEND TO MAIN LINE FOR FT",
+"ORDER SEND TO MAIN LINE FOR QC",
+"ORDER SEND TO MAIN LINE FOR PACKING",
+"TLP SEND TO MEI",
+"QC FAIL SEND TO MEI",
+"FRAME QC FAIL SEND TO MAIN LINE",
+"SEND TO MEI FOR REVIEW",
+"CS LOCATION",
+"SMALL DIA LOCATION",
+"LO QC FAIL LOCATION (JIT)",
 
-...Array.from({length:10},(_,i)=>`OMT RACK ${String(i+1).padStart(2,'0')}`),
+...Array.from({length:10},(_,i)=>
+`OMT RACK ${String(i+1).padStart(2,'0')}`),
 
-...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
+...Array.from({length:10},(_,i)=>
+`ICU TROLLEY ${i+1}`),
 
-...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
+...Array.from({length:10},(_,i)=>
+`OMT TROLLEY ${i+1}`)
 
 ];
 
@@ -508,15 +517,12 @@ name:data.name
 };
 
 loginPage.style.display="none";
-
 app.style.display="block";
 
 loadData();
 
 setTimeout(()=>{
-
 trayInput.focus();
-
 },500);
 
 }else{
@@ -574,7 +580,6 @@ trayData=[];
 snap.forEach(c=>{
 
 let d=c.val();
-
 d.type="TRAY";
 
 trayData.unshift(d);
@@ -582,7 +587,6 @@ trayData.unshift(d);
 });
 
 renderTray();
-
 mergeData();
 
 });
@@ -594,7 +598,6 @@ shipData=[];
 snap.forEach(c=>{
 
 let d=c.val();
-
 d.type="SHIPMENT";
 
 shipData.unshift(d);
@@ -602,7 +605,6 @@ shipData.unshift(d);
 });
 
 renderShip();
-
 mergeData();
 
 });
@@ -622,14 +624,10 @@ trayTable.innerHTML+=`
 <tr>
 
 <td>${d.date||""}</td>
-
 <td>${d.time||""}</td>
-
 <td>${d.barcode||""}</td>
-
 <td>${d.location||""}</td>
-
-<td>${d.user||""}</td>
+<td>${d.user||""} (${d.userId||""})</td>
 
 </tr>
 
@@ -650,14 +648,10 @@ shipTable.innerHTML+=`
 <tr>
 
 <td>${d.date||""}</td>
-
 <td>${d.time||""}</td>
-
 <td>${d.shipId||""}</td>
-
 <td>${d.location||""}</td>
-
-<td>${d.user||""}</td>
+<td>${d.user||""} (${d.userId||""})</td>
 
 </tr>
 
@@ -675,30 +669,28 @@ liveTotal.innerHTML="TOTAL SCANS : "+allData.length;
 
 }
 
-/* FINAL SINGLE ENTRY TRAY */
+/* FINAL TRAY SCAN */
 
-let trayLock = false;
+let trayLock=false;
 
 trayInput.addEventListener("keydown", function(e){
 
-if(e.key !== "Enter") return;
+if(e.key!=="Enter") return;
 
 if(trayLock) return;
 
-trayLock = true;
+trayLock=true;
 
 setTimeout(()=>{
-
-trayLock = false;
-
+trayLock=false;
 },1000);
 
-let code = trayInput.value
+let code=trayInput.value
 .replace(/\s/g,"")
 .trim()
 .toUpperCase();
 
-/* MT21345 TYPE VALIDATION */
+/* MT21345 FORMAT */
 
 if(!/^[A-Z0-9]{7}$/.test(code)){
 
@@ -715,26 +707,25 @@ return;
 
 db.ref("tray").push({
 
-barcode: code,
+barcode:code,
 
-location: loc.value,
+location:loc.value,
 
-date: new Date().toLocaleDateString("en-GB"),
+date:new Date().toLocaleDateString("en-GB"),
 
-time: new Date().toLocaleTimeString(),
+time:new Date().toLocaleTimeString(),
 
-user: user.name,
+user:user.name,
 
-userId: user.id,
+userId:user.id,
 
-timestamp: Date.now()
+timestamp:Date.now()
 
 })
 
 .then(()=>{
 
 trayInput.value="";
-
 trayInput.focus();
 
 })
@@ -742,7 +733,6 @@ trayInput.focus();
 .catch(err=>{
 
 console.log(err);
-
 alert("Save Failed");
 
 });
@@ -773,7 +763,9 @@ userId:user.id,
 
 timestamp:Date.now()
 
-}).then(()=>{
+})
+
+.then(()=>{
 
 shipInput.value="";
 
@@ -805,16 +797,11 @@ histData.innerHTML+=`
 <tr>
 
 <td>${d.type||""}</td>
-
 <td>${d.date||""}</td>
-
 <td>${d.time||""}</td>
-
 <td>${d.barcode||d.shipId||""}</td>
-
 <td>${d.location||""}</td>
-
-<td>${d.user||""}</td>
+<td>${d.user||""} (${d.userId||""})</td>
 
 </tr>
 
@@ -832,7 +819,7 @@ let csv="Type,Date,Time,ID,Location,User\n";
 
 allData.forEach(d=>{
 
-csv+=`${d.type||""},${d.date||""},${d.time||""},${d.barcode||d.shipId||""},${d.location||""},${d.user||""}\n`;
+csv+=`${d.type||""},${d.date||""},${d.time||""},${d.barcode||d.shipId||""},${d.location||""},${d.user||""} (${d.userId||""})\n`;
 
 });
 
