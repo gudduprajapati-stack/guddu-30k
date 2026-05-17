@@ -205,8 +205,6 @@ color:#00d4ff;
 </head>
 <body>
 
-<!-- LOGIN -->
-
 <div id="loginPage" class="login-page">
 
 <div class="login-box">
@@ -244,8 +242,6 @@ Back To Login
 
 </div>
 
-<!-- APP -->
-
 <div id="app" style="display:none;">
 
 <div class="sidebar">
@@ -264,8 +260,6 @@ Back To Login
 
 <div class="main">
 
-<!-- TRAY -->
-
 <div id="tray" class="tab active">
 
 <div class="card">
@@ -283,7 +277,6 @@ Back To Login
 <div class="card">
 
 <table>
-
 <thead>
 <tr>
 <th>Date</th>
@@ -293,16 +286,12 @@ Back To Login
 <th>User</th>
 </tr>
 </thead>
-
 <tbody id="trayTable"></tbody>
-
 </table>
 
 </div>
 
 </div>
-
-<!-- SHIPMENT -->
 
 <div id="shipment" class="tab">
 
@@ -326,7 +315,6 @@ Back To Login
 <div class="card">
 
 <table>
-
 <thead>
 <tr>
 <th>Date</th>
@@ -336,22 +324,18 @@ Back To Login
 <th>User</th>
 </tr>
 </thead>
-
 <tbody id="shipmentTable"></tbody>
-
 </table>
 
 </div>
 
 </div>
 
-<!-- HISTORY -->
-
 <div id="history" class="tab">
 
 <div class="card">
 
-<div class="row" style="flex-wrap:nowrap;overflow:auto;">
+<div class="row">
 
 <input type="date" id="fromDate">
 <input type="date" id="toDate">
@@ -375,7 +359,6 @@ Back To Login
 <div class="card">
 
 <table>
-
 <thead>
 <tr>
 <th>Type</th>
@@ -386,16 +369,12 @@ Back To Login
 <th>User</th>
 </tr>
 </thead>
-
 <tbody id="historyTable"></tbody>
-
 </table>
 
 </div>
 
 </div>
-
-<!-- DASHBOARD -->
 
 <div id="dashboard" class="tab">
 
@@ -412,13 +391,11 @@ Back To Login
 <option value="SHIPMENT">SHIPMENT</option>
 </select>
 
-<button onclick="renderDashboard()">
-APPLY FILTER
-</button>
+<button onclick="renderDashboard()">APPLY FILTER</button>
 
 </div>
 
-<label style="display:block;margin-bottom:10px;">
+<label>
 <input type="checkbox" id="selectAllLocations" checked>
 SELECT ALL
 </label>
@@ -431,17 +408,11 @@ SELECT ALL
 
 <div class="row">
 
-<button onclick="exportTable('locationHourlyTable')">
-Export Location Hourly
-</button>
+<button onclick="exportTable('locationHourlyTable')">Export Location Hourly</button>
 
-<button onclick="exportTable('personWiseTable')">
-Export Person Wise
-</button>
+<button onclick="exportTable('personWiseTable')">Export Person Wise</button>
 
-<button onclick="exportTable('personHourlyTable')">
-Export Person Hourly
-</button>
+<button onclick="exportTable('personHourlyTable')">Export Person Hourly</button>
 
 </div>
 
@@ -497,11 +468,8 @@ let shipmentData=[];
 let allData=[];
 
 const locations=[
-"ICU ENTRY",
-"MEI ENTRY",
-"OMT ENTRY",
-"LO SEND TO ICU",
-"LO SEND TO MEI",
+"ICU ENTRY","MEI ENTRY","OMT ENTRY",
+"LO SEND TO ICU","LO SEND TO MEI",
 "ORDER SEND TO MAIN LINE FOR FT",
 "ORDER SEND TO MAIN LINE FOR QC",
 "ORDER SEND TO MAIN LINE FOR PACKING",
@@ -518,13 +486,16 @@ const locations=[
 ];
 
 locations.forEach(l=>{
+
 trayLocation.innerHTML+=`<option>${l}</option>`;
 
 locCheckboxes.innerHTML+=`
 <label>
 <input type="checkbox" class="locCheck" value="${l}" checked>
 ${l}
-</label>`;
+</label>
+`;
+
 });
 
 function showRegister(){
@@ -581,7 +552,7 @@ name:data.name || "Unknown",
 id:id
 };
 
-document.getElementById("loginUserInfo").innerHTML=`
+loginUserInfo.innerHTML=`
 <div><b>Name:</b> ${currentUser.name}</div>
 <div><b>ID:</b> ${currentUser.id}</div>
 `;
@@ -591,10 +562,6 @@ app.style.display="block";
 
 startRealtime();
 
-})
-.catch((err)=>{
-console.log(err);
-alert("Login Failed");
 });
 
 }
@@ -692,7 +659,9 @@ trayTable.innerHTML+=`
 <td>${d.barcode}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>`;
+</tr>
+`;
+
 });
 
 }
@@ -710,7 +679,9 @@ shipmentTable.innerHTML+=`
 <td>${d.shipmentId}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>`;
+</tr>
+`;
+
 });
 
 }
@@ -800,7 +771,8 @@ historyTable.innerHTML+=`
 <td>${d.barcode||d.shipmentId}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>`;
+</tr>
+`;
 
 });
 
@@ -820,10 +792,76 @@ downloadCSV(csv,"history.csv");
 
 function deleteHistory(){
 
-if(!confirm("Delete ALL Data?")) return;
+const from=document.getElementById("fromDate").value;
+const to=document.getElementById("toDate").value;
+const type=document.getElementById("historyType").value;
 
-db.ref("tray").remove();
-db.ref("shipment").remove();
+if(!from || !to){
+alert("Select Date Range");
+return;
+}
+
+if(!confirm("Selected Date Range Data Delete Permanently?")){
+return;
+}
+
+const fromDate=new Date(from);
+fromDate.setHours(0,0,0,0);
+
+const toDate=new Date(to);
+toDate.setHours(23,59,59,999);
+
+if(type==="ALL" || type==="TRAY"){
+
+db.ref("tray").once("value")
+.then((snap)=>{
+
+snap.forEach((c)=>{
+
+const d=c.val();
+
+if(!d.timestamp) return;
+
+const dataDate=new Date(d.timestamp);
+
+if(dataDate>=fromDate && dataDate<=toDate){
+
+db.ref("tray/"+c.key).remove();
+
+}
+
+});
+
+});
+
+}
+
+if(type==="ALL" || type==="SHIPMENT"){
+
+db.ref("shipment").once("value")
+.then((snap)=>{
+
+snap.forEach((c)=>{
+
+const d=c.val();
+
+if(!d.timestamp) return;
+
+const dataDate=new Date(d.timestamp);
+
+if(dataDate>=fromDate && dataDate<=toDate){
+
+db.ref("shipment/"+c.key).remove();
+
+}
+
+});
+
+});
+
+}
+
+alert("Selected Date Range Data Deleted");
 
 }
 
@@ -950,7 +988,8 @@ locationHourlyTable.innerHTML+=`
 <tr>
 <td>${k}</td>
 ${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>`;
+</tr>
+`;
 
 });
 
@@ -968,7 +1007,8 @@ personWiseTable.innerHTML+=`
 <tr>
 <td>${k}</td>
 <td>${v}</td>
-</tr>`;
+</tr>
+`;
 
 });
 
@@ -986,7 +1026,8 @@ personHourlyTable.innerHTML+=`
 <tr>
 <td>${k}</td>
 ${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>`;
+</tr>
+`;
 
 });
 
