@@ -400,19 +400,6 @@ color:#00d4ff;
 
 <div class="card">
 
-<div class="row">
-
-<input type="date" id="dashFrom">
-<input type="date" id="dashTo">
-
-<select id="dashType">
-<option value="ALL">ALL</option>
-<option value="TRAY">TRAY</option>
-<option value="SHIPMENT">SHIPMENT</option>
-</select>
-
-</div>
-
 <label>
 <input type="checkbox" id="selectAllLocations" checked>
 SELECT ALL
@@ -526,7 +513,10 @@ function register(){
 const name=regName.value.trim();
 const id=regId.value.trim();
 
-if(!name || !id) return alert("Fill all fields");
+if(!name || !id){
+alert("Fill all fields");
+return;
+}
 
 db.ref("Users/"+id).set({
 name:name,
@@ -542,11 +532,23 @@ function login(){
 
 const id=loginId.value.trim();
 
-db.ref("Users/"+id).once("value",snap=>{
+if(!id){
+alert("Enter ID");
+return;
+}
 
-if(!snap.exists()) return alert("ID Not Found");
+db.ref("Users/"+id).once("value")
+.then(snap=>{
 
-currentUser=snap.val();
+if(!snap.exists()){
+alert("ID Not Found");
+return;
+}
+
+currentUser={
+name:snap.val().name || "Unknown",
+id:id
+};
 
 document.getElementById("loginUserInfo").innerHTML=`
 <div><b>Name:</b> ${currentUser.name}</div>
@@ -558,6 +560,10 @@ app.style.display="block";
 
 startRealtime();
 
+})
+.catch(err=>{
+console.log(err);
+alert("Login Error");
 });
 
 }
@@ -678,58 +684,93 @@ shipmentTable.innerHTML+=`
 
 }
 
-trayInput.addEventListener("keydown",e=>{
+trayInput.addEventListener("keydown",function(e){
 
 if(e.key==="Enter"){
 
 const val=trayInput.value.trim().toUpperCase();
 
-if(!val) return;
+if(!val){
+alert("Scan Tray");
+return;
+}
+
+if(val.length!==7){
+alert("Tray Must Be 7 Digit");
+return;
+}
 
 const now=Date.now();
 
 db.ref("tray").push({
+
 barcode:val,
 location:trayLocation.value,
+
 user:currentUser.name,
 userId:currentUser.id,
+
 date:formatDate(now),
 time:formatTime(now),
 timestamp:now
-});
+
+})
+.then(()=>{
 
 trayInput.value="";
+trayInput.focus();
+
+})
+.catch(err=>{
+console.log(err);
+alert("Tray Save Failed");
+});
 
 }
 
 });
 
-shipmentInput.addEventListener("keydown",e=>{
+shipmentInput.addEventListener("keydown",function(e){
 
 if(e.key==="Enter"){
 
 const val=shipmentInput.value.trim().toUpperCase();
 
-if(!val) return;
+if(!val){
+alert("Enter Shipment ID");
+return;
+}
 
 if(val.length>23){
-alert("23 Digit Max");
+alert("Max 23 Digit");
 return;
 }
 
 const now=Date.now();
 
 db.ref("shipment").push({
+
 shipmentId:val,
 location:shipmentAgency.value,
+
 user:currentUser.name,
 userId:currentUser.id,
+
 date:formatDate(now),
 time:formatTime(now),
 timestamp:now
-});
+
+})
+.then(()=>{
 
 shipmentInput.value="";
+shipmentInput.focus();
+
+})
+.catch(err=>{
+console.log(err);
+alert("Shipment Save Failed");
+});
 
 }
 
