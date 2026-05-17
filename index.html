@@ -32,6 +32,7 @@ height:100vh;
 background:#000;
 border-right:1px solid #222;
 padding-top:20px;
+overflow:auto;
 }
 
 .logo{
@@ -39,7 +40,17 @@ text-align:center;
 font-size:22px;
 font-weight:bold;
 color:#00d4ff;
-margin-bottom:25px;
+margin-bottom:15px;
+}
+
+#loginUserInfo{
+padding:10px;
+margin:10px;
+background:#111;
+border:1px solid #222;
+border-radius:8px;
+font-size:13px;
+line-height:1.6;
 }
 
 .nav-btn{
@@ -129,6 +140,7 @@ padding:15px;
 border-radius:10px;
 border:1px solid #222;
 margin-bottom:20px;
+overflow:auto;
 }
 
 .login-page{
@@ -171,7 +183,7 @@ margin-top:10px;
 }
 
 #locCheckboxes{
-max-height:200px;
+max-height:220px;
 overflow:auto;
 padding:10px;
 background:#111;
@@ -194,7 +206,7 @@ color:#00d4ff;
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN PAGE -->
 
 <div id="loginPage" class="login-page">
 
@@ -236,6 +248,8 @@ color:#00d4ff;
 <div class="sidebar">
 
 <div class="logo">NexS</div>
+
+<div id="loginUserInfo"></div>
 
 <div class="nav-btn active" onclick="openTab('tray',this)">📦 Tray</div>
 <div class="nav-btn" onclick="openTab('shipment',this)">🚛 Shipment</div>
@@ -489,6 +503,7 @@ const locations=[
 
 locations.forEach(l=>{
 trayLocation.innerHTML+=`<option>${l}</option>`;
+
 locCheckboxes.innerHTML+=`
 <label>
 <input type="checkbox" class="locCheck" value="${l}" checked>
@@ -532,6 +547,11 @@ db.ref("Users/"+id).once("value",snap=>{
 if(!snap.exists()) return alert("ID Not Found");
 
 currentUser=snap.val();
+
+document.getElementById("loginUserInfo").innerHTML=`
+<div><b>Name:</b> ${currentUser.name}</div>
+<div><b>ID:</b> ${currentUser.id}</div>
+`;
 
 loginPage.style.display="none";
 app.style.display="block";
@@ -587,7 +607,6 @@ type:"TRAY",
 });
 
 renderTray();
-
 mergeData();
 
 });
@@ -605,7 +624,6 @@ type:"SHIPMENT",
 });
 
 renderShipment();
-
 mergeData();
 
 });
@@ -694,7 +712,10 @@ const val=shipmentInput.value.trim().toUpperCase();
 
 if(!val) return;
 
-if(val.length>23) return alert("Max 23 Digit");
+if(val.length>23){
+alert("23 Digit Max");
+return;
+}
 
 const now=Date.now();
 
@@ -718,18 +739,20 @@ function applyHistory(){
 
 historyTable.innerHTML="";
 
-const from=fromDate.value;
-const to=toDate.value;
 const type=historyType.value;
 const search=historySearch.value.toUpperCase();
 
 allData.forEach(d=>{
 
-const text=(d.barcode||d.shipmentId||"").toUpperCase();
+const id=(d.barcode||d.shipmentId||"").toUpperCase();
 
 if(type!=="ALL" && d.type!==type) return;
 
-if(search && !text.includes(search) && !d.user.toUpperCase().includes(search)) return;
+if(search &&
+!id.includes(search) &&
+!d.user.toUpperCase().includes(search) &&
+!d.userId.toUpperCase().includes(search)
+) return;
 
 historyTable.innerHTML+=`
 <tr>
@@ -750,7 +773,7 @@ function exportHistory(){
 let csv="Type,Date,Time,ID,Location,User\n";
 
 allData.forEach(d=>{
-csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipmentId},${d.location},${d.user}\n`;
+csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipmentId},${d.location},${d.user} (${d.userId})\n`;
 });
 
 downloadCSV(csv,"history.csv");
@@ -773,9 +796,7 @@ const rows=document.querySelectorAll(`#${id} tr`);
 let csv="";
 
 rows.forEach(r=>{
-
 csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
-
 });
 
 downloadCSV(csv,id+".csv");
@@ -831,13 +852,15 @@ if(!selectedLoc.includes(d.location)) return;
 
 const h=new Date(d.timestamp).getHours();
 
+const userLabel=`${d.user} (${d.userId})`;
+
 if(!locMap[d.location]) locMap[d.location]=Array(24).fill(0);
 locMap[d.location][h]++;
 
-personMap[d.userId]=(personMap[d.userId]||0)+1;
+personMap[userLabel]=(personMap[userLabel]||0)+1;
 
-if(!personHourMap[d.userId]) personHourMap[d.userId]=Array(24).fill(0);
-personHourMap[d.userId][h]++;
+if(!personHourMap[userLabel]) personHourMap[userLabel]=Array(24).fill(0);
+personHourMap[userLabel][h]++;
 
 });
 
