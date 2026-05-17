@@ -354,7 +354,6 @@ Back To Login
 <div class="row" style="flex-wrap:nowrap;overflow:auto;">
 
 <input type="date" id="fromDate">
-
 <input type="date" id="toDate">
 
 <select id="historyType">
@@ -366,9 +365,7 @@ Back To Login
 <input type="text" id="historySearch" placeholder="Search">
 
 <button onclick="applyHistory()">Filter</button>
-
 <button onclick="exportHistory()">Export CSV</button>
-
 <button onclick="deleteHistory()">Delete</button>
 
 </div>
@@ -407,7 +404,6 @@ Back To Login
 <div class="row">
 
 <input type="date" id="dashFrom">
-
 <input type="date" id="dashTo">
 
 <select id="dashType">
@@ -423,11 +419,8 @@ APPLY FILTER
 </div>
 
 <label style="display:block;margin-bottom:10px;">
-
 <input type="checkbox" id="selectAllLocations" checked>
-
 SELECT ALL
-
 </label>
 
 <div id="locCheckboxes"></div>
@@ -504,7 +497,6 @@ let shipmentData=[];
 let allData=[];
 
 const locations=[
-
 "ICU ENTRY",
 "MEI ENTRY",
 "OMT ENTRY",
@@ -520,24 +512,19 @@ const locations=[
 "CS LOCATION",
 "SMALL DIA LOCATION",
 "LO QC FAIL LOCATION (JIT)",
-
 ...Array.from({length:10},(_,i)=>`OMT RACK 0${i}`),
 ...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
 ...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
-
 ];
 
 locations.forEach(l=>{
-
 trayLocation.innerHTML+=`<option>${l}</option>`;
 
 locCheckboxes.innerHTML+=`
 <label>
 <input type="checkbox" class="locCheck" value="${l}" checked>
 ${l}
-</label>
-`;
-
+</label>`;
 });
 
 function showRegister(){
@@ -564,11 +551,8 @@ db.ref("Users/"+id).set({
 name:name,
 id:id
 }).then(()=>{
-
 alert("Registration Successful");
-
 showLogin();
-
 });
 
 }
@@ -583,16 +567,21 @@ return;
 }
 
 db.ref("Users/"+id).once("value")
-.then(snap=>{
+.then((snap)=>{
 
 if(!snap.exists()){
 alert("ID Not Found");
 return;
 }
 
-currentUser=snap.val();
+const data=snap.val();
 
-loginUserInfo.innerHTML=`
+currentUser={
+name:data.name || "Unknown",
+id:id
+};
+
+document.getElementById("loginUserInfo").innerHTML=`
 <div><b>Name:</b> ${currentUser.name}</div>
 <div><b>ID:</b> ${currentUser.id}</div>
 `;
@@ -602,6 +591,10 @@ app.style.display="block";
 
 startRealtime();
 
+})
+.catch((err)=>{
+console.log(err);
+alert("Login Failed");
 });
 
 }
@@ -644,13 +637,11 @@ db.ref("tray").on("value",snap=>{
 trayData=[];
 
 snap.forEach(c=>{
-
 trayData.push({
 key:c.key,
 type:"TRAY",
 ...c.val()
 });
-
 });
 
 renderTray();
@@ -663,13 +654,11 @@ db.ref("shipment").on("value",snap=>{
 shipmentData=[];
 
 snap.forEach(c=>{
-
 shipmentData.push({
 key:c.key,
 type:"SHIPMENT",
 ...c.val()
 });
-
 });
 
 renderShipment();
@@ -703,9 +692,7 @@ trayTable.innerHTML+=`
 <td>${d.barcode}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>
-`;
-
+</tr>`;
 });
 
 }
@@ -723,9 +710,7 @@ shipmentTable.innerHTML+=`
 <td>${d.shipmentId}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>
-`;
-
+</tr>`;
 });
 
 }
@@ -744,17 +729,13 @@ return;
 const now=Date.now();
 
 db.ref("tray").push({
-
 barcode:val,
 location:trayLocation.value,
-
 user:currentUser.name,
 userId:currentUser.id,
-
 date:formatDate(now),
 time:formatTime(now),
 timestamp:now
-
 });
 
 trayInput.value="";
@@ -777,17 +758,13 @@ return;
 const now=Date.now();
 
 db.ref("shipment").push({
-
 shipmentId:val,
 location:shipmentAgency.value,
-
 user:currentUser.name,
 userId:currentUser.id,
-
 date:formatDate(now),
 time:formatTime(now),
 timestamp:now
-
 });
 
 shipmentInput.value="";
@@ -823,8 +800,7 @@ historyTable.innerHTML+=`
 <td>${d.barcode||d.shipmentId}</td>
 <td>${d.location}</td>
 <td>${d.user} (${d.userId})</td>
-</tr>
-`;
+</tr>`;
 
 });
 
@@ -835,9 +811,7 @@ function exportHistory(){
 let csv="Type,Date,Time,ID,Location,User\n";
 
 allData.forEach(d=>{
-
 csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipmentId},${d.location},${d.user} (${d.userId})\n`;
-
 });
 
 downloadCSV(csv,"history.csv");
@@ -860,11 +834,7 @@ const rows=document.querySelectorAll(`#${id} tr`);
 let csv="";
 
 rows.forEach(r=>{
-
-csv+=[...r.children]
-.map(td=>td.innerText)
-.join(",")+"\n";
-
+csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
 });
 
 downloadCSV(csv,id+".csv");
@@ -924,11 +894,9 @@ let personHourMap={};
 
 allData.forEach(d=>{
 
-if(typeFilter!=="ALL" && d.type!==typeFilter)
-return;
+if(typeFilter!=="ALL" && d.type!==typeFilter) return;
 
-if(!selectedLoc.includes(d.location))
-return;
+if(!selectedLoc.includes(d.location)) return;
 
 const dataDate=new Date(d.timestamp);
 
@@ -975,17 +943,14 @@ ${hours.map(h=>`<th>${h}</th>`).join("")}
 </tr>`;
 
 Object.entries(locMap)
-.sort((a,b)=>
-b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y)
-)
+.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
 .forEach(([k,v])=>{
 
 locationHourlyTable.innerHTML+=`
 <tr>
 <td>${k}</td>
 ${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>
-`;
+</tr>`;
 
 });
 
@@ -1003,8 +968,7 @@ personWiseTable.innerHTML+=`
 <tr>
 <td>${k}</td>
 <td>${v}</td>
-</tr>
-`;
+</tr>`;
 
 });
 
@@ -1015,17 +979,14 @@ ${hours.map(h=>`<th>${h}</th>`).join("")}
 </tr>`;
 
 Object.entries(personHourMap)
-.sort((a,b)=>
-b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y)
-)
+.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
 .forEach(([k,v])=>{
 
 personHourlyTable.innerHTML+=`
 <tr>
 <td>${k}</td>
 ${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>
-`;
+</tr>`;
 
 });
 
