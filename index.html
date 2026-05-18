@@ -3,1019 +3,917 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>NexS ULTRA FINAL</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
-
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Segoe UI,sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,sans-serif;
 }
 
 body{
-background:#0b0b0b;
-color:#fff;
-overflow:hidden;
+    background:#0b0b0b;
+    color:#fff;
+    overflow:hidden;
 }
 
 /* SIDEBAR */
-
 .sidebar{
-position:fixed;
-left:0;
-top:0;
-width:240px;
-height:100vh;
-background:#000;
-border-right:1px solid #222;
-overflow:auto;
-z-index:999;
+    position:fixed;
+    left:0;
+    top:0;
+    width:240px;
+    height:100vh;
+    background:#000;
+    border-right:1px solid #222;
+    overflow:auto;
+    z-index:999;
 }
 
 .logo{
-text-align:center;
-font-size:24px;
-font-weight:bold;
-color:#00d4ff;
-padding:20px 10px;
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+    color:#00d4ff;
+    padding:20px 10px;
 }
 
 #loginUserInfo{
-margin:10px;
-padding:10px;
-background:#111;
-border:1px solid #222;
-border-radius:8px;
-line-height:1.7;
-font-size:13px;
+    margin:10px;
+    padding:10px;
+    background:#111;
+    border:1px solid #222;
+    border-radius:8px;
+    line-height:1.7;
+    font-size:13px;
 }
 
 .nav-btn{
-padding:15px 20px;
-cursor:pointer;
-border-left:4px solid transparent;
-transition:.2s;
+    padding:15px 20px;
+    cursor:pointer;
+    border-left:4px solid transparent;
+    transition:.2s;
 }
 
 .nav-btn:hover{
-background:#111;
+    background:#111;
 }
 
 .nav-btn.active{
-background:#111;
-border-left:4px solid #00d4ff;
-color:#00d4ff;
+    background:#111;
+    border-left:4px solid #00d4ff;
+    color:#00d4ff;
 }
 
 /* MAIN */
-
 .main{
-margin-left:240px;
-height:100vh;
-overflow:auto;
-padding:20px;
+    margin-left:240px;
+    height:100vh;
+    overflow:auto;
+    padding:20px;
 }
 
 .tab{
-display:none;
+    display:none;
 }
 
 .tab.active{
-display:block;
+    display:block;
 }
 
 .card{
-background:#111;
-padding:15px;
-border-radius:10px;
-border:1px solid #222;
-margin-bottom:20px;
-overflow:auto;
+    background:#111;
+    padding:15px;
+    border-radius:10px;
+    border:1px solid #222;
+    margin-bottom:20px;
+    overflow:auto;
 }
 
 .row{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-align-items:center;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
 }
 
 /* INPUT */
-
 input,select,button{
-padding:11px;
-border:none;
-outline:none;
-border-radius:6px;
-font-size:14px;
-height:44px;
+    padding:11px;
+    border:none;
+    outline:none;
+    border-radius:6px;
+    font-size:14px;
+    height:44px;
 }
 
 input,select{
-background:#000;
-color:#fff;
-border:1px solid #333;
+    background:#000;
+    color:#fff;
+    border:1px solid #333;
 }
 
 select{
-min-width:230px;
-appearance:auto;
--webkit-appearance:menulist;
--moz-appearance:menulist;
-cursor:pointer;
-position:relative;
-z-index:99999;
+    min-width:230px;
+    appearance:auto;
+    -webkit-appearance:menulist;
+    -moz-appearance:menulist;
+    cursor:pointer;
 }
 
 select:focus{
-border:1px solid #00d4ff;
+    border:1px solid #00d4ff;
 }
 
 button{
-background:#00d4ff;
-color:#000;
-font-weight:bold;
-cursor:pointer;
+    background:#00d4ff;
+    color:#000;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* CUSTOM MULTISELECT DROPDOWN FOR DASHBOARD */
+.multiselect-container {
+    position: relative;
+    min-width: 250px;
+}
+
+.select-box {
+    background: #000;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 11px;
+    border-radius: 6px;
+    font-size: 14px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.checkboxes-dropdown {
+    display: none;
+    position: absolute;
+    background: #111;
+    border: 1px solid #333;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    border-radius: 6px;
+    margin-top: 2px;
+    padding: 5px;
+}
+
+.checkboxes-dropdown label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.checkboxes-dropdown label:hover {
+    background: #222;
+}
+
+.checkboxes-dropdown input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.multiselect-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    border-bottom: 1px solid #222;
+    margin-bottom: 5px;
+}
+
+.multiselect-actions span {
+    font-size: 12px;
+    color: #00d4ff;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 /* TABLE */
-
 table{
-width:100%;
-border-collapse:collapse;
-margin-top:10px;
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
 }
 
 th,td{
-padding:10px;
-border-bottom:1px solid #222;
-text-align:center;
-font-size:13px;
-white-space:nowrap;
+    padding:10px;
+    border-bottom:1px solid #222;
+    text-align:center;
+    font-size:13px;
+    white-space:nowrap;
 }
 
 th{
-background:#000;
-color:#00d4ff;
-position:sticky;
-top:0;
+    background:#000;
+    color:#00d4ff;
+    position:sticky;
+    top:0;
 }
 
 /* LOGIN */
-
 .login-page{
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
 
 .login-box{
-width:350px;
-background:#111;
-padding:25px;
-border-radius:10px;
-border:1px solid #333;
+    width:350px;
+    background:#111;
+    padding:25px;
+    border-radius:10px;
+    border:1px solid #333;
 }
 
 .login-box h2{
-text-align:center;
-margin-bottom:20px;
-color:#00d4ff;
+    text-align:center;
+    margin-bottom:20px;
+    color:#00d4ff;
 }
 
 .login-box input{
-width:100%;
-margin-bottom:10px;
+    width:100%;
+    margin-bottom:10px;
 }
 
 .login-box button{
-width:100%;
-margin-bottom:10px;
+    width:100%;
+    margin-bottom:10px;
 }
 
 .small-link{
-text-align:center;
-font-size:13px;
-color:#00d4ff;
-cursor:pointer;
+    text-align:center;
+    font-size:13px;
+    color:#00d4ff;
+    cursor:pointer;
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="loginPage" class="login-page">
+    <div class="login-box">
+        <div id="loginBox">
+            <h2>NexS Login</h2>
+            <input type="text" id="loginId" placeholder="Employee ID">
+            <button onclick="login()">LOGIN</button>
+            <div class="small-link" onclick="showRegister()">New Registration</div>
+        </div>
 
-<div class="login-box">
-
-<div id="loginBox">
-
-<h2>NexS Login</h2>
-
-<input type="text" id="loginId" placeholder="Employee ID">
-
-<button onclick="login()">LOGIN</button>
-
-<div class="small-link" onclick="showRegister()">
-New Registration
+        <div id="registerBox" style="display:none;">
+            <h2>Registration</h2>
+            <input type="text" id="regName" placeholder="Full Name">
+            <input type="text" id="regId" placeholder="Employee ID">
+            <button onclick="register()">SAVE USER</button>
+            <div class="small-link" onclick="showLogin()">Back To Login</div>
+        </div>
+    </div>
 </div>
-
-</div>
-
-<div id="registerBox" style="display:none;">
-
-<h2>Registration</h2>
-
-<input type="text" id="regName" placeholder="Full Name">
-<input type="text" id="regId" placeholder="Employee ID">
-
-<button onclick="register()">SAVE USER</button>
-
-<div class="small-link" onclick="showLogin()">
-Back To Login
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- APP -->
 
 <div id="app" style="display:none;">
-
-<!-- SIDEBAR -->
-
-<div class="sidebar">
-
-<div class="logo">NexS</div>
-
-<div id="loginUserInfo"></div>
-
-<div class="nav-btn active" onclick="openTab('tray',this)">
-📦 Tray
-</div>
-
-<div class="nav-btn" onclick="openTab('shipment',this)">
-🚛 Shipment
-</div>
-
-<div class="nav-btn" onclick="openTab('history',this)">
-🕒 History
-</div>
-
-<div class="nav-btn" onclick="openTab('dashboard',this)">
-📊 Dashboard
-</div>
-
-<div class="nav-btn" onclick="logout()">
-🚪 Logout
-</div>
-
-</div>
-
-<!-- MAIN -->
-
-<div class="main">
-
-<!-- TRAY -->
-
-<div id="tray" class="tab active">
-
-<div class="card">
-
-<div class="row">
-
-<select id="trayLocation" size="1"></select>
-
-<input type="text"
-id="trayInput"
-placeholder="Scan Tray"
-autocomplete="off"
-autocorrect="off"
-autocapitalize="off"
-spellcheck="false">
-
-</div>
-
-</div>
-
-<div class="card">
-
-<table>
-
-<thead>
-<tr>
-<th>Date</th>
-<th>Time</th>
-<th>Tray</th>
-<th>Location</th>
-<th>User</th>
-</tr>
-</thead>
-
-<tbody id="trayTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-<!-- SHIPMENT -->
-
-<div id="shipment" class="tab">
-
-<div class="card">
-
-<div class="row">
-
-<select id="shipmentAgency">
-<option>DHL SHIPMENT</option>
-<option>GPSUPPLY</option>
-<option>SREERAJXPRESS</option>
-<option>OTHER SHIPMENT</option>
-</select>
-
-<input type="text"
-id="shipmentInput"
-placeholder="Shipment Max 23"
-autocomplete="off">
-
-</div>
-
-</div>
-
-<div class="card">
-
-<table>
-
-<thead>
-<tr>
-<th>Date</th>
-<th>Time</th>
-<th>Shipment</th>
-<th>Agency</th>
-<th>User</th>
-</tr>
-</thead>
-
-<tbody id="shipmentTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-<!-- HISTORY -->
-
-<div id="history" class="tab">
-
-<div class="card">
-
-<div class="row">
-
-<input type="date" id="fromDate">
-<input type="date" id="toDate">
-
-<select id="historyType">
-<option value="ALL">ALL</option>
-<option value="TRAY">TRAY</option>
-<option value="SHIPMENT">SHIPMENT</option>
-</select>
-
-<input type="text" id="historySearch" placeholder="Search">
-
-<button onclick="applyHistory()">Filter</button>
-
-<button onclick="exportHistory()">Export CSV</button>
-
-<button onclick="deleteHistory()">Delete</button>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<table>
-
-<thead>
-<tr>
-<th>Type</th>
-<th>Date</th>
-<th>Time</th>
-<th>ID</th>
-<th>Location</th>
-<th>User</th>
-</tr>
-</thead>
-
-<tbody id="historyTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-<!-- DASHBOARD -->
-
-<div id="dashboard" class="tab">
-
-<div class="card">
-
-<div class="row">
-
-<input type="date" id="dashFrom">
-<input type="date" id="dashTo">
-
-<select id="dashType">
-<option value="ALL">ALL</option>
-<option value="TRAY">TRAY</option>
-<option value="SHIPMENT">SHIPMENT</option>
-</select>
-
-<button onclick="renderDashboard()">
-Apply Filter
-</button>
-
-</div>
-
-</div>
-
-<div class="card">
-<h3>📦 Location Hourly Productivity</h3>
-<table id="locationHourlyTable"></table>
-</div>
-
-<div class="card">
-<h3>👤 Person Wise Productivity</h3>
-<table id="personWiseTable"></table>
-</div>
-
-<div class="card">
-<h3>⏱ Person + Hourly Productivity</h3>
-<table id="personHourlyTable"></table>
-</div>
-
-</div>
-
-</div>
-
+    <div class="sidebar">
+        <div class="logo">NexS</div>
+        <div id="loginUserInfo"></div>
+        <div class="nav-btn active" onclick="openTab('tray',this)">📦 Tray</div>
+        <div class="nav-btn" onclick="openTab('shipment',this)">🚛 Shipment</div>
+        <div class="nav-btn" onclick="openTab('history',this)">🕒 History</div>
+        <div class="nav-btn" onclick="openTab('dashboard',this)">📊 Dashboard</div>
+        <div class="nav-btn" onclick="logout()">🚪 Logout</div>
+    </div>
+
+    <div class="main">
+        <div id="tray" class="tab active">
+            <div class="card">
+                <div class="row">
+                    <select id="trayLocation"></select>
+                    <input type="text" id="trayInput" placeholder="Scan Tray" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                </div>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Tray</th>
+                            <th>Location</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trayTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="shipment" class="tab">
+            <div class="card">
+                <div class="row">
+                    <select id="shipmentAgency">
+                        <option>DHL SHIPMENT</option>
+                        <option>GPSUPPLY</option>
+                        <option>SREERAJXPRESS</option>
+                        <option>OTHER SHIPMENT</option>
+                    </select>
+                    <input type="text" id="shipmentInput" placeholder="Shipment Max 23" autocomplete="off">
+                </div>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Shipment</th>
+                            <th>Agency</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipmentTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="history" class="tab">
+            <div class="card">
+                <div class="row">
+                    <input type="date" id="fromDate">
+                    <input type="date" id="toDate">
+                    <select id="historyType">
+                        <option value="ALL">ALL</option>
+                        <option value="TRAY">TRAY</option>
+                        <option value="SHIPMENT">SHIPMENT</option>
+                    </select>
+                    <input type="text" id="historySearch" placeholder="Search">
+                    <button onclick="applyHistory()">Filter</button>
+                    <button onclick="exportHistory()">Export CSV</button>
+                    <button onclick="deleteHistory()">Delete All</button>
+                </div>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>ID</th>
+                            <th>Location</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="dashboard" class="tab">
+            <div class="card">
+                <div class="row">
+                    <input type="date" id="dashFrom">
+                    <input type="date" id="dashTo">
+                    
+                    <select id="dashType">
+                        <option value="ALL">ALL DATA</option>
+                        <option value="TRAY">TRAY ONLY</option>
+                        <option value="SHIPMENT">SHIPMENT ONLY</option>
+                    </select>
+
+                    <div class="multiselect-container">
+                        <div class="select-box" onclick="toggleDashboardDropdown(event)">
+                            <span id="dropdownLabel">Select Locations (All)</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="checkboxes-dropdown" id="dashLocationDropdown">
+                            <div class="multiselect-actions">
+                                <span onclick="selectAllDashLocations(true)">Select All</span>
+                                <span onclick="selectAllDashLocations(false)">Clear All</span>
+                            </div>
+                            <div id="checkboxesContainer"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="renderDashboard()">Apply Filter</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📦 Location Hourly Productivity</h3>
+                <table id="locationHourlyTable"></table>
+            </div>
+            <div class="card">
+                <h3>👤 Person Wise Productivity</h3>
+                <table id="personWiseTable"></table>
+            </div>
+            <div class="card">
+                <h3>⏱ Person + Hourly Productivity</h3>
+                <table id="personHourlyTable"></table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-
-/* FIREBASE */
-
+/* FIREBASE INITIALIZATION */
 firebase.initializeApp({
-apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
-authDomain:"nexs-guddu-30k.firebaseapp.com",
-databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com",
-projectId:"nexs-guddu-30k",
-storageBucket:"nexs-guddu-30k.appspot.com",
-messagingSenderId:"634684833271",
-appId:"1:634684833271:web:31a25a2c5301fa108142f2"
+    apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
+    authDomain:"nexs-guddu-30k.firebaseapp.com",
+    databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com",
+    projectId:"nexs-guddu-30k",
+    storageBucket:"nexs-guddu-30k.appspot.com",
+    messagingSenderId:"634684833271",
+    appId:"1:634684833271:web:31a25a2c5301fa108142f2"
 });
 
 firebase.database().goOnline();
+const db = firebase.database();
 
-const db=firebase.database();
+/* GLOBAL STATE */
+let currentUser = {};
+let trayData = [];
+let shipmentData = [];
+let allData = [];
 
-/* GLOBAL */
-
-let currentUser={};
-let trayData=[];
-let shipmentData=[];
-let allData=[];
-
-/* 45 LOCATIONS */
-
-const locations=[
-"ICU ENTRY",
-"MEI ENTRY",
-"OMT ENTRY",
-"LO SEND TO ICU",
-"LO SEND TO MEI",
-"ORDER SEND TO MAIN LINE FOR FT",
-"ORDER SEND TO MAIN LINE FOR QC",
-"ORDER SEND TO MAIN LINE FOR PACKING",
-"TLP SEND TO MEI",
-"QC FAIL SEND TO MEI",
-"FRAME QC FAIL SEND TO MAIN LINE",
-"SEND TO MEI FOR REVIEW",
-"CS LOCATION",
-"SMALL DIA LOCATION",
-"LO QC FAIL LOCATION (JIT)",
-"OMT RACK 01",
-"OMT RACK 02",
-"OMT RACK 03",
-"OMT RACK 04",
-"OMT RACK 05",
-"OMT RACK 06",
-"OMT RACK 07",
-"OMT RACK 08",
-"OMT RACK 09",
-"OMT RACK 10",
-"ICU TROLLEY 1",
-"ICU TROLLEY 2",
-"ICU TROLLEY 3",
-"ICU TROLLEY 4",
-"ICU TROLLEY 5",
-"ICU TROLLEY 6",
-"ICU TROLLEY 7",
-"ICU TROLLEY 8",
-"ICU TROLLEY 9",
-"ICU TROLLEY 10",
-"OMT TROLLEY 1",
-"OMT TROLLEY 2",
-"OMT TROLLEY 3",
-"OMT TROLLEY 4",
-"OMT TROLLEY 5",
-"OMT TROLLEY 6",
-"OMT TROLLEY 7",
-"OMT TROLLEY 8",
-"OMT TROLLEY 9",
-"OMT TROLLEY 10"
+const locations = [
+    "ICU ENTRY", "MEI ENTRY", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI",
+    "ORDER SEND TO MAIN LINE FOR FT", "ORDER SEND TO MAIN LINE FOR QC",
+    "ORDER SEND TO MAIN LINE FOR PACKING", "TLP SEND TO MEI", "QC FAIL SEND TO MEI",
+    "FRAME QC FAIL SEND TO MAIN LINE", "SEND TO MEI FOR REVIEW", "CS LOCATION",
+    "SMALL DIA LOCATION", "LO QC FAIL LOCATION (JIT)", "OMT RACK 01", "OMT RACK 02",
+    "OMT RACK 03", "OMT RACK 04", "OMT RACK 05", "OMT RACK 06", "OMT RACK 07",
+    "OMT RACK 08", "OMT RACK 09", "OMT RACK 10", "ICU TROLLEY 1", "ICU TROLLEY 2",
+    "ICU TROLLEY 3", "ICU TROLLEY 4", "ICU TROLLEY 5", "ICU TROLLEY 6", "ICU TROLLEY 7",
+    "ICU TROLLEY 8", "ICU TROLLEY 9", "ICU TROLLEY 10", "OMT TROLLEY 1", "OMT TROLLEY 2",
+    "OMT TROLLEY 3", "OMT TROLLEY 4", "OMT TROLLEY 5", "OMT TROLLEY 6", "OMT TROLLEY 7",
+    "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT TROLLEY 10"
 ];
 
-const trayLocation=document.getElementById("trayLocation");
+// Populate location dropdowns
+const trayLocation = document.getElementById("trayLocation");
+const checkboxesContainer = document.getElementById("checkboxesContainer");
 
-locations.forEach(l=>{
-const op=document.createElement("option");
-op.value=l;
-op.textContent=l;
-trayLocation.appendChild(op);
+locations.forEach(l => {
+    // Fill main Tray dropdown
+    const op = document.createElement("option");
+    op.value = l;
+    op.textContent = l;
+    trayLocation.appendChild(op);
+
+    // Fill Dashboard custom Checkbox dropdown
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" value="${l}" checked onchange="updateDropdownLabel()"> ${l}`;
+    checkboxesContainer.appendChild(label);
 });
 
-/* LOGIN */
+// Set default input dates on load (Today)
+const todayString = new Date().toISOString().split('T')[0];
+document.getElementById("fromDate").value = todayString;
+document.getElementById("toDate").value = todayString;
+document.getElementById("dashFrom").value = todayString;
+document.getElementById("dashTo").value = todayString;
 
+/* DROPDOWN INTERACTION MANAGEMENT */
+function toggleDashboardDropdown(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById("dashLocationDropdown");
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+
+function selectAllDashLocations(status) {
+    const checkboxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = status);
+    updateDropdownLabel();
+}
+
+function updateDropdownLabel() {
+    const checkboxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]');
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const label = document.getElementById("dropdownLabel");
+    
+    if (checkedCount === checkboxes.length) {
+        label.textContent = "Select Locations (All)";
+    } else if (checkedCount === 0) {
+        label.textContent = "0 Locations Selected";
+    } else {
+        label.textContent = `${checkedCount} Locations Selected`;
+    }
+}
+
+// Close dropdown if clicked outside
+document.addEventListener("click", () => {
+    document.getElementById("dashLocationDropdown").style.display = "none";
+});
+document.getElementById("dashLocationDropdown").addEventListener("click", (e) => {
+    e.stopPropagation();
+});
+
+/* CHECK PERSISTENT SESSION ON LOAD */
+window.addEventListener('DOMContentLoaded', () => {
+    const savedUser = localStorage.getItem('nexs_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        setupSessionUI();
+    }
+});
+
+/* AUTHENTICATION ROUTINES */
 function showRegister(){
-loginBox.style.display="none";
-registerBox.style.display="block";
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("registerBox").style.display = "block";
 }
 
 function showLogin(){
-registerBox.style.display="none";
-loginBox.style.display="block";
+    document.getElementById("registerBox").style.display = "none";
+    document.getElementById("loginBox").style.display = "block";
 }
 
 function register(){
+    const name = document.getElementById("regName").value.trim();
+    const id = document.getElementById("regId").value.trim();
 
-const name=regName.value.trim();
-const id=regId.value.trim();
+    if(!name || !id){
+        alert("Fill all fields");
+        return;
+    }
 
-if(!name || !id){
-alert("Fill all fields");
-return;
-}
-
-db.ref("Users/"+id).set({
-name,
-id
-}).then(()=>{
-alert("Registration Successful");
-showLogin();
-});
-
+    db.ref("Users/" + id).set({ name, id }).then(() => {
+        alert("Registration Successful");
+        showLogin();
+    });
 }
 
 function login(){
+    const id = document.getElementById("loginId").value.trim();
+    if(!id) return alert("Please enter your Employee ID");
 
-const id=loginId.value.trim();
-
-db.ref("Users/"+id).once("value")
-.then(snap=>{
-
-if(!snap.exists()){
-alert("ID Not Found");
-return;
+    db.ref("Users/" + id).once("value").then(snap => {
+        if(!snap.exists()){
+            alert("ID Not Found");
+            return;
+        }
+        const data = snap.val();
+        // Securely handle matching user id structures
+        currentUser = {
+            name: data.name,
+            id: data.id || id
+        };
+        localStorage.setItem('nexs_user', JSON.stringify(currentUser));
+        setupSessionUI();
+    });
 }
 
-currentUser=snap.val();
-
-loginUserInfo.innerHTML=`
-<div><b>Name:</b> ${currentUser.name}</div>
-<div><b>ID:</b> ${currentUser.id}</div>
-`;
-
-loginPage.style.display="none";
-app.style.display="block";
-
-startRealtime();
-
-});
-
+function setupSessionUI(){
+    document.getElementById("loginUserInfo").innerHTML = `
+        <div><b>Name:</b> ${currentUser.name}</div>
+        <div><b>ID:</b> ${currentUser.id}</div>
+    `;
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    startRealtime();
 }
-
-/* LOGOUT */
 
 function logout(){
-location.reload();
+    localStorage.removeItem('nexs_user');
+    location.reload();
 }
 
-/* TAB */
-
-function openTab(id,el){
-
-document.querySelectorAll(".tab")
-.forEach(t=>t.classList.remove("active"));
-
-document.getElementById(id)
-.classList.add("active");
-
-document.querySelectorAll(".nav-btn")
-.forEach(n=>n.classList.remove("active"));
-
-el.classList.add("active");
-
+/* NAVIGATION ENGINE */
+function openTab(id, el){
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    document.querySelectorAll(".nav-btn").forEach(n => n.classList.remove("active"));
+    el.classList.add("active");
 }
 
-/* DATE */
-
+/* FORMATTERS */
 function formatDate(t){
-
-const d=new Date(t);
-
-return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
-
+    const d = new Date(t);
+    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
 }
 
 function formatTime(t){
-
-return new Date(t).toLocaleTimeString();
-
+    return new Date(t).toLocaleTimeString();
 }
 
-/* REALTIME */
-
+/* SYNC & MERGE MECHANICS */
 function startRealtime(){
+    db.ref("tray").on("value", snap => {
+        trayData = [];
+        snap.forEach(c => {
+            trayData.push({ key: c.key, type: "TRAY", ...c.val() });
+        });
+        renderTray();
+        mergeData();
+    });
 
-db.ref("tray").on("value",snap=>{
-
-trayData=[];
-
-snap.forEach(c=>{
-trayData.push({
-key:c.key,
-type:"TRAY",
-...c.val()
-});
-});
-
-renderTray();
-mergeData();
-
-});
-
-db.ref("shipment").on("value",snap=>{
-
-shipmentData=[];
-
-snap.forEach(c=>{
-shipmentData.push({
-key:c.key,
-type:"SHIPMENT",
-...c.val()
-});
-});
-
-renderShipment();
-mergeData();
-
-});
-
+    db.ref("shipment").on("value", snap => {
+        shipmentData = [];
+        snap.forEach(c => {
+            shipmentData.push({ key: c.key, type: "SHIPMENT", ...c.val() });
+        });
+        renderShipment();
+        mergeData();
+    });
 }
-
-/* MERGE */
 
 function mergeData(){
-
-allData=[...trayData,...shipmentData];
-
-allData.sort((a,b)=>b.timestamp-a.timestamp);
-
-applyHistory();
-renderDashboard();
-
+    allData = [...trayData, ...shipmentData];
+    allData.sort((a, b) => b.timestamp - a.timestamp);
+    applyHistory();
+    renderDashboard();
 }
 
-/* TRAY RENDER */
-
+/* LIVE VIEW TAB RENDERING */
 function renderTray(){
-
-trayTable.innerHTML="";
-
-[...trayData]
-.sort((a,b)=>b.timestamp-a.timestamp)
-.slice(0,20)
-.forEach(d=>{
-
-trayTable.innerHTML+=`
-<tr>
-<td>${d.date}</td>
-<td>${d.time}</td>
-<td>${d.barcode}</td>
-<td>${d.location}</td>
-<td>${d.user} (${d.userId})</td>
-</tr>
-`;
-
-});
-
+    const trayTable = document.getElementById("trayTable");
+    trayTable.innerHTML = "";
+    [...trayData]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 20)
+        .forEach(d => {
+            trayTable.innerHTML += `
+                <tr>
+                    <td>${d.date}</td>
+                    <td>${d.time}</td>
+                    <td>${d.barcode}</td>
+                    <td>${d.location}</td>
+                    <td>${d.user} (${d.userId || 'N/A'})</td>
+                </tr>`;
+        });
 }
-
-/* SHIPMENT */
 
 function renderShipment(){
-
-shipmentTable.innerHTML="";
-
-[...shipmentData]
-.sort((a,b)=>b.timestamp-a.timestamp)
-.slice(0,20)
-.forEach(d=>{
-
-shipmentTable.innerHTML+=`
-<tr>
-<td>${d.date}</td>
-<td>${d.time}</td>
-<td>${d.shipmentId}</td>
-<td>${d.location}</td>
-<td>${d.user} (${d.userId})</td>
-</tr>
-`;
-
-});
-
+    const shipmentTable = document.getElementById("shipmentTable");
+    shipmentTable.innerHTML = "";
+    [...shipmentData]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 20)
+        .forEach(d => {
+            shipmentTable.innerHTML += `
+                <tr>
+                    <td>${d.date}</td>
+                    <td>${d.time}</td>
+                    <td>${d.shipmentId}</td>
+                    <td>${d.location}</td>
+                    <td>${d.user} (${d.userId || 'N/A'})</td>
+                </tr>`;
+        });
 }
 
-/* SUPER FAST AUTO FOCUS */
+/* SMART AUTO-FOCUS SCHEDULER */
+setInterval(() => {
+    const trayInput = document.getElementById("trayInput");
+    const trayLocationSelect = document.getElementById("trayLocation");
+    
+    if(document.getElementById("tray").classList.contains("active")) {
+        if(document.activeElement !== trayInput && document.activeElement !== trayLocationSelect){
+            trayInput.focus();
+        }
+    }
+}, 200);
 
-setInterval(()=>{
+/* TRANSACTION WRITERS */
+document.getElementById("trayInput").addEventListener("keydown", e => {
+    if(e.key !== "Enter") return;
+    const trayInput = e.target;
+    const val = trayInput.value.trim().toUpperCase();
 
-if(document.getElementById("tray").classList.contains("active")){
-trayInput.focus();
+    if(val.length !== 7){
+        trayInput.value = "";
+        return;
+    }
+
+    const now = Date.now();
+    db.ref("tray").push({
+        barcode: val,
+        location: document.getElementById("trayLocation").value,
+        user: currentUser.name,
+        userId: currentUser.id,
+        date: formatDate(now),
+        time: formatTime(now),
+        timestamp: now
+    });
+    trayInput.value = "";
+});
+
+document.getElementById("shipmentInput").addEventListener("keydown", e => {
+    if(e.key !== "Enter") return;
+    const shipmentInput = e.target;
+    const val = shipmentInput.value.trim().toUpperCase();
+
+    if(val.length > 23 || val.length < 1){
+        shipmentInput.value = "";
+        return;
+    }
+
+    const now = Date.now();
+    db.ref("shipment").push({
+        shipmentId: val,
+        location: document.getElementById("shipmentAgency").value,
+        user: currentUser.name,
+        userId: currentUser.id,
+        date: formatDate(now),
+        time: formatTime(now),
+        timestamp: now
+    });
+    shipmentInput.value = "";
+});
+
+/* FILTER UTILITY BY TIMESTAMP AND INPUT DATE STALKS */
+function getFilteredDataset(startInputId, endInputId, typeFilterId, searchStr = "") {
+    const startVal = document.getElementById(startInputId).value;
+    const endVal = document.getElementById(endInputId).value;
+    const type = document.getElementById(typeFilterId).value;
+    const normSearch = searchStr.toUpperCase();
+
+    const startTimestamp = startVal ? new Date(startVal + 'T00:00:00').getTime() : 0;
+    const endTimestamp = endVal ? new Date(endVal + 'T23:59:59.999').getTime() : Infinity;
+
+    return allData.filter(d => {
+        if (d.timestamp < startTimestamp || d.timestamp > endTimestamp) return false;
+        if (type !== "ALL" && d.type !== type) return false;
+        
+        if (normSearch) {
+            const matchTarget = (d.barcode || d.shipmentId || "").toUpperCase();
+            const userTarget = (d.user || "").toUpperCase();
+            const locTarget = (d.location || "").toUpperCase();
+            if (!matchTarget.includes(normSearch) && !userTarget.includes(normSearch) && !locTarget.includes(normSearch)) return false;
+        }
+        return true;
+    });
 }
 
-},200);
-
-/* TRAY SCAN */
-
-trayInput.addEventListener("keydown",e=>{
-
-if(e.key!=="Enter") return;
-
-const val=trayInput.value.trim().toUpperCase();
-
-if(val.length!==7){
-trayInput.value="";
-return;
-}
-
-const now=Date.now();
-
-db.ref("tray").push({
-barcode:val,
-location:trayLocation.value,
-user:currentUser.name,
-userId:currentUser.id,
-date:formatDate(now),
-time:formatTime(now),
-timestamp:now
-});
-
-trayInput.value="";
-
-});
-
-/* SHIPMENT SCAN */
-
-shipmentInput.addEventListener("keydown",e=>{
-
-if(e.key!=="Enter") return;
-
-const val=shipmentInput.value.trim().toUpperCase();
-
-if(val.length>23 || val.length<1){
-shipmentInput.value="";
-return;
-}
-
-const now=Date.now();
-
-db.ref("shipment").push({
-shipmentId:val,
-location:shipmentAgency.value,
-user:currentUser.name,
-userId:currentUser.id,
-date:formatDate(now),
-time:formatTime(now),
-timestamp:now
-});
-
-shipmentInput.value="";
-
-});
-
-/* HISTORY */
-
+/* HISTORY VIEW ENGINE */
 function applyHistory(){
+    const historyTable = document.getElementById("historyTable");
+    historyTable.innerHTML = "";
+    
+    const searchStr = document.getElementById("historySearch").value;
+    const filtered = getFilteredDataset("fromDate", "toDate", "historyType", searchStr);
 
-historyTable.innerHTML="";
-
-const type=historyType.value;
-const search=historySearch.value.toUpperCase();
-
-let filtered=[...allData];
-
-filtered=filtered.filter(d=>{
-
-if(type!=="ALL" && d.type!==type){
-return false;
+    filtered.forEach(d => {
+        historyTable.innerHTML += `
+            <tr>
+                <td><b>${d.type}</b></td>
+                <td>${d.date}</td>
+                <td>${d.time}</td>
+                <td>${d.barcode || d.shipmentId}</td>
+                <td>${d.location}</td>
+                <td>${d.user}</td>
+            </tr>`;
+    });
 }
 
-const id=(d.barcode||d.shipmentId||"")
-.toUpperCase();
-
-return id.includes(search);
-
-});
-
-filtered.forEach(d=>{
-
-historyTable.innerHTML+=`
-<tr>
-<td>${d.type}</td>
-<td>${d.date}</td>
-<td>${d.time}</td>
-<td>${d.barcode||d.shipmentId}</td>
-<td>${d.location}</td>
-<td>${d.user}</td>
-</tr>
-`;
-
-});
-
-}
-
-/* DASHBOARD */
-
+/* METRIC COMPILERS & METADATA DASHBOARDS */
 function renderDashboard(){
+    const hours = [
+        "12AM","1AM","2AM","3AM","4AM","5AM","6AM","7AM","8AM","9AM","10AM","11AM",
+        "12PM","1PM","2PM","3PM","4PM","5PM","6PM","7PM","8PM","9PM","10PM","11PM"
+    ];
 
-const hours=[
-"12AM","1AM","2AM","3AM","4AM","5AM",
-"6AM","7AM","8AM","9AM","10AM","11AM",
-"12PM","1PM","2PM","3PM","4PM","5PM",
-"6PM","7PM","8PM","9PM","10PM","11PM"
-];
+    let locMap = {};
+    let personMap = {};
+    let personHourMap = {};
 
-let locMap={};
-let personMap={};
-let personHourMap={};
+    // Get checked locations from custom multi-select dropdown
+    const checkedBoxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
+    const allowedLocations = Array.from(checkedBoxes).map(cb => cb.value);
 
-allData.forEach(d=>{
+    const filtered = getFilteredDataset("dashFrom", "dashTo", "dashType");
 
-const hr=new Date(d.timestamp).getHours();
+    filtered.forEach(d => {
+        // Skip records if location isn't selected in dropdown checkbox matrix
+        if (allowedLocations.length > 0 && !allowedLocations.includes(d.location)) return;
 
-if(!locMap[d.location]){
-locMap[d.location]=Array(24).fill(0);
+        const hr = new Date(d.timestamp).getHours();
+
+        if(!locMap[d.location]){
+            locMap[d.location] = Array(24).fill(0);
+        }
+        locMap[d.location][hr]++;
+
+        const user = `${d.user} (${d.userId || 'N/A'})`;
+        personMap[user] = (personMap[user] || 0) + 1;
+
+        if(!personHourMap[user]){
+            personHourMap[user] = Array(24).fill(0);
+        }
+        personHourMap[user][hr]++;
+    });
+
+    /* RENDER SCANNED LOCATIONS RUNTIMES */
+    const locationHourlyTable = document.getElementById("locationHourlyTable");
+    locationHourlyTable.innerHTML = `
+        <tr>
+            <th>Location</th>
+            ${hours.map(h => `<th>${h}</th>`).join("")}
+        </tr>`;
+
+    Object.entries(locMap)
+        .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
+        .forEach(([k, v]) => {
+            locationHourlyTable.innerHTML += `
+                <tr>
+                    <td><b>${k}</b></td>
+                    ${v.map(x => `<td>${x === 0 ? '-' : x}</td>`).join("")}
+                </tr>`;
+        });
+
+    /* RENDER OPERATOR LEADERBOARD */
+    const personWiseTable = document.getElementById("personWiseTable");
+    personWiseTable.innerHTML = `
+        <tr>
+            <th>User</th>
+            <th>Total Units Scanned</th>
+        </tr>`;
+
+    Object.entries(personMap)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([k, v]) => {
+            personWiseTable.innerHTML += `
+                <tr>
+                    <td><b>${k}</b></td>
+                    <td style="color:#00d4ff; font-weight:bold;">${v}</td>
+                </tr>`;
+        });
+
+    /* RENDER CROSS-REFERENCE MAP (USER + HOUR) */
+    const personHourlyTable = document.getElementById("personHourlyTable");
+    personHourlyTable.innerHTML = `
+        <tr>
+            <th>User</th>
+            ${hours.map(h => `<th>${h}</th>`).join("")}
+        </tr>`;
+
+    Object.entries(personHourMap)
+        .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
+        .forEach(([k, v]) => {
+            personHourlyTable.innerHTML += `
+                <tr>
+                    <td><b>${k}</b></td>
+                    ${v.map(x => `<td>${x === 0 ? '-' : x}</td>`).join("")}
+                </tr>`;
+        });
 }
 
-locMap[d.location][hr]++;
-
-const user=`${d.user} (${d.userId})`;
-
-personMap[user]=(personMap[user]||0)+1;
-
-if(!personHourMap[user]){
-personHourMap[user]=Array(24).fill(0);
-}
-
-personHourMap[user][hr]++;
-
-});
-
-/* LOCATION */
-
-locationHourlyTable.innerHTML=`
-<tr>
-<th>Location</th>
-${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>
-`;
-
-Object.entries(locMap)
-.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
-.forEach(([k,v])=>{
-
-locationHourlyTable.innerHTML+=`
-<tr>
-<td>${k}</td>
-${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>
-`;
-
-});
-
-/* PERSON */
-
-personWiseTable.innerHTML=`
-<tr>
-<th>User</th>
-<th>Total</th>
-</tr>
-`;
-
-Object.entries(personMap)
-.sort((a,b)=>b[1]-a[1])
-.forEach(([k,v])=>{
-
-personWiseTable.innerHTML+=`
-<tr>
-<td>${k}</td>
-<td>${v}</td>
-</tr>
-`;
-
-});
-
-/* PERSON HOURLY */
-
-personHourlyTable.innerHTML=`
-<tr>
-<th>User</th>
-${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>
-`;
-
-Object.entries(personHourMap)
-.forEach(([k,v])=>{
-
-personHourlyTable.innerHTML+=`
-<tr>
-<td>${k}</td>
-${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>
-`;
-
-});
-
-}
-
-/* EXPORT */
-
+/* FILTERED EXPORT PARSER */
 function exportHistory(){
+    const searchStr = document.getElementById("historySearch").value;
+    const filtered = getFilteredDataset("fromDate", "toDate", "historyType", searchStr);
 
-let csv="Type,Date,Time,ID,Location,User\n";
+    if (filtered.length === 0) {
+        alert("No current data fits the chosen parameters to export.");
+        return;
+    }
 
-allData.forEach(d=>{
+    let csv = "Type,Date,Time,ID,Location,User,UserId\n";
+    filtered.forEach(d => {
+        const cleanedUser = d.user ? d.user.replace(/,/g, '') : '';
+        const cleanedLoc = d.location ? d.location.replace(/,/g, '') : '';
+        csv += `${d.type},${d.date},${d.time},${d.barcode || d.shipmentId},${cleanedLoc},${cleanedUser},${d.userId || ''}\n`;
+    });
 
-csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipmentId},${d.location},${d.user}\n`;
-
-});
-
-downloadCSV(csv,"history.csv");
-
+    downloadCSV(csv, `NexS_Export_${new Date().toISOString().split('T')[0]}.csv`);
 }
 
-function downloadCSV(csv,name){
-
-const a=document.createElement("a");
-
-a.href=URL.createObjectURL(
-new Blob([csv],{type:"text/csv"})
-);
-
-a.download=name;
-a.click();
-
+function downloadCSV(csv, name){
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    a.download = name;
+    a.click();
 }
 
-/* DELETE */
-
+/* CLEAR DATA MECHANISM */
 function deleteHistory(){
-
-if(!confirm("Delete All Data?")) return;
-
-db.ref("tray").remove();
-db.ref("shipment").remove();
-
+    if(!confirm("⚠️ CRITICAL ALERT: Are you absolutely certain you want to wipe the active data tables from the Firebase ledger? This cannot be undone.")) return;
+    
+    Promise.all([
+        db.ref("tray").remove(),
+        db.ref("shipment").remove()
+    ]).then(() => {
+        alert("Database cleared successfully.");
+    }).catch(err => {
+        alert("Execution Error: " + err.message);
+    });
 }
-
 </script>
 
 </body>
