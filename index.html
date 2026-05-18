@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>NexS ULTRA FINAL</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -23,6 +24,8 @@ color:#fff;
 overflow:hidden;
 }
 
+/* SIDEBAR */
+
 .sidebar{
 position:fixed;
 left:0;
@@ -31,9 +34,8 @@ width:240px;
 height:100vh;
 background:#000;
 border-right:1px solid #222;
-padding-top:20px;
 overflow:auto;
-z-index:1000;
+z-index:999;
 }
 
 .logo{
@@ -41,7 +43,7 @@ text-align:center;
 font-size:24px;
 font-weight:bold;
 color:#00d4ff;
-margin-bottom:10px;
+padding:20px 10px;
 }
 
 #loginUserInfo{
@@ -70,6 +72,8 @@ background:#111;
 border-left:4px solid #00d4ff;
 color:#00d4ff;
 }
+
+/* MAIN */
 
 .main{
 margin-left:240px;
@@ -102,12 +106,15 @@ flex-wrap:wrap;
 align-items:center;
 }
 
+/* INPUT */
+
 input,select,button{
 padding:11px;
 border:none;
 outline:none;
 border-radius:6px;
 font-size:14px;
+height:44px;
 }
 
 input,select{
@@ -117,8 +124,17 @@ border:1px solid #333;
 }
 
 select{
-min-width:180px;
+min-width:230px;
+appearance:auto;
+-webkit-appearance:menulist;
+-moz-appearance:menulist;
 cursor:pointer;
+position:relative;
+z-index:99999;
+}
+
+select:focus{
+border:1px solid #00d4ff;
 }
 
 button{
@@ -127,6 +143,8 @@ color:#000;
 font-weight:bold;
 cursor:pointer;
 }
+
+/* TABLE */
 
 table{
 width:100%;
@@ -148,6 +166,8 @@ color:#00d4ff;
 position:sticky;
 top:0;
 }
+
+/* LOGIN */
 
 .login-page{
 display:flex;
@@ -235,6 +255,8 @@ Back To Login
 
 <div id="app" style="display:none;">
 
+<!-- SIDEBAR -->
+
 <div class="sidebar">
 
 <div class="logo">NexS</div>
@@ -263,6 +285,8 @@ Back To Login
 
 </div>
 
+<!-- MAIN -->
+
 <div class="main">
 
 <!-- TRAY -->
@@ -273,9 +297,15 @@ Back To Login
 
 <div class="row">
 
-<select id="trayLocation"></select>
+<select id="trayLocation" size="1"></select>
 
-<input type="text" id="trayInput" placeholder="Tray Scan">
+<input type="text"
+id="trayInput"
+placeholder="Scan Tray"
+autocomplete="off"
+autocorrect="off"
+autocapitalize="off"
+spellcheck="false">
 
 </div>
 
@@ -318,7 +348,10 @@ Back To Login
 <option>OTHER SHIPMENT</option>
 </select>
 
-<input type="text" id="shipmentInput" placeholder="Shipment Max 23">
+<input type="text"
+id="shipmentInput"
+placeholder="Shipment Max 23"
+autocomplete="off">
 
 </div>
 
@@ -446,6 +479,8 @@ Apply Filter
 
 <script>
 
+/* FIREBASE */
+
 firebase.initializeApp({
 apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
 authDomain:"nexs-guddu-30k.firebaseapp.com",
@@ -460,10 +495,14 @@ firebase.database().goOnline();
 
 const db=firebase.database();
 
+/* GLOBAL */
+
 let currentUser={};
 let trayData=[];
 let shipmentData=[];
 let allData=[];
+
+/* 45 LOCATIONS */
 
 const locations=[
 "ICU ENTRY",
@@ -481,19 +520,48 @@ const locations=[
 "CS LOCATION",
 "SMALL DIA LOCATION",
 "LO QC FAIL LOCATION (JIT)",
-...Array.from({length:10},(_,i)=>`OMT RACK ${String(i+1).padStart(2,"0")}`),
-...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
-...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`),
-"ICU HOLD",
-"MEI HOLD",
-"PACKING HOLD",
-"QC HOLD",
-"DISPATCH HOLD"
+"OMT RACK 01",
+"OMT RACK 02",
+"OMT RACK 03",
+"OMT RACK 04",
+"OMT RACK 05",
+"OMT RACK 06",
+"OMT RACK 07",
+"OMT RACK 08",
+"OMT RACK 09",
+"OMT RACK 10",
+"ICU TROLLEY 1",
+"ICU TROLLEY 2",
+"ICU TROLLEY 3",
+"ICU TROLLEY 4",
+"ICU TROLLEY 5",
+"ICU TROLLEY 6",
+"ICU TROLLEY 7",
+"ICU TROLLEY 8",
+"ICU TROLLEY 9",
+"ICU TROLLEY 10",
+"OMT TROLLEY 1",
+"OMT TROLLEY 2",
+"OMT TROLLEY 3",
+"OMT TROLLEY 4",
+"OMT TROLLEY 5",
+"OMT TROLLEY 6",
+"OMT TROLLEY 7",
+"OMT TROLLEY 8",
+"OMT TROLLEY 9",
+"OMT TROLLEY 10"
 ];
 
+const trayLocation=document.getElementById("trayLocation");
+
 locations.forEach(l=>{
-document.getElementById("trayLocation").innerHTML+=`<option>${l}</option>`;
+const op=document.createElement("option");
+op.value=l;
+op.textContent=l;
+trayLocation.appendChild(op);
 });
+
+/* LOGIN */
 
 function showRegister(){
 loginBox.style.display="none";
@@ -516,7 +584,8 @@ return;
 }
 
 db.ref("Users/"+id).set({
-name,id
+name,
+id
 }).then(()=>{
 alert("Registration Successful");
 showLogin();
@@ -552,9 +621,13 @@ startRealtime();
 
 }
 
+/* LOGOUT */
+
 function logout(){
 location.reload();
 }
+
+/* TAB */
 
 function openTab(id,el){
 
@@ -571,17 +644,23 @@ el.classList.add("active");
 
 }
 
-function formatDate(d){
+/* DATE */
 
-const dt=new Date(d);
+function formatDate(t){
 
-return `${String(dt.getDate()).padStart(2,"0")}/${String(dt.getMonth()+1).padStart(2,"0")}/${dt.getFullYear()}`;
+const d=new Date(t);
+
+return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
 
 }
 
-function formatTime(d){
-return new Date(d).toLocaleTimeString();
+function formatTime(t){
+
+return new Date(t).toLocaleTimeString();
+
 }
+
+/* REALTIME */
 
 function startRealtime(){
 
@@ -621,6 +700,8 @@ mergeData();
 
 }
 
+/* MERGE */
+
 function mergeData(){
 
 allData=[...trayData,...shipmentData];
@@ -631,6 +712,8 @@ applyHistory();
 renderDashboard();
 
 }
+
+/* TRAY RENDER */
 
 function renderTray(){
 
@@ -655,6 +738,8 @@ trayTable.innerHTML+=`
 
 }
 
+/* SHIPMENT */
+
 function renderShipment(){
 
 shipmentTable.innerHTML="";
@@ -678,16 +763,17 @@ shipmentTable.innerHTML+=`
 
 }
 
+/* SUPER FAST AUTO FOCUS */
+
 setInterval(()=>{
 
-if(
-document.getElementById("tray")
-.classList.contains("active")
-){
+if(document.getElementById("tray").classList.contains("active")){
 trayInput.focus();
 }
 
-},300);
+},200);
+
+/* TRAY SCAN */
 
 trayInput.addEventListener("keydown",e=>{
 
@@ -716,13 +802,15 @@ trayInput.value="";
 
 });
 
+/* SHIPMENT SCAN */
+
 shipmentInput.addEventListener("keydown",e=>{
 
 if(e.key!=="Enter") return;
 
 const val=shipmentInput.value.trim().toUpperCase();
 
-if(val.length>23){
+if(val.length>23 || val.length<1){
 shipmentInput.value="";
 return;
 }
@@ -743,14 +831,16 @@ shipmentInput.value="";
 
 });
 
+/* HISTORY */
+
 function applyHistory(){
 
 historyTable.innerHTML="";
 
-let filtered=[...allData];
-
 const type=historyType.value;
 const search=historySearch.value.toUpperCase();
+
+let filtered=[...allData];
 
 filtered=filtered.filter(d=>{
 
@@ -758,7 +848,8 @@ if(type!=="ALL" && d.type!==type){
 return false;
 }
 
-const id=(d.barcode||d.shipmentId||"").toUpperCase();
+const id=(d.barcode||d.shipmentId||"")
+.toUpperCase();
 
 return id.includes(search);
 
@@ -781,6 +872,8 @@ historyTable.innerHTML+=`
 
 }
 
+/* DASHBOARD */
+
 function renderDashboard(){
 
 const hours=[
@@ -796,14 +889,13 @@ let personHourMap={};
 
 allData.forEach(d=>{
 
-const dt=new Date(d.timestamp);
-const h=dt.getHours();
+const hr=new Date(d.timestamp).getHours();
 
 if(!locMap[d.location]){
 locMap[d.location]=Array(24).fill(0);
 }
 
-locMap[d.location][h]++;
+locMap[d.location][hr]++;
 
 const user=`${d.user} (${d.userId})`;
 
@@ -813,9 +905,11 @@ if(!personHourMap[user]){
 personHourMap[user]=Array(24).fill(0);
 }
 
-personHourMap[user][h]++;
+personHourMap[user][hr]++;
 
 });
+
+/* LOCATION */
 
 locationHourlyTable.innerHTML=`
 <tr>
@@ -824,7 +918,9 @@ ${hours.map(h=>`<th>${h}</th>`).join("")}
 </tr>
 `;
 
-Object.entries(locMap).forEach(([k,v])=>{
+Object.entries(locMap)
+.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
+.forEach(([k,v])=>{
 
 locationHourlyTable.innerHTML+=`
 <tr>
@@ -835,6 +931,8 @@ ${v.map(x=>`<td>${x}</td>`).join("")}
 
 });
 
+/* PERSON */
+
 personWiseTable.innerHTML=`
 <tr>
 <th>User</th>
@@ -842,7 +940,9 @@ personWiseTable.innerHTML=`
 </tr>
 `;
 
-Object.entries(personMap).forEach(([k,v])=>{
+Object.entries(personMap)
+.sort((a,b)=>b[1]-a[1])
+.forEach(([k,v])=>{
 
 personWiseTable.innerHTML+=`
 <tr>
@@ -853,6 +953,8 @@ personWiseTable.innerHTML+=`
 
 });
 
+/* PERSON HOURLY */
+
 personHourlyTable.innerHTML=`
 <tr>
 <th>User</th>
@@ -860,7 +962,8 @@ ${hours.map(h=>`<th>${h}</th>`).join("")}
 </tr>
 `;
 
-Object.entries(personHourMap).forEach(([k,v])=>{
+Object.entries(personHourMap)
+.forEach(([k,v])=>{
 
 personHourlyTable.innerHTML+=`
 <tr>
@@ -872,6 +975,8 @@ ${v.map(x=>`<td>${x}</td>`).join("")}
 });
 
 }
+
+/* EXPORT */
 
 function exportHistory(){
 
@@ -887,15 +992,6 @@ downloadCSV(csv,"history.csv");
 
 }
 
-function deleteHistory(){
-
-if(!confirm("Delete All History?")) return;
-
-db.ref("tray").remove();
-db.ref("shipment").remove();
-
-}
-
 function downloadCSV(csv,name){
 
 const a=document.createElement("a");
@@ -906,6 +1002,17 @@ new Blob([csv],{type:"text/csv"})
 
 a.download=name;
 a.click();
+
+}
+
+/* DELETE */
+
+function deleteHistory(){
+
+if(!confirm("Delete All Data?")) return;
+
+db.ref("tray").remove();
+db.ref("shipment").remove();
 
 }
 
