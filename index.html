@@ -1,24 +1,12 @@
-<!-- 🔥 NEXS ULTRA FINAL -->
-<!-- 🔥 UPDATED VERSION -->
-<!-- 🔥 Latest 20 Tray -->
-<!-- 🔥 Date Range History -->
-<!-- 🔥 Realtime -->
-<!-- 🔥 Login + Registration -->
-<!-- 🔥 Dashboard -->
-<!-- 🔥 Export -->
-<!-- 🔥 Delete -->
-<!-- 🔥 Shipment -->
-<!-- 🔥 Firebase -->
-
+<!-- 🔥 NEXS ULTRA FINAL COMPLETE WITH DASHBOARD -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>NexS ULTRA</title>
+<title>NexS ULTRA FINAL</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -147,6 +135,7 @@ padding:10px;
 border-bottom:1px solid #222;
 text-align:center;
 font-size:13px;
+white-space:nowrap;
 }
 
 th{
@@ -192,27 +181,6 @@ text-align:center;
 font-size:13px;
 color:#00d4ff;
 cursor:pointer;
-}
-
-#locCheckboxes{
-max-height:250px;
-overflow:auto;
-background:#000;
-border:1px solid #333;
-padding:10px;
-border-radius:8px;
-margin-top:10px;
-}
-
-#locCheckboxes label{
-display:block;
-margin-bottom:5px;
-font-size:13px;
-}
-
-h3{
-margin-bottom:10px;
-color:#00d4ff;
 }
 
 </style>
@@ -347,7 +315,7 @@ Back To Login
 <option>OTHER SHIPMENT</option>
 </select>
 
-<input type="text" id="shipmentInput" placeholder="Shipment ID Max 23">
+<input type="text" id="shipmentInput" placeholder="Shipment Max 23">
 
 </div>
 
@@ -439,9 +407,11 @@ Back To Login
 <input type="date" id="dashTo">
 
 <select id="dashType">
+
 <option value="ALL">ALL</option>
 <option value="TRAY">TRAY</option>
 <option value="SHIPMENT">SHIPMENT</option>
+
 </select>
 
 <button onclick="renderDashboard()">
@@ -450,38 +420,19 @@ Apply Filter
 
 </div>
 
-<label style="margin-top:10px;display:block;">
-<input type="checkbox" id="selectAllLocations" checked>
-SELECT ALL
-</label>
-
-<div id="locCheckboxes"></div>
-
 </div>
 
 <div class="card">
 
 <div class="row">
 
-<button onclick="exportTable('locationHourlyTable')">
-Export Location Hourly
-</button>
-
-<button onclick="exportTable('personWiseTable')">
-Export Person Wise
-</button>
-
-<button onclick="exportTable('personHourlyTable')">
-Export Person Hourly
-</button>
-
-</div>
-
-</div>
-
-<div class="card">
-
 <h3>📦 Location Hourly Productivity</h3>
+
+<button onclick="exportTable('locationHourlyTable')">
+Export CSV
+</button>
+
+</div>
 
 <table id="locationHourlyTable"></table>
 
@@ -489,7 +440,15 @@ Export Person Hourly
 
 <div class="card">
 
+<div class="row">
+
 <h3>👤 Person Wise Productivity</h3>
+
+<button onclick="exportTable('personWiseTable')">
+Export CSV
+</button>
+
+</div>
 
 <table id="personWiseTable"></table>
 
@@ -497,7 +456,15 @@ Export Person Hourly
 
 <div class="card">
 
+<div class="row">
+
 <h3>⏱ Person + Hourly Productivity</h3>
+
+<button onclick="exportTable('personHourlyTable')">
+Export CSV
+</button>
+
+</div>
 
 <table id="personHourlyTable"></table>
 
@@ -521,6 +488,8 @@ messagingSenderId:"634684833271",
 appId:"1:634684833271:web:31a25a2c5301fa108142f2"
 });
 
+firebase.database().goOnline();
+
 const db=firebase.database();
 
 let currentUser={};
@@ -529,6 +498,7 @@ let shipmentData=[];
 let allData=[];
 
 const locations=[
+
 "ICU ENTRY",
 "MEI ENTRY",
 "OMT ENTRY",
@@ -544,24 +514,21 @@ const locations=[
 "CS LOCATION",
 "SMALL DIA LOCATION",
 "LO QC FAIL LOCATION (JIT)",
-...Array.from({length:10},(_,i)=>`OMT RACK 0${i}`),
+
+...Array.from({length:10},(_,i)=>`OMT RACK ${String(i+1).padStart(2,"0")}`),
 ...Array.from({length:10},(_,i)=>`ICU TROLLEY ${i+1}`),
-...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`)
+...Array.from({length:10},(_,i)=>`OMT TROLLEY ${i+1}`),
+
+"ICU HOLD",
+"MEI HOLD",
+"PACKING HOLD",
+"QC HOLD",
+"DISPATCH HOLD"
+
 ];
 
 locations.forEach(l=>{
-
-trayLocation.innerHTML+=`
-<option>${l}</option>
-`;
-
-locCheckboxes.innerHTML+=`
-<label>
-<input type="checkbox" class="locCheck" value="${l}" checked>
-${l}
-</label>
-`;
-
+trayLocation.innerHTML+=`<option>${l}</option>`;
 });
 
 function showRegister(){
@@ -716,11 +683,11 @@ function renderTray(){
 
 trayTable.innerHTML="";
 
-const latestTray=[...trayData]
+const latest=[...trayData]
 .sort((a,b)=>b.timestamp-a.timestamp)
 .slice(0,20);
 
-latestTray.forEach(d=>{
+latest.forEach(d=>{
 
 trayTable.innerHTML+=`
 <tr>
@@ -740,11 +707,11 @@ function renderShipment(){
 
 shipmentTable.innerHTML="";
 
-const latestShipment=[...shipmentData]
+const latest=[...shipmentData]
 .sort((a,b)=>b.timestamp-a.timestamp)
 .slice(0,20);
 
-latestShipment.forEach(d=>{
+latest.forEach(d=>{
 
 shipmentTable.innerHTML+=`
 <tr>
@@ -760,20 +727,38 @@ shipmentTable.innerHTML+=`
 
 }
 
+setInterval(()=>{
+
+const trayTab=document.getElementById("tray");
+
+if(
+trayTab.classList.contains("active") &&
+document.activeElement!==trayInput
+){
+trayInput.focus();
+}
+
+},300);
+
 trayInput.addEventListener("keydown",function(e){
 
-if(e.key==="Enter"){
+if(e.key!=="Enter") return;
+
+e.preventDefault();
 
 const val=trayInput.value.trim().toUpperCase();
 
 if(val.length!==7){
-alert("Tray Must Be 7 Digit");
+trayInput.value="";
 return;
 }
 
 const now=Date.now();
 
+trayInput.value="";
+
 db.ref("tray").push({
+
 barcode:val,
 location:trayLocation.value,
 user:currentUser.name,
@@ -781,28 +766,30 @@ userId:currentUser.id,
 date:formatDate(now),
 time:formatTime(now),
 timestamp:now
+
 });
-
-trayInput.value="";
-
-}
 
 });
 
 shipmentInput.addEventListener("keydown",function(e){
 
-if(e.key==="Enter"){
+if(e.key!=="Enter") return;
+
+e.preventDefault();
 
 const val=shipmentInput.value.trim().toUpperCase();
 
 if(val.length>23){
-alert("Max 23 Digit");
+shipmentInput.value="";
 return;
 }
 
 const now=Date.now();
 
+shipmentInput.value="";
+
 db.ref("shipment").push({
+
 shipmentId:val,
 location:shipmentAgency.value,
 user:currentUser.name,
@@ -810,11 +797,8 @@ userId:currentUser.id,
 date:formatDate(now),
 time:formatTime(now),
 timestamp:now
+
 });
-
-shipmentInput.value="";
-
-}
 
 });
 
@@ -892,6 +876,131 @@ historyTable.innerHTML+=`
 
 }
 
+function renderDashboard(){
+
+const from=dashFrom.value;
+const to=dashTo.value;
+const type=dashType.value;
+
+const hours=[
+"12AM","1AM","2AM","3AM","4AM","5AM",
+"6AM","7AM","8AM","9AM","10AM","11AM",
+"12PM","1PM","2PM","3PM","4PM","5PM",
+"6PM","7PM","8PM","9PM","10PM","11PM"
+];
+
+let locMap={};
+let personMap={};
+let personHourMap={};
+
+allData.forEach(d=>{
+
+if(type!=="ALL" && d.type!==type) return;
+
+const dt=new Date(d.timestamp);
+
+if(from){
+
+const f=new Date(from);
+f.setHours(0,0,0,0);
+
+if(dt<f) return;
+
+}
+
+if(to){
+
+const t=new Date(to);
+t.setHours(23,59,59,999);
+
+if(dt>t) return;
+
+}
+
+const hour=dt.getHours();
+
+const user=`${d.user} (${d.userId})`;
+
+if(!locMap[d.location]){
+locMap[d.location]=Array(24).fill(0);
+}
+
+locMap[d.location][hour]++;
+
+personMap[user]=(personMap[user]||0)+1;
+
+if(!personHourMap[user]){
+personHourMap[user]=Array(24).fill(0);
+}
+
+personHourMap[user][hour]++;
+
+});
+
+const hourHeader=hours.map(h=>`<th>${h}</th>`).join("");
+
+locationHourlyTable.innerHTML=`
+<tr>
+<th>Location</th>
+${hourHeader}
+</tr>
+`;
+
+Object.entries(locMap)
+.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
+.forEach(([k,v])=>{
+
+locationHourlyTable.innerHTML+=`
+<tr>
+<td>${k}</td>
+${v.map(x=>`<td>${x}</td>`).join("")}
+</tr>
+`;
+
+});
+
+personWiseTable.innerHTML=`
+<tr>
+<th>User</th>
+<th>Total</th>
+</tr>
+`;
+
+Object.entries(personMap)
+.sort((a,b)=>b[1]-a[1])
+.forEach(([k,v])=>{
+
+personWiseTable.innerHTML+=`
+<tr>
+<td>${k}</td>
+<td>${v}</td>
+</tr>
+`;
+
+});
+
+personHourlyTable.innerHTML=`
+<tr>
+<th>User</th>
+${hourHeader}
+</tr>
+`;
+
+Object.entries(personHourMap)
+.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
+.forEach(([k,v])=>{
+
+personHourlyTable.innerHTML+=`
+<tr>
+<td>${k}</td>
+${v.map(x=>`<td>${x}</td>`).join("")}
+</tr>
+`;
+
+});
+
+}
+
 function exportHistory(){
 
 let csv="Type,Date,Time,ID,Location,User\n";
@@ -901,6 +1010,20 @@ csv+=`${d.type},${d.date},${d.time},${d.barcode||d.shipmentId},${d.location},${d
 });
 
 downloadCSV(csv,"history.csv");
+
+}
+
+function exportTable(id){
+
+const rows=document.querySelectorAll(`#${id} tr`);
+
+let csv="";
+
+rows.forEach(r=>{
+csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
+});
+
+downloadCSV(csv,id+".csv");
 
 }
 
@@ -986,165 +1109,6 @@ new Blob([csv],{type:"text/csv"})
 a.download=name;
 
 a.click();
-
-}
-
-function exportTable(id){
-
-const rows=document.querySelectorAll(`#${id} tr`);
-
-let csv="";
-
-rows.forEach(r=>{
-csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
-});
-
-downloadCSV(csv,id+".csv");
-
-}
-
-selectAllLocations.addEventListener("change",()=>{
-
-document.querySelectorAll(".locCheck")
-.forEach(c=>c.checked=selectAllLocations.checked);
-
-renderDashboard();
-
-});
-
-document.addEventListener("change",e=>{
-
-if(e.target.classList.contains("locCheck")){
-renderDashboard();
-}
-
-});
-
-function renderDashboard(){
-
-const selectedLoc=[...document.querySelectorAll(".locCheck:checked")]
-.map(c=>c.value);
-
-const from=dashFrom.value;
-const to=dashTo.value;
-const type=dashType.value;
-
-const hours=[
-"12AM","1AM","2AM","3AM","4AM","5AM",
-"6AM","7AM","8AM","9AM","10AM","11AM",
-"12PM","1PM","2PM","3PM","4PM","5PM",
-"6PM","7PM","8PM","9PM","10PM","11PM"
-];
-
-let locMap={};
-let personMap={};
-let personHourMap={};
-
-allData.forEach(d=>{
-
-if(type!=="ALL" && d.type!==type) return;
-
-if(!selectedLoc.includes(d.location)) return;
-
-const dt=new Date(d.timestamp);
-
-if(from){
-
-const f=new Date(from);
-f.setHours(0,0,0,0);
-
-if(dt<f) return;
-
-}
-
-if(to){
-
-const t=new Date(to);
-t.setHours(23,59,59,999);
-
-if(dt>t) return;
-
-}
-
-const h=dt.getHours();
-
-const user=`${d.user} (${d.userId})`;
-
-if(!locMap[d.location]){
-locMap[d.location]=Array(24).fill(0);
-}
-
-locMap[d.location][h]++;
-
-personMap[user]=(personMap[user]||0)+1;
-
-if(!personHourMap[user]){
-personHourMap[user]=Array(24).fill(0);
-}
-
-personHourMap[user][h]++;
-
-});
-
-locationHourlyTable.innerHTML=`
-<tr>
-<th>Location</th>
-${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>
-`;
-
-Object.entries(locMap)
-.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
-.forEach(([k,v])=>{
-
-locationHourlyTable.innerHTML+=`
-<tr>
-<td>${k}</td>
-${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>
-`;
-
-});
-
-personWiseTable.innerHTML=`
-<tr>
-<th>User</th>
-<th>Total</th>
-</tr>
-`;
-
-Object.entries(personMap)
-.sort((a,b)=>b[1]-a[1])
-.forEach(([k,v])=>{
-
-personWiseTable.innerHTML+=`
-<tr>
-<td>${k}</td>
-<td>${v}</td>
-</tr>
-`;
-
-});
-
-personHourlyTable.innerHTML=`
-<tr>
-<th>User</th>
-${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>
-`;
-
-Object.entries(personHourMap)
-.sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
-.forEach(([k,v])=>{
-
-personHourlyTable.innerHTML+=`
-<tr>
-<td>${k}</td>
-${v.map(x=>`<td>${x}</td>`).join("")}
-</tr>
-`;
-
-});
 
 }
 
