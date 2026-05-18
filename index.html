@@ -76,7 +76,7 @@ body{
     height:100vh;
     overflow:auto;
     padding:20px;
-    contain: content; /* Tells browser not to style-recalculate out of view sections */
+    contain: content;
 }
 
 .tab{
@@ -212,7 +212,7 @@ table{
     width:100%;
     border-collapse:collapse;
     margin-top:10px;
-    contain: strict; /* Major memory savior */
+    contain: strict;
 }
 
 th,td{
@@ -368,7 +368,7 @@ th{
                     <input type="text" id="historySearch" placeholder="Search">
                     <button onclick="applyHistory()">Filter</button>
                     <button onclick="exportHistory()">Export CSV</button>
-                    <button onclick="deleteHistory()">Delete All</button>
+                    <button onclick="deleteHistoryByRange()" style="background:#ff4d4d; color:#fff;">Delete Range</button>
                 </div>
             </div>
             <div class="card">
@@ -415,6 +415,7 @@ th{
                     </div>
 
                     <button onclick="renderDashboard()">Apply Filter</button>
+                    <button onclick="exportDashboardData()" style="background:#00ffcc; color:#000;">Export Dashboard CSV</button>
                 </div>
             </div>
             <div class="card">
@@ -453,7 +454,11 @@ let currentUser = {};
 let trayData = [];
 let shipmentData = [];
 let allData = [];
-let mergeTimeout = null; // Used for debouncing heavy computations
+let mergeTimeout = null;
+
+let currentLocMap = Object.create(null);
+let currentPersonMap = Object.create(null);
+let currentPersonHourMap = Object.create(null);
 
 const locations = [
     "ICU ENTRY", "MEI ENTRY", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI",
@@ -469,7 +474,11 @@ const locations = [
     "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT TROLLEY 10"
 ];
 
-// Populate location options smoothly via fragments
+const hoursGlobal = [
+    "12AM","1AM","2AM","3AM","4AM","5AM","6AM","7AM","8AM","9AM","10AM","11AM",
+    "12PM","1PM","2PM","3PM","4PM","5PM","6PM","7PM","8PM","9PM","10PM","11PM"
+];
+
 const trayLocation = document.getElementById("trayLocation");
 const checkboxesContainer = document.getElementById("checkboxesContainer");
 const fragSelect = document.createDocumentFragment();
@@ -524,7 +533,7 @@ document.getElementById("dashLocationDropdown").addEventListener("click", (e) =>
     e.stopPropagation();
 });
 
-/* PERSISTENCE SELECTION ENGINE */
+/* PERSISTENCE ENGINE */
 window.addEventListener('DOMContentLoaded', () => {
     const savedUser = localStorage.getItem('nexs_user');
     if (savedUser) {
@@ -598,7 +607,7 @@ function formatTime(t){
     return new Date(t).toLocaleTimeString();
 }
 
-/* REALTIME SYNC (OPTIMIZED ARRAYS WITH REDUCED ITERATIONS) */
+/* REALTIME SYNC */
 function startRealtime(){
     db.ref("tray").on("value", snap => {
         const temp = [];
@@ -617,7 +626,6 @@ function startRealtime(){
     });
 }
 
-/* DEBOUNCING INTERCEPTOR: Prevents database spikes from locking the UI */
 function debounceMerge(){
     clearTimeout(mergeTimeout);
     mergeTimeout = setTimeout(() => {
@@ -628,14 +636,11 @@ function debounceMerge(){
     }, 150); 
 }
 
-/* HIGH-SPEED DOM INJECTION USING DOCUMENT FRAGMENTS */
 function renderTray(){
     const trayTable = document.getElementById("trayTable");
     const fragment = document.createDocumentFragment();
     trayTable.innerHTML = "";
-    
     const sorted = [...trayData].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
-    
     sorted.forEach(d => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
@@ -648,9 +653,7 @@ function renderShipment(){
     const shipmentTable = document.getElementById("shipmentTable");
     const fragment = document.createDocumentFragment();
     shipmentTable.innerHTML = "";
-    
     const sorted = [...shipmentData].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
-    
     sorted.forEach(d => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.shipmentId}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
@@ -663,7 +666,6 @@ function renderShipment(){
 setInterval(() => {
     const trayInput = document.getElementById("trayInput");
     const trayLocationSelect = document.getElementById("trayLocation");
-    
     if(document.getElementById("tray").classList.contains("active")) {
         if(document.activeElement !== trayInput && document.activeElement !== trayLocationSelect){
             trayInput.focus();
@@ -671,7 +673,7 @@ setInterval(() => {
     }
 }, 250);
 
-/* BACKSTAGE SCANNERS */
+/* TRANSACTION WRITERS */
 document.getElementById("trayInput").addEventListener("keydown", e => {
     if(e.key !== "Enter") return;
     const val = e.target.value.trim().toUpperCase();
@@ -708,7 +710,7 @@ document.getElementById("shipmentInput").addEventListener("keydown", e => {
     e.target.value = "";
 });
 
-/* OPTIMIZED PRE-FILTER PARSER */
+/* OPTIMIZED FILTER UTILITY */
 function getFilteredDataset(startInputId, endInputId, typeFilterId, searchStr = "") {
     const startVal = document.getElementById(startInputId).value;
     const endVal = document.getElementById(endInputId).value;
@@ -722,15 +724,16 @@ function getFilteredDataset(startInputId, endInputId, typeFilterId, searchStr = 
         if (d.timestamp < startTimestamp || d.timestamp > endTimestamp) return false;
         if (type !== "ALL" && d.type !== type) return false;
         if (normSearch) {
+            const formattedUserWithId = `${d.user || ""} (${d.userId || ""})`.toUpperCase();
             return (d.barcode || d.shipmentId || "").toUpperCase().includes(normSearch) || 
-                   (d.user || "").toUpperCase().includes(normSearch) || 
+                   formattedUserWithId.includes(normSearch) || 
                    (d.location || "").toUpperCase().includes(normSearch);
         }
         return true;
     });
 }
 
-/* HISTORY CONTROLLER */
+/* HISTORY VIEW ENGINE */
 function applyHistory(){
     const historyTable = document.getElementById("historyTable");
     const fragment = document.createDocumentFragment();
@@ -739,27 +742,21 @@ function applyHistory(){
     const searchStr = document.getElementById("historySearch").value;
     const filtered = getFilteredDataset("fromDate", "toDate", "historyType", searchStr);
 
-    // Render limit protection to prevent layout thrashing on big searches
     const viewableSubset = filtered.slice(0, 500);
 
     viewableSubset.forEach(d => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td><b>${d.type}</b></td><td>${d.date}</td><td>${d.time}</td><td>${d.barcode || d.shipmentId}</td><td>${d.location}</td><td>${d.user}</td>`;
+        tr.innerHTML = `<td><b>${d.type}</b></td><td>${d.date}</td><td>${d.time}</td><td>${d.barcode || d.shipmentId}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
         fragment.appendChild(tr);
     });
     historyTable.appendChild(fragment);
 }
 
-/* DASHBOARD PIPELINE WITH MEMORY CACHE MAPS */
+/* DASHBOARD ENGINE */
 function renderDashboard(){
-    const hours = [
-        "12AM","1AM","2AM","3AM","4AM","5AM","6AM","7AM","8AM","9AM","10AM","11AM",
-        "12PM","1PM","2PM","3PM","4PM","5PM","6PM","7PM","8PM","9PM","10PM","11PM"
-    ];
-
-    let locMap = Object.create(null);
-    let personMap = Object.create(null);
-    let personHourMap = Object.create(null);
+    currentLocMap = Object.create(null);
+    currentPersonMap = Object.create(null);
+    currentPersonHourMap = Object.create(null);
 
     const checkedBoxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
     const allowedLocations = new Set(Array.from(checkedBoxes).map(cb => cb.value));
@@ -771,22 +768,21 @@ function renderDashboard(){
 
         const hr = new Date(d.timestamp).getHours();
 
-        if(!locMap[d.location]) locMap[d.location] = Array(24).fill(0);
-        locMap[d.location][hr]++;
+        if(!currentLocMap[d.location]) currentLocMap[d.location] = Array(24).fill(0);
+        currentLocMap[d.location][hr]++;
 
         const user = `${d.user} (${d.userId || 'N/A'})`;
-        personMap[user] = (personMap[user] || 0) + 1;
+        currentPersonMap[user] = (currentPersonMap[user] || 0) + 1;
 
-        if(!personHourMap[user]) personHourMap[user] = Array(24).fill(0);
-        personHourMap[user][hr]++;
+        if(!currentPersonHourMap[user]) currentPersonHourMap[user] = Array(24).fill(0);
+        currentPersonHourMap[user][hr]++;
     });
 
-    // 1. Render Locations Table
     const locationHourlyTable = document.getElementById("locationHourlyTable");
     const fragLoc = document.createDocumentFragment();
-    locationHourlyTable.innerHTML = `<tr><th>Location</th>${hours.map(h => `<th>${h}</th>`).join("")}</tr>`;
+    locationHourlyTable.innerHTML = `<tr><th>Location</th>${hoursGlobal.map(h => `<th>${h}</th>`).join("")}</tr>`;
 
-    Object.entries(locMap)
+    Object.entries(currentLocMap)
         .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
         .forEach(([k, v]) => {
             const tr = document.createElement("tr");
@@ -795,12 +791,11 @@ function renderDashboard(){
         });
     locationHourlyTable.appendChild(fragLoc);
 
-    // 2. Render Leaderboard Table
     const personWiseTable = document.getElementById("personWiseTable");
     const fragPerson = document.createDocumentFragment();
     personWiseTable.innerHTML = `<tr><th>User</th><th>Total Units Scanned</th></tr>`;
 
-    Object.entries(personMap)
+    Object.entries(currentPersonMap)
         .sort((a, b) => b[1] - a[1])
         .forEach(([k, v]) => {
             const tr = document.createElement("tr");
@@ -809,12 +804,11 @@ function renderDashboard(){
         });
     personWiseTable.appendChild(fragPerson);
 
-    // 3. Render Cross-Reference Table
     const personHourlyTable = document.getElementById("personHourlyTable");
     const fragPersHr = document.createDocumentFragment();
-    personHourlyTable.innerHTML = `<tr><th>User</th>${hours.map(h => `<th>${h}</th>`).join("")}</tr>`;
+    personHourlyTable.innerHTML = `<tr><th>User</th>${hoursGlobal.map(h => `<th>${h}</th>`).join("")}</tr>`;
 
-    Object.entries(personHourMap)
+    Object.entries(currentPersonHourMap)
         .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
         .forEach(([k, v]) => {
             const tr = document.createElement("tr");
@@ -824,7 +818,48 @@ function renderDashboard(){
     personHourlyTable.appendChild(fragPersHr);
 }
 
-/* BACKUP EXPORTS */
+/* DASHBOARD CSV EXPORTER */
+function exportDashboardData() {
+    let csv = "";
+    const dateStamp = `Filter Range: ${document.getElementById("dashFrom").value} to ${document.getElementById("dashTo").value}\n\n`;
+    csv += dateStamp;
+
+    csv += "SECTION 1: LOCATION HOURLY PRODUCTIVITY\n";
+    csv += "Location," + hoursGlobal.join(",") + ",Total\n";
+    Object.entries(currentLocMap)
+        .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
+        .forEach(([loc, hrs]) => {
+            const total = hrs.reduce((x, y) => x + y, 0);
+            csv += `"${loc.replace(/"/g, '""')}",` + hrs.join(",") + `,${total}\n`;
+        });
+    csv += "\n\n";
+
+    csv += "SECTION 2: PERSON WISE PRODUCTIVITY\n";
+    csv += "User (ID),Total Units Scanned\n";
+    Object.entries(currentPersonMap)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([user, count]) => {
+            csv += `"${user.replace(/"/g, '""')}",${count}\n`;
+        });
+    csv += "\n\n";
+
+    csv += "SECTION 3: PERSON + HOURLY PRODUCTIVITY\n";
+    csv += "User (ID)," + hoursGlobal.join(",") + ",Total\n";
+    Object.entries(currentPersonHourMap)
+        .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
+        .forEach(([user, hrs]) => {
+            const total = hrs.reduce((x, y) => x + y, 0);
+            csv += `"${user.replace(/"/g, '""')}",` + hrs.join(",") + `,${total}\n`;
+        });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `NexS_Dashboard_Productivity_${document.getElementById("dashFrom").value}.csv`;
+    a.click();
+}
+
+/* EXPORT HISTORY */
 function exportHistory(){
     const searchStr = document.getElementById("historySearch").value;
     const filtered = getFilteredDataset("fromDate", "toDate", "historyType", searchStr);
@@ -840,15 +875,49 @@ function exportHistory(){
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `NexS_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `NexS_History_Export_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
 }
 
-function deleteHistory(){
-    if(!confirm("⚠️ WIPE DATA ENGINE: Remove values?")) return;
-    Promise.all([db.ref("tray").remove(), db.ref("shipment").remove()]).then(() => {
-        alert("Database cleared.");
+/* NEW FEATURE: DELETE BY SELECTED DATE RANGE ONLY */
+function deleteHistoryByRange() {
+    const fromDateVal = document.getElementById("fromDate").value;
+    const toDateVal = document.getElementById("toDate").value;
+
+    if (!fromDateVal || !toDateVal) {
+        alert("Please select both 'From Date' and 'To Date' first.");
+        return;
+    }
+
+    const startTimestamp = new Date(fromDateVal + 'T00:00:00').getTime();
+    const endTimestamp = new Date(toDateVal + 'T23:59:59.999').getTime();
+
+    const confirmMsg = `⚠️ DATE RANGE WIPEOUT ALERT!\n\nAre you sure you want to delete data between:\n📅 ${fromDateVal} and ${toDateVal}?\n\nThis will remove matching records from Firebase. This cannot be undone!`;
+    if (!confirm(confirmMsg)) return;
+
+    // Filter elements in active runtime memory matching bounds to get their unique keys
+    const itemsToDelete = allData.filter(d => d.timestamp >= startTimestamp && d.timestamp <= endTimestamp);
+
+    if (itemsToDelete.length === 0) {
+        alert("No records found within this selected date range.");
+        return;
+    }
+
+    let deletePromises = [];
+    itemsToDelete.forEach(item => {
+        // Dynamic node switching matching node layout types
+        const nodePath = item.type === "TRAY" ? "tray" : "shipment";
+        deletePromises.push(db.ref(`${nodePath}/${item.key}`).remove());
     });
+
+    // Execute multi-node destruction pipeline asynchronously
+    Promise.all(deletePromises)
+        .then(() => {
+            alert(`Successfully deleted ${itemsToDelete.length} records within the specified range!`);
+        })
+        .catch(err => {
+            alert("Error trying to remove logs: " + err.message);
+        });
 }
 </script>
 </body>
