@@ -1,9 +1,24 @@
+<!-- 🔥 NEXS ULTRA FINAL -->
+<!-- 🔥 UPDATED VERSION -->
+<!-- 🔥 Latest 20 Tray -->
+<!-- 🔥 Date Range History -->
+<!-- 🔥 Realtime -->
+<!-- 🔥 Login + Registration -->
+<!-- 🔥 Dashboard -->
+<!-- 🔥 Export -->
+<!-- 🔥 Delete -->
+<!-- 🔥 Shipment -->
+<!-- 🔥 Firebase -->
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexS ULTRA FINAL</title>
+
+<title>NexS ULTRA</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -18,7 +33,7 @@ font-family:Segoe UI,sans-serif;
 }
 
 body{
-background:#0a0a0a;
+background:#0b0b0b;
 color:#fff;
 overflow:hidden;
 }
@@ -44,13 +59,13 @@ margin-bottom:10px;
 }
 
 #loginUserInfo{
-padding:10px;
 margin:10px;
+padding:10px;
 background:#111;
 border:1px solid #222;
 border-radius:8px;
+line-height:1.7;
 font-size:13px;
-line-height:1.6;
 }
 
 .nav-btn{
@@ -99,7 +114,6 @@ display:flex;
 gap:10px;
 flex-wrap:wrap;
 align-items:center;
-margin-bottom:10px;
 }
 
 input,select,button{
@@ -126,7 +140,6 @@ table{
 width:100%;
 border-collapse:collapse;
 margin-top:10px;
-background:#111;
 }
 
 th,td{
@@ -184,15 +197,16 @@ cursor:pointer;
 #locCheckboxes{
 max-height:250px;
 overflow:auto;
-padding:10px;
 background:#000;
 border:1px solid #333;
+padding:10px;
 border-radius:8px;
+margin-top:10px;
 }
 
 #locCheckboxes label{
 display:block;
-margin-bottom:6px;
+margin-bottom:5px;
 font-size:13px;
 }
 
@@ -202,8 +216,12 @@ color:#00d4ff;
 }
 
 </style>
+
 </head>
+
 <body>
+
+<!-- LOGIN -->
 
 <div id="loginPage" class="login-page">
 
@@ -242,6 +260,8 @@ Back To Login
 
 </div>
 
+<!-- APP -->
+
 <div id="app" style="display:none;">
 
 <div class="sidebar">
@@ -250,15 +270,31 @@ Back To Login
 
 <div id="loginUserInfo"></div>
 
-<div class="nav-btn active" onclick="openTab('tray',this)">📦 Tray</div>
-<div class="nav-btn" onclick="openTab('shipment',this)">🚛 Shipment</div>
-<div class="nav-btn" onclick="openTab('history',this)">🕒 History</div>
-<div class="nav-btn" onclick="openTab('dashboard',this)">📊 Dashboard</div>
-<div class="nav-btn" onclick="logout()">🚪 Logout</div>
+<div class="nav-btn active" onclick="openTab('tray',this)">
+📦 Tray
+</div>
+
+<div class="nav-btn" onclick="openTab('shipment',this)">
+🚛 Shipment
+</div>
+
+<div class="nav-btn" onclick="openTab('history',this)">
+🕒 History
+</div>
+
+<div class="nav-btn" onclick="openTab('dashboard',this)">
+📊 Dashboard
+</div>
+
+<div class="nav-btn" onclick="logout()">
+🚪 Logout
+</div>
 
 </div>
 
 <div class="main">
+
+<!-- TRAY -->
 
 <div id="tray" class="tab active">
 
@@ -268,7 +304,7 @@ Back To Login
 
 <select id="trayLocation"></select>
 
-<input type="text" id="trayInput" placeholder="Tray Scan (MT76921)">
+<input type="text" id="trayInput" placeholder="Tray Scan">
 
 </div>
 
@@ -277,6 +313,7 @@ Back To Login
 <div class="card">
 
 <table>
+
 <thead>
 <tr>
 <th>Date</th>
@@ -286,12 +323,16 @@ Back To Login
 <th>User</th>
 </tr>
 </thead>
+
 <tbody id="trayTable"></tbody>
+
 </table>
 
 </div>
 
 </div>
+
+<!-- SHIPMENT -->
 
 <div id="shipment" class="tab">
 
@@ -306,7 +347,7 @@ Back To Login
 <option>OTHER SHIPMENT</option>
 </select>
 
-<input type="text" id="shipmentInput" placeholder="Shipment ID Max 23 Digit">
+<input type="text" id="shipmentInput" placeholder="Shipment ID Max 23">
 
 </div>
 
@@ -315,6 +356,7 @@ Back To Login
 <div class="card">
 
 <table>
+
 <thead>
 <tr>
 <th>Date</th>
@@ -324,12 +366,16 @@ Back To Login
 <th>User</th>
 </tr>
 </thead>
+
 <tbody id="shipmentTable"></tbody>
+
 </table>
 
 </div>
 
 </div>
+
+<!-- HISTORY -->
 
 <div id="history" class="tab">
 
@@ -349,7 +395,9 @@ Back To Login
 <input type="text" id="historySearch" placeholder="Search">
 
 <button onclick="applyHistory()">Filter</button>
+
 <button onclick="exportHistory()">Export CSV</button>
+
 <button onclick="deleteHistory()">Delete</button>
 
 </div>
@@ -359,6 +407,7 @@ Back To Login
 <div class="card">
 
 <table>
+
 <thead>
 <tr>
 <th>Type</th>
@@ -369,12 +418,16 @@ Back To Login
 <th>User</th>
 </tr>
 </thead>
+
 <tbody id="historyTable"></tbody>
+
 </table>
 
 </div>
 
 </div>
+
+<!-- DASHBOARD -->
 
 <div id="dashboard" class="tab">
 
@@ -391,11 +444,13 @@ Back To Login
 <option value="SHIPMENT">SHIPMENT</option>
 </select>
 
-<button onclick="renderDashboard()">APPLY FILTER</button>
+<button onclick="renderDashboard()">
+Apply Filter
+</button>
 
 </div>
 
-<label>
+<label style="margin-top:10px;display:block;">
 <input type="checkbox" id="selectAllLocations" checked>
 SELECT ALL
 </label>
@@ -408,11 +463,17 @@ SELECT ALL
 
 <div class="row">
 
-<button onclick="exportTable('locationHourlyTable')">Export Location Hourly</button>
+<button onclick="exportTable('locationHourlyTable')">
+Export Location Hourly
+</button>
 
-<button onclick="exportTable('personWiseTable')">Export Person Wise</button>
+<button onclick="exportTable('personWiseTable')">
+Export Person Wise
+</button>
 
-<button onclick="exportTable('personHourlyTable')">Export Person Hourly</button>
+<button onclick="exportTable('personHourlyTable')">
+Export Person Hourly
+</button>
 
 </div>
 
@@ -455,7 +516,7 @@ apiKey:"AIzaSyBvyW-kGWwUX4UH9-cpCRORSwccxrFuHQM",
 authDomain:"nexs-guddu-30k.firebaseapp.com",
 databaseURL:"https://nexs-guddu-30k-default-rtdb.firebaseio.com",
 projectId:"nexs-guddu-30k",
-storageBucket:"nexs-guddu-30k.firebasestorage.app",
+storageBucket:"nexs-guddu-30k.appspot.com",
 messagingSenderId:"634684833271",
 appId:"1:634684833271:web:31a25a2c5301fa108142f2"
 });
@@ -468,8 +529,11 @@ let shipmentData=[];
 let allData=[];
 
 const locations=[
-"ICU ENTRY","MEI ENTRY","OMT ENTRY",
-"LO SEND TO ICU","LO SEND TO MEI",
+"ICU ENTRY",
+"MEI ENTRY",
+"OMT ENTRY",
+"LO SEND TO ICU",
+"LO SEND TO MEI",
 "ORDER SEND TO MAIN LINE FOR FT",
 "ORDER SEND TO MAIN LINE FOR QC",
 "ORDER SEND TO MAIN LINE FOR PACKING",
@@ -487,7 +551,9 @@ const locations=[
 
 locations.forEach(l=>{
 
-trayLocation.innerHTML+=`<option>${l}</option>`;
+trayLocation.innerHTML+=`
+<option>${l}</option>
+`;
 
 locCheckboxes.innerHTML+=`
 <label>
@@ -650,7 +716,11 @@ function renderTray(){
 
 trayTable.innerHTML="";
 
-trayData.forEach(d=>{
+const latestTray=[...trayData]
+.sort((a,b)=>b.timestamp-a.timestamp)
+.slice(0,20);
+
+latestTray.forEach(d=>{
 
 trayTable.innerHTML+=`
 <tr>
@@ -670,7 +740,11 @@ function renderShipment(){
 
 shipmentTable.innerHTML="";
 
-shipmentData.forEach(d=>{
+const latestShipment=[...shipmentData]
+.sort((a,b)=>b.timestamp-a.timestamp)
+.slice(0,20);
+
+latestShipment.forEach(d=>{
 
 shipmentTable.innerHTML+=`
 <tr>
@@ -751,17 +825,57 @@ historyTable.innerHTML="";
 const type=historyType.value;
 const search=historySearch.value.toUpperCase();
 
-allData.forEach(d=>{
+const from=fromDate.value;
+const to=toDate.value;
+
+let filtered=[...allData];
+
+filtered=filtered.filter(d=>{
+
+if(type!=="ALL" && d.type!==type){
+return false;
+}
 
 const id=(d.barcode||d.shipmentId||"").toUpperCase();
 
-if(type!=="ALL" && d.type!==type) return;
-
-if(search &&
+if(
+search &&
 !id.includes(search) &&
 !d.user.toUpperCase().includes(search) &&
 !d.userId.toUpperCase().includes(search)
-) return;
+){
+return false;
+}
+
+if(from){
+
+const fromD=new Date(from);
+fromD.setHours(0,0,0,0);
+
+if(new Date(d.timestamp)<fromD){
+return false;
+}
+
+}
+
+if(to){
+
+const toD=new Date(to);
+toD.setHours(23,59,59,999);
+
+if(new Date(d.timestamp)>toD){
+return false;
+}
+
+}
+
+return true;
+
+});
+
+filtered.sort((a,b)=>b.timestamp-a.timestamp);
+
+filtered.forEach(d=>{
 
 historyTable.innerHTML+=`
 <tr>
@@ -792,42 +906,40 @@ downloadCSV(csv,"history.csv");
 
 function deleteHistory(){
 
-const from=document.getElementById("fromDate").value;
-const to=document.getElementById("toDate").value;
-const type=document.getElementById("historyType").value;
+const from=fromDate.value;
+const to=toDate.value;
+const type=historyType.value;
 
 if(!from || !to){
 alert("Select Date Range");
 return;
 }
 
-if(!confirm("Selected Date Range Data Delete Permanently?")){
+if(!confirm("Delete Selected Data?")){
 return;
 }
 
-const fromDate=new Date(from);
-fromDate.setHours(0,0,0,0);
+const fromD=new Date(from);
+fromD.setHours(0,0,0,0);
 
-const toDate=new Date(to);
-toDate.setHours(23,59,59,999);
+const toD=new Date(to);
+toD.setHours(23,59,59,999);
 
 if(type==="ALL" || type==="TRAY"){
 
 db.ref("tray").once("value")
-.then((snap)=>{
+.then(snap=>{
 
-snap.forEach((c)=>{
+snap.forEach(c=>{
 
 const d=c.val();
 
 if(!d.timestamp) return;
 
-const dataDate=new Date(d.timestamp);
+const dt=new Date(d.timestamp);
 
-if(dataDate>=fromDate && dataDate<=toDate){
-
+if(dt>=fromD && dt<=toD){
 db.ref("tray/"+c.key).remove();
-
 }
 
 });
@@ -839,20 +951,18 @@ db.ref("tray/"+c.key).remove();
 if(type==="ALL" || type==="SHIPMENT"){
 
 db.ref("shipment").once("value")
-.then((snap)=>{
+.then(snap=>{
 
-snap.forEach((c)=>{
+snap.forEach(c=>{
 
 const d=c.val();
 
 if(!d.timestamp) return;
 
-const dataDate=new Date(d.timestamp);
+const dt=new Date(d.timestamp);
 
-if(dataDate>=fromDate && dataDate<=toDate){
-
+if(dt>=fromD && dt<=toD){
 db.ref("shipment/"+c.key).remove();
-
 }
 
 });
@@ -861,21 +971,7 @@ db.ref("shipment/"+c.key).remove();
 
 }
 
-alert("Selected Date Range Data Deleted");
-
-}
-
-function exportTable(id){
-
-const rows=document.querySelectorAll(`#${id} tr`);
-
-let csv="";
-
-rows.forEach(r=>{
-csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
-});
-
-downloadCSV(csv,id+".csv");
+alert("Selected Data Deleted");
 
 }
 
@@ -890,6 +986,20 @@ new Blob([csv],{type:"text/csv"})
 a.download=name;
 
 a.click();
+
+}
+
+function exportTable(id){
+
+const rows=document.querySelectorAll(`#${id} tr`);
+
+let csv="";
+
+rows.forEach(r=>{
+csv+=[...r.children].map(td=>td.innerText).join(",")+"\n";
+});
+
+downloadCSV(csv,id+".csv");
 
 }
 
@@ -915,9 +1025,9 @@ function renderDashboard(){
 const selectedLoc=[...document.querySelectorAll(".locCheck:checked")]
 .map(c=>c.value);
 
-const fromDate=dashFrom.value;
-const toDate=dashTo.value;
-const typeFilter=dashType.value;
+const from=dashFrom.value;
+const to=dashTo.value;
+const type=dashType.value;
 
 const hours=[
 "12AM","1AM","2AM","3AM","4AM","5AM",
@@ -932,53 +1042,56 @@ let personHourMap={};
 
 allData.forEach(d=>{
 
-if(typeFilter!=="ALL" && d.type!==typeFilter) return;
+if(type!=="ALL" && d.type!==type) return;
 
 if(!selectedLoc.includes(d.location)) return;
 
-const dataDate=new Date(d.timestamp);
+const dt=new Date(d.timestamp);
 
-if(fromDate){
+if(from){
 
-const from=new Date(fromDate);
-from.setHours(0,0,0,0);
+const f=new Date(from);
+f.setHours(0,0,0,0);
 
-if(dataDate<from) return;
-
-}
-
-if(toDate){
-
-const to=new Date(toDate);
-to.setHours(23,59,59,999);
-
-if(dataDate>to) return;
+if(dt<f) return;
 
 }
 
-const h=dataDate.getHours();
+if(to){
 
-const userLabel=`${d.user} (${d.userId})`;
+const t=new Date(to);
+t.setHours(23,59,59,999);
 
-if(!locMap[d.location])
+if(dt>t) return;
+
+}
+
+const h=dt.getHours();
+
+const user=`${d.user} (${d.userId})`;
+
+if(!locMap[d.location]){
 locMap[d.location]=Array(24).fill(0);
+}
 
 locMap[d.location][h]++;
 
-personMap[userLabel]=(personMap[userLabel]||0)+1;
+personMap[user]=(personMap[user]||0)+1;
 
-if(!personHourMap[userLabel])
-personHourMap[userLabel]=Array(24).fill(0);
+if(!personHourMap[user]){
+personHourMap[user]=Array(24).fill(0);
+}
 
-personHourMap[userLabel][h]++;
+personHourMap[user][h]++;
 
 });
 
-locationHourlyTable.innerHTML=
-`<tr>
+locationHourlyTable.innerHTML=`
+<tr>
 <th>Location</th>
 ${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>`;
+</tr>
+`;
 
 Object.entries(locMap)
 .sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
@@ -993,11 +1106,12 @@ ${v.map(x=>`<td>${x}</td>`).join("")}
 
 });
 
-personWiseTable.innerHTML=
-`<tr>
+personWiseTable.innerHTML=`
+<tr>
 <th>User</th>
 <th>Total</th>
-</tr>`;
+</tr>
+`;
 
 Object.entries(personMap)
 .sort((a,b)=>b[1]-a[1])
@@ -1012,11 +1126,12 @@ personWiseTable.innerHTML+=`
 
 });
 
-personHourlyTable.innerHTML=
-`<tr>
+personHourlyTable.innerHTML=`
+<tr>
 <th>User</th>
 ${hours.map(h=>`<th>${h}</th>`).join("")}
-</tr>`;
+</tr>
+`;
 
 Object.entries(personHourMap)
 .sort((a,b)=>b[1].reduce((x,y)=>x+y)-a[1].reduce((x,y)=>x+y))
