@@ -70,12 +70,13 @@ body{
     color:#00d4ff;
 }
 
-/* MAIN */
+/* MAIN WITH PERFORMANCE OPTIMIZATION */
 .main{
     margin-left:240px;
     height:100vh;
     overflow:auto;
     padding:20px;
+    contain: content; /* Tells browser not to style-recalculate out of view sections */
 }
 
 .tab{
@@ -206,11 +207,12 @@ button{
     font-weight: bold;
 }
 
-/* TABLE */
+/* TABLE LAYER PERFORMANCE UPGRADES */
 table{
     width:100%;
     border-collapse:collapse;
     margin-top:10px;
+    contain: strict; /* Major memory savior */
 }
 
 th,td{
@@ -451,6 +453,7 @@ let currentUser = {};
 let trayData = [];
 let shipmentData = [];
 let allData = [];
+let mergeTimeout = null; // Used for debouncing heavy computations
 
 const locations = [
     "ICU ENTRY", "MEI ENTRY", "OMT ENTRY", "LO SEND TO ICU", "LO SEND TO MEI",
@@ -466,31 +469,32 @@ const locations = [
     "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT TROLLEY 10"
 ];
 
-// Populate location dropdowns
+// Populate location options smoothly via fragments
 const trayLocation = document.getElementById("trayLocation");
 const checkboxesContainer = document.getElementById("checkboxesContainer");
+const fragSelect = document.createDocumentFragment();
+const fragCheck = document.createDocumentFragment();
 
 locations.forEach(l => {
-    // Fill main Tray dropdown
     const op = document.createElement("option");
     op.value = l;
     op.textContent = l;
-    trayLocation.appendChild(op);
+    fragSelect.appendChild(op);
 
-    // Fill Dashboard custom Checkbox dropdown
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" value="${l}" checked onchange="updateDropdownLabel()"> ${l}`;
-    checkboxesContainer.appendChild(label);
+    fragCheck.appendChild(label);
 });
+trayLocation.appendChild(fragSelect);
+checkboxesContainer.appendChild(fragCheck);
 
-// Set default input dates on load (Today)
 const todayString = new Date().toISOString().split('T')[0];
 document.getElementById("fromDate").value = todayString;
 document.getElementById("toDate").value = todayString;
 document.getElementById("dashFrom").value = todayString;
 document.getElementById("dashTo").value = todayString;
 
-/* DROPDOWN INTERACTION MANAGEMENT */
+/* DROPDOWN OPTIONS CONTROL */
 function toggleDashboardDropdown(e) {
     e.stopPropagation();
     const dropdown = document.getElementById("dashLocationDropdown");
@@ -508,16 +512,11 @@ function updateDropdownLabel() {
     const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
     const label = document.getElementById("dropdownLabel");
     
-    if (checkedCount === checkboxes.length) {
-        label.textContent = "Select Locations (All)";
-    } else if (checkedCount === 0) {
-        label.textContent = "0 Locations Selected";
-    } else {
-        label.textContent = `${checkedCount} Locations Selected`;
-    }
+    if (checkedCount === checkboxes.length) label.textContent = "Select Locations (All)";
+    else if (checkedCount === 0) label.textContent = "0 Locations Selected";
+    else label.textContent = `${checkedCount} Locations Selected`;
 }
 
-// Close dropdown if clicked outside
 document.addEventListener("click", () => {
     document.getElementById("dashLocationDropdown").style.display = "none";
 });
@@ -525,7 +524,7 @@ document.getElementById("dashLocationDropdown").addEventListener("click", (e) =>
     e.stopPropagation();
 });
 
-/* CHECK PERSISTENT SESSION ON LOAD */
+/* PERSISTENCE SELECTION ENGINE */
 window.addEventListener('DOMContentLoaded', () => {
     const savedUser = localStorage.getItem('nexs_user');
     if (savedUser) {
@@ -534,7 +533,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-/* AUTHENTICATION ROUTINES */
 function showRegister(){
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("registerBox").style.display = "block";
@@ -548,11 +546,7 @@ function showLogin(){
 function register(){
     const name = document.getElementById("regName").value.trim();
     const id = document.getElementById("regId").value.trim();
-
-    if(!name || !id){
-        alert("Fill all fields");
-        return;
-    }
+    if(!name || !id) return alert("Fill all fields");
 
     db.ref("Users/" + id).set({ name, id }).then(() => {
         alert("Registration Successful");
@@ -565,16 +559,9 @@ function login(){
     if(!id) return alert("Please enter your Employee ID");
 
     db.ref("Users/" + id).once("value").then(snap => {
-        if(!snap.exists()){
-            alert("ID Not Found");
-            return;
-        }
+        if(!snap.exists()) return alert("ID Not Found");
         const data = snap.val();
-        // Securely handle matching user id structures
-        currentUser = {
-            name: data.name,
-            id: data.id || id
-        };
+        currentUser = { name: data.name, id: data.id || id };
         localStorage.setItem('nexs_user', JSON.stringify(currentUser));
         setupSessionUI();
     });
@@ -595,7 +582,6 @@ function logout(){
     location.reload();
 }
 
-/* NAVIGATION ENGINE */
 function openTab(id, el){
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById(id).classList.add("active");
@@ -603,7 +589,6 @@ function openTab(id, el){
     el.classList.add("active");
 }
 
-/* FORMATTERS */
 function formatDate(t){
     const d = new Date(t);
     return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
@@ -613,72 +598,68 @@ function formatTime(t){
     return new Date(t).toLocaleTimeString();
 }
 
-/* SYNC & MERGE MECHANICS */
+/* REALTIME SYNC (OPTIMIZED ARRAYS WITH REDUCED ITERATIONS) */
 function startRealtime(){
     db.ref("tray").on("value", snap => {
-        trayData = [];
-        snap.forEach(c => {
-            trayData.push({ key: c.key, type: "TRAY", ...c.val() });
-        });
+        const temp = [];
+        snap.forEach(c => { temp.push({ key: c.key, type: "TRAY", ...c.val() }); });
+        trayData = temp;
         renderTray();
-        mergeData();
+        debounceMerge();
     });
 
     db.ref("shipment").on("value", snap => {
-        shipmentData = [];
-        snap.forEach(c => {
-            shipmentData.push({ key: c.key, type: "SHIPMENT", ...c.val() });
-        });
+        const temp = [];
+        snap.forEach(c => { temp.push({ key: c.key, type: "SHIPMENT", ...c.val() }); });
+        shipmentData = temp;
         renderShipment();
-        mergeData();
+        debounceMerge();
     });
 }
 
-function mergeData(){
-    allData = [...trayData, ...shipmentData];
-    allData.sort((a, b) => b.timestamp - a.timestamp);
-    applyHistory();
-    renderDashboard();
+/* DEBOUNCING INTERCEPTOR: Prevents database spikes from locking the UI */
+function debounceMerge(){
+    clearTimeout(mergeTimeout);
+    mergeTimeout = setTimeout(() => {
+        allData = [...trayData, ...shipmentData];
+        allData.sort((a, b) => b.timestamp - a.timestamp);
+        applyHistory();
+        renderDashboard();
+    }, 150); 
 }
 
-/* LIVE VIEW TAB RENDERING */
+/* HIGH-SPEED DOM INJECTION USING DOCUMENT FRAGMENTS */
 function renderTray(){
     const trayTable = document.getElementById("trayTable");
+    const fragment = document.createDocumentFragment();
     trayTable.innerHTML = "";
-    [...trayData]
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, 20)
-        .forEach(d => {
-            trayTable.innerHTML += `
-                <tr>
-                    <td>${d.date}</td>
-                    <td>${d.time}</td>
-                    <td>${d.barcode}</td>
-                    <td>${d.location}</td>
-                    <td>${d.user} (${d.userId || 'N/A'})</td>
-                </tr>`;
-        });
+    
+    const sorted = [...trayData].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+    
+    sorted.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
+        fragment.appendChild(tr);
+    });
+    trayTable.appendChild(fragment);
 }
 
 function renderShipment(){
     const shipmentTable = document.getElementById("shipmentTable");
+    const fragment = document.createDocumentFragment();
     shipmentTable.innerHTML = "";
-    [...shipmentData]
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, 20)
-        .forEach(d => {
-            shipmentTable.innerHTML += `
-                <tr>
-                    <td>${d.date}</td>
-                    <td>${d.time}</td>
-                    <td>${d.shipmentId}</td>
-                    <td>${d.location}</td>
-                    <td>${d.user} (${d.userId || 'N/A'})</td>
-                </tr>`;
-        });
+    
+    const sorted = [...shipmentData].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+    
+    sorted.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.shipmentId}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
+        fragment.appendChild(tr);
+    });
+    shipmentTable.appendChild(fragment);
 }
 
-/* SMART AUTO-FOCUS SCHEDULER */
+/* SMART FOCUS MANAGER */
 setInterval(() => {
     const trayInput = document.getElementById("trayInput");
     const trayLocationSelect = document.getElementById("trayLocation");
@@ -688,18 +669,13 @@ setInterval(() => {
             trayInput.focus();
         }
     }
-}, 200);
+}, 250);
 
-/* TRANSACTION WRITERS */
+/* BACKSTAGE SCANNERS */
 document.getElementById("trayInput").addEventListener("keydown", e => {
     if(e.key !== "Enter") return;
-    const trayInput = e.target;
-    const val = trayInput.value.trim().toUpperCase();
-
-    if(val.length !== 7){
-        trayInput.value = "";
-        return;
-    }
+    const val = e.target.value.trim().toUpperCase();
+    if(val.length !== 7) { e.target.value = ""; return; }
 
     const now = Date.now();
     db.ref("tray").push({
@@ -711,18 +687,13 @@ document.getElementById("trayInput").addEventListener("keydown", e => {
         time: formatTime(now),
         timestamp: now
     });
-    trayInput.value = "";
+    e.target.value = "";
 });
 
 document.getElementById("shipmentInput").addEventListener("keydown", e => {
     if(e.key !== "Enter") return;
-    const shipmentInput = e.target;
-    const val = shipmentInput.value.trim().toUpperCase();
-
-    if(val.length > 23 || val.length < 1){
-        shipmentInput.value = "";
-        return;
-    }
+    const val = e.target.value.trim().toUpperCase();
+    if(val.length > 23 || val.length < 1) { e.target.value = ""; return; }
 
     const now = Date.now();
     db.ref("shipment").push({
@@ -734,155 +705,130 @@ document.getElementById("shipmentInput").addEventListener("keydown", e => {
         time: formatTime(now),
         timestamp: now
     });
-    shipmentInput.value = "";
+    e.target.value = "";
 });
 
-/* FILTER UTILITY BY TIMESTAMP AND INPUT DATE STALKS */
+/* OPTIMIZED PRE-FILTER PARSER */
 function getFilteredDataset(startInputId, endInputId, typeFilterId, searchStr = "") {
     const startVal = document.getElementById(startInputId).value;
     const endVal = document.getElementById(endInputId).value;
     const type = document.getElementById(typeFilterId).value;
-    const normSearch = searchStr.toUpperCase();
-
+    
     const startTimestamp = startVal ? new Date(startVal + 'T00:00:00').getTime() : 0;
     const endTimestamp = endVal ? new Date(endVal + 'T23:59:59.999').getTime() : Infinity;
+    const normSearch = searchStr.toUpperCase();
 
     return allData.filter(d => {
         if (d.timestamp < startTimestamp || d.timestamp > endTimestamp) return false;
         if (type !== "ALL" && d.type !== type) return false;
-        
         if (normSearch) {
-            const matchTarget = (d.barcode || d.shipmentId || "").toUpperCase();
-            const userTarget = (d.user || "").toUpperCase();
-            const locTarget = (d.location || "").toUpperCase();
-            if (!matchTarget.includes(normSearch) && !userTarget.includes(normSearch) && !locTarget.includes(normSearch)) return false;
+            return (d.barcode || d.shipmentId || "").toUpperCase().includes(normSearch) || 
+                   (d.user || "").toUpperCase().includes(normSearch) || 
+                   (d.location || "").toUpperCase().includes(normSearch);
         }
         return true;
     });
 }
 
-/* HISTORY VIEW ENGINE */
+/* HISTORY CONTROLLER */
 function applyHistory(){
     const historyTable = document.getElementById("historyTable");
+    const fragment = document.createDocumentFragment();
     historyTable.innerHTML = "";
     
     const searchStr = document.getElementById("historySearch").value;
     const filtered = getFilteredDataset("fromDate", "toDate", "historyType", searchStr);
 
-    filtered.forEach(d => {
-        historyTable.innerHTML += `
-            <tr>
-                <td><b>${d.type}</b></td>
-                <td>${d.date}</td>
-                <td>${d.time}</td>
-                <td>${d.barcode || d.shipmentId}</td>
-                <td>${d.location}</td>
-                <td>${d.user}</td>
-            </tr>`;
+    // Render limit protection to prevent layout thrashing on big searches
+    const viewableSubset = filtered.slice(0, 500);
+
+    viewableSubset.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td><b>${d.type}</b></td><td>${d.date}</td><td>${d.time}</td><td>${d.barcode || d.shipmentId}</td><td>${d.location}</td><td>${d.user}</td>`;
+        fragment.appendChild(tr);
     });
+    historyTable.appendChild(fragment);
 }
 
-/* METRIC COMPILERS & METADATA DASHBOARDS */
+/* DASHBOARD PIPELINE WITH MEMORY CACHE MAPS */
 function renderDashboard(){
     const hours = [
         "12AM","1AM","2AM","3AM","4AM","5AM","6AM","7AM","8AM","9AM","10AM","11AM",
         "12PM","1PM","2PM","3PM","4PM","5PM","6PM","7PM","8PM","9PM","10PM","11PM"
     ];
 
-    let locMap = {};
-    let personMap = {};
-    let personHourMap = {};
+    let locMap = Object.create(null);
+    let personMap = Object.create(null);
+    let personHourMap = Object.create(null);
 
-    // Get checked locations from custom multi-select dropdown
     const checkedBoxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
-    const allowedLocations = Array.from(checkedBoxes).map(cb => cb.value);
+    const allowedLocations = new Set(Array.from(checkedBoxes).map(cb => cb.value));
 
     const filtered = getFilteredDataset("dashFrom", "dashTo", "dashType");
 
     filtered.forEach(d => {
-        // Skip records if location isn't selected in dropdown checkbox matrix
-        if (allowedLocations.length > 0 && !allowedLocations.includes(d.location)) return;
+        if (allowedLocations.size > 0 && !allowedLocations.has(d.location)) return;
 
         const hr = new Date(d.timestamp).getHours();
 
-        if(!locMap[d.location]){
-            locMap[d.location] = Array(24).fill(0);
-        }
+        if(!locMap[d.location]) locMap[d.location] = Array(24).fill(0);
         locMap[d.location][hr]++;
 
         const user = `${d.user} (${d.userId || 'N/A'})`;
         personMap[user] = (personMap[user] || 0) + 1;
 
-        if(!personHourMap[user]){
-            personHourMap[user] = Array(24).fill(0);
-        }
+        if(!personHourMap[user]) personHourMap[user] = Array(24).fill(0);
         personHourMap[user][hr]++;
     });
 
-    /* RENDER SCANNED LOCATIONS RUNTIMES */
+    // 1. Render Locations Table
     const locationHourlyTable = document.getElementById("locationHourlyTable");
-    locationHourlyTable.innerHTML = `
-        <tr>
-            <th>Location</th>
-            ${hours.map(h => `<th>${h}</th>`).join("")}
-        </tr>`;
+    const fragLoc = document.createDocumentFragment();
+    locationHourlyTable.innerHTML = `<tr><th>Location</th>${hours.map(h => `<th>${h}</th>`).join("")}</tr>`;
 
     Object.entries(locMap)
         .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
         .forEach(([k, v]) => {
-            locationHourlyTable.innerHTML += `
-                <tr>
-                    <td><b>${k}</b></td>
-                    ${v.map(x => `<td>${x === 0 ? '-' : x}</td>`).join("")}
-                </tr>`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td><b>${k}</b></td>${v.map(x => `<td>${x === 0 ? '-' : x}</td>`).join("")}`;
+            fragLoc.appendChild(tr);
         });
+    locationHourlyTable.appendChild(fragLoc);
 
-    /* RENDER OPERATOR LEADERBOARD */
+    // 2. Render Leaderboard Table
     const personWiseTable = document.getElementById("personWiseTable");
-    personWiseTable.innerHTML = `
-        <tr>
-            <th>User</th>
-            <th>Total Units Scanned</th>
-        </tr>`;
+    const fragPerson = document.createDocumentFragment();
+    personWiseTable.innerHTML = `<tr><th>User</th><th>Total Units Scanned</th></tr>`;
 
     Object.entries(personMap)
         .sort((a, b) => b[1] - a[1])
         .forEach(([k, v]) => {
-            personWiseTable.innerHTML += `
-                <tr>
-                    <td><b>${k}</b></td>
-                    <td style="color:#00d4ff; font-weight:bold;">${v}</td>
-                </tr>`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td><b>${k}</b></td><td style="color:#00d4ff; font-weight:bold;">${v}</td>`;
+            fragPerson.appendChild(tr);
         });
+    personWiseTable.appendChild(fragPerson);
 
-    /* RENDER CROSS-REFERENCE MAP (USER + HOUR) */
+    // 3. Render Cross-Reference Table
     const personHourlyTable = document.getElementById("personHourlyTable");
-    personHourlyTable.innerHTML = `
-        <tr>
-            <th>User</th>
-            ${hours.map(h => `<th>${h}</th>`).join("")}
-        </tr>`;
+    const fragPersHr = document.createDocumentFragment();
+    personHourlyTable.innerHTML = `<tr><th>User</th>${hours.map(h => `<th>${h}</th>`).join("")}</tr>`;
 
     Object.entries(personHourMap)
         .sort((a, b) => b[1].reduce((x, y) => x + y) - a[1].reduce((x, y) => x + y))
         .forEach(([k, v]) => {
-            personHourlyTable.innerHTML += `
-                <tr>
-                    <td><b>${k}</b></td>
-                    ${v.map(x => `<td>${x === 0 ? '-' : x}</td>`).join("")}
-                </tr>`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td><b>${k}</b></td>${v.map(x => `<td>${x === 0 ? '-' : x}</td>`).join("")}`;
+            fragPersHr.appendChild(tr);
         });
+    personHourlyTable.appendChild(fragPersHr);
 }
 
-/* FILTERED EXPORT PARSER */
+/* BACKUP EXPORTS */
 function exportHistory(){
     const searchStr = document.getElementById("historySearch").value;
     const filtered = getFilteredDataset("fromDate", "toDate", "historyType", searchStr);
-
-    if (filtered.length === 0) {
-        alert("No current data fits the chosen parameters to export.");
-        return;
-    }
+    if (filtered.length === 0) return alert("No current data fits parameters to export.");
 
     let csv = "Type,Date,Time,ID,Location,User,UserId\n";
     filtered.forEach(d => {
@@ -891,30 +837,19 @@ function exportHistory(){
         csv += `${d.type},${d.date},${d.time},${d.barcode || d.shipmentId},${cleanedLoc},${cleanedUser},${d.userId || ''}\n`;
     });
 
-    downloadCSV(csv, `NexS_Export_${new Date().toISOString().split('T')[0]}.csv`);
-}
-
-function downloadCSV(csv, name){
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
-    a.download = name;
+    a.href = URL.createObjectURL(blob);
+    a.download = `NexS_Export_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
 }
 
-/* CLEAR DATA MECHANISM */
 function deleteHistory(){
-    if(!confirm("⚠️ CRITICAL ALERT: Are you absolutely certain you want to wipe the active data tables from the Firebase ledger? This cannot be undone.")) return;
-    
-    Promise.all([
-        db.ref("tray").remove(),
-        db.ref("shipment").remove()
-    ]).then(() => {
-        alert("Database cleared successfully.");
-    }).catch(err => {
-        alert("Execution Error: " + err.message);
+    if(!confirm("⚠️ WIPE DATA ENGINE: Remove values?")) return;
+    Promise.all([db.ref("tray").remove(), db.ref("shipment").remove()]).then(() => {
+        alert("Database cleared.");
     });
 }
 </script>
-
 </body>
 </html>
