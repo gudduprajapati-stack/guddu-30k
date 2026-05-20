@@ -261,13 +261,6 @@ th{
     width:100%;
     margin-bottom:10px;
 }
-
-.small-link{
-    text-align:center;
-    font-size:13px;
-    color:#00d4ff;
-    cursor:pointer;
-}
 </style>
 </head>
 
@@ -279,15 +272,6 @@ th{
             <h2>NexS Login</h2>
             <input type="text" id="loginId" placeholder="Employee ID">
             <button onclick="login()">LOGIN</button>
-            <div class="small-link" onclick="showRegister()">New Registration</div>
-        </div>
-
-        <div id="registerBox" style="display:none;">
-            <h2>Registration</h2>
-            <input type="text" id="regName" placeholder="Full Name">
-            <input type="text" id="regId" placeholder="Employee ID">
-            <button onclick="register()">SAVE USER</button>
-            <div class="small-link" onclick="showLogin()">Back To Login</div>
         </div>
     </div>
 </div>
@@ -446,22 +430,37 @@ th{
                 </div>
             </div>
 
-            <div id="secureDeleteCard" class="card" style="display:none; max-width: 600px; margin: 0 auto;">
-                <h3 style="color:#ff4d4d; margin-bottom:15px;">🧹 Secure Range Deletion Panel</h3>
-                <p style="font-size:13px; color:#aaa; margin-bottom:15px;">Select the date boundaries below to delete matching scans permanently from Firebase database nodes.</p>
-                <div class="row" style="flex-direction: column; align-items: stretch; gap:15px;">
-                    <div>
-                        <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">From Date:</label>
-                        <input type="date" id="delFromDate" style="width:100%;">
+            <div id="secureAdminPanels" style="display:none; max-width: 600px; margin: 0 auto; gap:20px;">
+                
+                <div class="card" style="border: 1px solid #00d4ff;">
+                    <h3 style="color:#00d4ff; margin-bottom:15px;">👤 Register New Employee</h3>
+                    <div class="row" style="flex-direction: column; align-items: stretch; gap:10px;">
+                        <input type="text" id="regName" placeholder="Full Name" style="width:100%;">
+                        <input type="text" id="regId" placeholder="Employee ID" style="width:100%;">
+                        <button onclick="register()" style="background:#00d4ff; color:#000; font-size:14px; font-weight:bold;">
+                            SAVE NEW USER
+                        </button>
                     </div>
-                    <div>
-                        <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">To Date:</label>
-                        <input type="date" id="delToDate" style="width:100%;">
-                    </div>
-                    <button onclick="secureDeleteHistoryByRange()" style="background:#ff4d4d; color:#fff; font-size:15px; margin-top:10px; height:50px;">
-                        ⚠️ CRITICAL EXECUTE: Delete Range Data
-                    </button>
                 </div>
+
+                <div class="card" style="border: 1px solid #ff4d4d; margin-top: 20px;">
+                    <h3 style="color:#ff4d4d; margin-bottom:15px;">🧹 Secure Range Deletion Panel</h3>
+                    <p style="font-size:13px; color:#aaa; margin-bottom:15px;">Select the date boundaries below to delete matching scans permanently from Firebase database nodes.</p>
+                    <div class="row" style="flex-direction: column; align-items: stretch; gap:15px;">
+                        <div>
+                            <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">From Date:</label>
+                            <input type="date" id="delFromDate" style="width:100%;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">To Date:</label>
+                            <input type="date" id="delToDate" style="width:100%;">
+                        </div>
+                        <button onclick="secureDeleteHistoryByRange()" style="background:#ff4d4d; color:#fff; font-size:15px; margin-top:10px; height:50px;">
+                            ⚠️ CRITICAL EXECUTE: Delete Range Data
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -503,9 +502,9 @@ const locations = [
     "OMT RACK 03", "OMT RACK 04", "OMT RACK 05", "OMT RACK 06", "OMT RACK 07",
     "OMT RACK 08", "OMT RACK 09", "OMT RACK 00", "ICU TROLLEY 1", "ICU TROLLEY 2",
     "ICU TROLLEY 3", "ICU TROLLEY 4", "ICU TROLLEY 5", "ICU TROLLEY 6", "ICU TROLLEY 7",
-    "ICU TROLLEY 8", "ICU TROLLEY 9", "ICU TROLLEY 10", "OMT TROLLEY 1", "OMT TROLLEY 2",
+    "ICU TROLLEY 8", "ICU TROLLEY 9", "ICU ESC", "OMT TROLLEY 1", "OMT TROLLEY 2",
     "OMT TROLLEY 3", "OMT TROLLEY 4", "OMT TROLLEY 5", "OMT TROLLEY 6", "OMT TROLLEY 7",
-    "OMT TROLLEY 8", "INTERNATIONL ORDER", "OMT LO RACK"
+    "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT LO RACK"
 ];
 
 const hoursGlobal = [
@@ -578,27 +577,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function showRegister(){
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("registerBox").style.display = "block";
-}
-
-function showLogin(){
-    document.getElementById("registerBox").style.display = "none";
-    document.getElementById("loginBox").style.display = "block";
-}
-
-function register(){
-    const name = document.getElementById("regName").value.trim();
-    const id = document.getElementById("regId").value.trim();
-    if(!name || !id) return alert("Fill all fields");
-
-    db.ref("Users/" + id).set({ name, id }).then(() => {
-        alert("Registration Successful");
-        showLogin();
-    });
-}
-
 function login(){
     const id = document.getElementById("loginId").value.trim();
     if(!id) return alert("Please enter your Employee ID");
@@ -633,12 +611,11 @@ function openTab(id, el){
     document.querySelectorAll(".nav-btn").forEach(n => n.classList.remove("active"));
     el.classList.add("active");
 
-    // Reset Secure Tab state if leaving the superadmin view
     if (id !== 'superadmin') {
         document.getElementById("adminPasswordInput").value = "";
         document.getElementById("adminAuthBox").style.display = "block";
         document.getElementById("adminSuccessMsg").style.display = "none";
-        document.getElementById("secureDeleteCard").style.display = "none";
+        document.getElementById("secureAdminPanels").style.display = "none";
     }
 }
 
@@ -937,20 +914,39 @@ function exportHistory(){
 function verifyAdminPassword() {
     const inputPass = document.getElementById("adminPasswordInput").value;
     
-    // CHANGE PASSWORD HERE: Aap yahan apna pasandida password change kar sakte hain
+    // UPDATED MASTER PASSWORD TO: Guddu@123
     const masterPassword = "Guddu@123"; 
 
     if (inputPass === masterPassword) {
         document.getElementById("adminAuthBox").style.display = "none";
         document.getElementById("adminSuccessMsg").style.display = "block";
-        document.getElementById("secureDeleteCard").style.display = "block";
+        document.getElementById("secureAdminPanels").style.display = "block";
     } else {
         alert("Incorrect Admin Password! Access Denied.");
         document.getElementById("adminPasswordInput").value = "";
     }
 }
 
-/* SECURE LOCK DATA DELETION WITH RANGE BOUNDARIES */
+/* NEW USER REGISTRATION */
+function register(){
+    const name = document.getElementById("regName").value.trim();
+    const id = document.getElementById("regId").value.trim();
+
+    if(!name || !id) {
+        alert("Please enter both Full Name and Employee ID");
+        return;
+    }
+
+    db.ref("Users/" + id).set({ name, id }).then(() => {
+        alert(`Employee ${name} [ID: ${id}] Registered Successfully!`);
+        document.getElementById("regName").value = "";
+        document.getElementById("regId").value = "";
+    }).catch(err => {
+        alert("Registration Error: " + err.message);
+    });
+}
+
+/* SECURE LOCK DATA DELETION WITH RANGE BOUNDARIES + AUDIT TRAIL LOGGING */
 function secureDeleteHistoryByRange() {
     const fromDateVal = document.getElementById("delFromDate").value;
     const toDateVal = document.getElementById("delToDate").value;
@@ -973,20 +969,37 @@ function secureDeleteHistoryByRange() {
         return;
     }
 
-    let deletePromises = [];
-    itemsToDelete.forEach(item => {
-        const nodePath = item.type === "TRAY" ? "tray" : "shipment";
-        deletePromises.push(db.ref(`${nodePath}/${item.key}`).remove());
-    });
+    const now = Date.now();
+    
+    // AUDIT TRAIL DATA PAYLOAD
+    const logPayload = {
+        deletedBy_Name: currentUser.name || "Unknown",
+        deletedBy_ID: currentUser.id || "N/A",
+        executedAt_Date: formatDate(now),
+        executedAt_Time: formatTime(now),
+        targetRange_From: fromDateVal,
+        targetRange_To: toDateVal,
+        recordsCountDeleted: itemsToDelete.length,
+        timestamp: now
+    };
 
-    Promise.all(deletePromises)
+    // First, push into ActivityLogs, then wipe selected ranges
+    db.ref("ActivityLogs").push(logPayload)
         .then(() => {
-            alert(`Wipeout Success! Deleted ${itemsToDelete.length} logs from the system database.`);
-            // Lock back the panel for safety
+            let deletePromises = [];
+            itemsToDelete.forEach(item => {
+                const nodePath = item.type === "TRAY" ? "tray" : "shipment";
+                deletePromises.push(db.ref(`${nodePath}/${item.key}`).remove());
+            });
+
+            return Promise.all(deletePromises);
+        })
+        .then(() => {
+            alert(`Wipeout Success! Deleted ${itemsToDelete.length} logs from the system database. Activity has been logged securely.`);
             openTab('tray', document.querySelector('.nav-btn'));
         })
         .catch(err => {
-            alert("Error trying to securely remove logs: " + err.message);
+            alert("Security Error trying to safely remove logs: " + err.message);
         });
 }
 </script>
