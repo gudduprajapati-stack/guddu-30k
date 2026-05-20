@@ -300,6 +300,7 @@ th{
         <div class="nav-btn" onclick="openTab('shipment',this)">🚛 Shipment</div>
         <div class="nav-btn" onclick="openTab('history',this)">🕒 History</div>
         <div class="nav-btn" onclick="openTab('dashboard',this)">📊 Dashboard</div>
+        <div class="nav-btn" onclick="openTab('superadmin',this)">🔒 Super Admin</div>
         <div class="nav-btn" onclick="logout()">🚪 Logout</div>
     </div>
 
@@ -312,6 +313,7 @@ th{
                 </div>
             </div>
             <div class="card">
+                <h4 style="color:#00d4ff; margin-bottom:5px;">Your Recent Scans (Aapke Apne Scan)</h4>
                 <table>
                     <thead>
                         <tr>
@@ -340,6 +342,7 @@ th{
                 </div>
             </div>
             <div class="card">
+                <h4 style="color:#00d4ff; margin-bottom:5px;">Your Recent Shipments (Aapke Apne Scan)</h4>
                 <table>
                     <thead>
                         <tr>
@@ -368,7 +371,6 @@ th{
                     <input type="text" id="historySearch" placeholder="Search">
                     <button onclick="applyHistory()">Filter</button>
                     <button onclick="exportHistory()">Export CSV</button>
-                    <button onclick="deleteHistoryByRange()" style="background:#ff4d4d; color:#fff;">Delete Range</button>
                 </div>
             </div>
             <div class="card">
@@ -431,6 +433,38 @@ th{
                 <table id="personHourlyTable"></table>
             </div>
         </div>
+
+        <div id="superadmin" class="tab">
+            <div class="card" style="max-width: 500px; margin: 0 auto 20px auto;">
+                <h3 style="color:#ff4d4d; margin-bottom:15px; text-align:center;">🔓 Admin Verification Required</h3>
+                <div id="adminAuthBox" style="display:block; text-align:center;">
+                    <input type="password" id="adminPasswordInput" placeholder="Enter Super Admin Password" style="width:100%; margin-bottom:15px; text-align:center;">
+                    <button onclick="verifyAdminPassword()" style="background:#ff4d4d; color:#fff; width:100%;">Verify & Access Control</button>
+                </div>
+                <div id="adminSuccessMsg" style="display:none; color:#00ffcc; text-align:center; font-weight:bold; margin-top:10px;">
+                    ✓ Access Granted Successfully!
+                </div>
+            </div>
+
+            <div id="secureDeleteCard" class="card" style="display:none; max-width: 600px; margin: 0 auto;">
+                <h3 style="color:#ff4d4d; margin-bottom:15px;">🧹 Secure Range Deletion Panel</h3>
+                <p style="font-size:13px; color:#aaa; margin-bottom:15px;">Select the date boundaries below to delete matching scans permanently from Firebase database nodes.</p>
+                <div class="row" style="flex-direction: column; align-items: stretch; gap:15px;">
+                    <div>
+                        <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">From Date:</label>
+                        <input type="date" id="delFromDate" style="width:100%;">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">To Date:</label>
+                        <input type="date" id="delToDate" style="width:100%;">
+                    </div>
+                    <button onclick="secureDeleteHistoryByRange()" style="background:#ff4d4d; color:#fff; font-size:15px; margin-top:10px; height:50px;">
+                        ⚠️ CRITICAL EXECUTE: Delete Range Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -467,11 +501,11 @@ const locations = [
     "FRAME QC FAIL SEND TO MAIN LINE", "SEND TO MEI FOR REVIEW", "CS LOCATION",
     "SMALL DIA LOCATION", "LO QC FAIL LOCATION (JIT)", "OMT RACK 01", "OMT RACK 02",
     "OMT RACK 03", "OMT RACK 04", "OMT RACK 05", "OMT RACK 06", "OMT RACK 07",
-    "OMT RACK 08", "OMT RACK 09", "OMT RACK 10", "ICU TROLLEY 1", "ICU TROLLEY 2",
+    "OMT RACK 08", "OMT RACK 09", "OMT RACK 00", "ICU TROLLEY 1", "ICU TROLLEY 2",
     "ICU TROLLEY 3", "ICU TROLLEY 4", "ICU TROLLEY 5", "ICU TROLLEY 6", "ICU TROLLEY 7",
     "ICU TROLLEY 8", "ICU TROLLEY 9", "ICU TROLLEY 10", "OMT TROLLEY 1", "OMT TROLLEY 2",
     "OMT TROLLEY 3", "OMT TROLLEY 4", "OMT TROLLEY 5", "OMT TROLLEY 6", "OMT TROLLEY 7",
-    "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT TROLLEY 10"
+    "OMT TROLLEY 8", "INTERNATIONL ORDER", "OMT LO RACK"
 ];
 
 const hoursGlobal = [
@@ -502,6 +536,8 @@ document.getElementById("fromDate").value = todayString;
 document.getElementById("toDate").value = todayString;
 document.getElementById("dashFrom").value = todayString;
 document.getElementById("dashTo").value = todayString;
+document.getElementById("delFromDate").value = todayString;
+document.getElementById("delToDate").value = todayString;
 
 /* DROPDOWN OPTIONS CONTROL */
 function toggleDashboardDropdown(e) {
@@ -596,6 +632,14 @@ function openTab(id, el){
     document.getElementById(id).classList.add("active");
     document.querySelectorAll(".nav-btn").forEach(n => n.classList.remove("active"));
     el.classList.add("active");
+
+    // Reset Secure Tab state if leaving the superadmin view
+    if (id !== 'superadmin') {
+        document.getElementById("adminPasswordInput").value = "";
+        document.getElementById("adminAuthBox").style.display = "block";
+        document.getElementById("adminSuccessMsg").style.display = "none";
+        document.getElementById("secureDeleteCard").style.display = "none";
+    }
 }
 
 function formatDate(t){
@@ -640,8 +684,13 @@ function renderTray(){
     const trayTable = document.getElementById("trayTable");
     const fragment = document.createDocumentFragment();
     trayTable.innerHTML = "";
-    const sorted = [...trayData].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
-    sorted.forEach(d => {
+    
+    const mySortedTrays = trayData
+        .filter(d => d.userId === currentUser.id)
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 20);
+        
+    mySortedTrays.forEach(d => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
         fragment.appendChild(tr);
@@ -653,8 +702,13 @@ function renderShipment(){
     const shipmentTable = document.getElementById("shipmentTable");
     const fragment = document.createDocumentFragment();
     shipmentTable.innerHTML = "";
-    const sorted = [...shipmentData].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
-    sorted.forEach(d => {
+    
+    const mySortedShipments = shipmentData
+        .filter(d => d.userId === currentUser.id)
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 20);
+        
+    mySortedShipments.forEach(d => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.shipmentId}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
         fragment.appendChild(tr);
@@ -879,10 +933,27 @@ function exportHistory(){
     a.click();
 }
 
-/* NEW FEATURE: DELETE BY SELECTED DATE RANGE ONLY */
-function deleteHistoryByRange() {
-    const fromDateVal = document.getElementById("fromDate").value;
-    const toDateVal = document.getElementById("toDate").value;
+/* SUPER ADMIN VERIFICATION ROUTINE */
+function verifyAdminPassword() {
+    const inputPass = document.getElementById("adminPasswordInput").value;
+    
+    // CHANGE PASSWORD HERE: Aap yahan apna pasandida password change kar sakte hain
+    const masterPassword = "Guddu@123"; 
+
+    if (inputPass === masterPassword) {
+        document.getElementById("adminAuthBox").style.display = "none";
+        document.getElementById("adminSuccessMsg").style.display = "block";
+        document.getElementById("secureDeleteCard").style.display = "block";
+    } else {
+        alert("Incorrect Admin Password! Access Denied.");
+        document.getElementById("adminPasswordInput").value = "";
+    }
+}
+
+/* SECURE LOCK DATA DELETION WITH RANGE BOUNDARIES */
+function secureDeleteHistoryByRange() {
+    const fromDateVal = document.getElementById("delFromDate").value;
+    const toDateVal = document.getElementById("delToDate").value;
 
     if (!fromDateVal || !toDateVal) {
         alert("Please select both 'From Date' and 'To Date' first.");
@@ -892,10 +963,9 @@ function deleteHistoryByRange() {
     const startTimestamp = new Date(fromDateVal + 'T00:00:00').getTime();
     const endTimestamp = new Date(toDateVal + 'T23:59:59.999').getTime();
 
-    const confirmMsg = `⚠️ DATE RANGE WIPEOUT ALERT!\n\nAre you sure you want to delete data between:\n📅 ${fromDateVal} and ${toDateVal}?\n\nThis will remove matching records from Firebase. This cannot be undone!`;
+    const confirmMsg = `⚠️ CRITICAL SECURE WIPEOUT REQUEST!\n\nAre you absolutely sure you want to delete data between:\n📅 ${fromDateVal} and ${toDateVal}?\n\nThis will permanently wipe entries from Firebase. THIS ACTION IS REVERSIBLE IN NO WAY!`;
     if (!confirm(confirmMsg)) return;
 
-    // Filter elements in active runtime memory matching bounds to get their unique keys
     const itemsToDelete = allData.filter(d => d.timestamp >= startTimestamp && d.timestamp <= endTimestamp);
 
     if (itemsToDelete.length === 0) {
@@ -905,18 +975,18 @@ function deleteHistoryByRange() {
 
     let deletePromises = [];
     itemsToDelete.forEach(item => {
-        // Dynamic node switching matching node layout types
         const nodePath = item.type === "TRAY" ? "tray" : "shipment";
         deletePromises.push(db.ref(`${nodePath}/${item.key}`).remove());
     });
 
-    // Execute multi-node destruction pipeline asynchronously
     Promise.all(deletePromises)
         .then(() => {
-            alert(`Successfully deleted ${itemsToDelete.length} records within the specified range!`);
+            alert(`Wipeout Success! Deleted ${itemsToDelete.length} logs from the system database.`);
+            // Lock back the panel for safety
+            openTab('tray', document.querySelector('.nav-btn'));
         })
         .catch(err => {
-            alert("Error trying to remove logs: " + err.message);
+            alert("Error trying to securely remove logs: " + err.message);
         });
 }
 </script>
