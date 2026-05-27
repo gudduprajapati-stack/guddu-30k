@@ -7,6 +7,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
 *{
@@ -284,6 +285,7 @@ th{
         <div class="nav-btn" onclick="openTab('shipment',this)">🚛 Shipment</div>
         <div class="nav-btn" onclick="openTab('history',this)">🕒 History</div>
         <div class="nav-btn" onclick="openTab('dashboard',this)">📊 Dashboard</div>
+        <div class="nav-btn" onclick="openTab('cvvupdate',this)">📋 CVV Update</div>
         <div class="nav-btn" onclick="openTab('superadmin',this)">🔒 Super Admin</div>
         <div class="nav-btn" onclick="logout()">🚪 Logout</div>
     </div>
@@ -305,6 +307,7 @@ th{
                             <th>Time</th>
                             <th>Tray</th>
                             <th>Location</th>
+                            <th style="color:#ffcc00;">Delay Status</th>
                             <th>User</th>
                         </tr>
                     </thead>
@@ -418,6 +421,36 @@ th{
             </div>
         </div>
 
+        <div id="cvvupdate" class="tab">
+            <div class="card" style="max-width: 500px; margin: 0 auto 20px auto;">
+                <h3 style="color:#00d4ff; margin-bottom:15px; text-align:center;">📋 CVV Admin Verification</h3>
+                <div id="cvvAuthBox" style="display:block; text-align:center;">
+                    <input type="password" id="cvvPasswordInput" placeholder="Enter Admin Password" style="width:100%; margin-bottom:15px; text-align:center;">
+                    <button onclick="verifyCvvPassword()" style="width:100%;">Verify & Open CVV Panel</button>
+                </div>
+                <div id="cvvSuccessMsg" style="display:none; color:#00ffcc; text-align:center; font-weight:bold; margin-top:10px;">
+                    ✓ CVV Authentication Successful!
+                </div>
+            </div>
+
+            <div id="secureCvvPanel" style="display:none; max-width: 600px; margin: 0 auto;">
+                <div class="card" style="border: 1px solid #ffcc00; text-align:center; padding:30px 20px;">
+                    <h3 style="color:#ffcc00; margin-bottom:10px;">📊 Upload Delay Status Excel File</h3>
+                    <p style="font-size:13px; color:#aaa; margin-bottom:20px;">
+                        Excel Requirement: <b>Column 1 = Tray ID (Barcode)</b> | <b>Column 2 = Current Status</b>
+                    </p>
+                    
+                    <div style="margin:20px 0;">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="background:#000; color:#00d4ff; padding:10px; border:1px dashed #333; width:100%; cursor:pointer;">
+                    </div>
+                    
+                    <button onclick="processExcelUpload()" style="background:#ffcc00; color:#000; width:100%; font-weight:bold; height:48px;">
+                        🚀 PROCESS & UPDATE LIVE LEDGER
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="superadmin" class="tab">
             <div class="card" style="max-width: 500px; margin: 0 auto 20px auto;">
                 <h3 style="color:#ff4d4d; margin-bottom:15px; text-align:center;">🔓 Admin Verification Required</h3>
@@ -487,6 +520,7 @@ let currentUser = {};
 let trayData = [];
 let shipmentData = [];
 let allData = [];
+let activeDelayStatusMap = Object.create(null);
 let mergeTimeout = null;
 
 let currentLocMap = Object.create(null);
@@ -617,6 +651,13 @@ function openTab(id, el){
         document.getElementById("adminSuccessMsg").style.display = "none";
         document.getElementById("secureAdminPanels").style.display = "none";
     }
+    if (id !== 'cvvupdate') {
+        document.getElementById("cvvPasswordInput").value = "";
+        document.getElementById("cvvAuthBox").style.display = "block";
+        document.getElementById("cvvSuccessMsg").style.display = "none";
+        document.getElementById("secureCvvPanel").style.display = "none";
+        document.getElementById("excelFileInput").value = "";
+    }
 }
 
 function formatDate(t){
@@ -630,6 +671,19 @@ function formatTime(t){
 
 /* REALTIME SYNC */
 function startRealtime(){
+    db.ref("DelayLedger").on("value", snap => {
+        activeDelayStatusMap = Object.create(null);
+        if(snap.exists()) {
+            snap.forEach(child => {
+                const item = child.val();
+                if(item && item.barcode) {
+                    activeDelayStatusMap[item.barcode.toUpperCase()] = item.status || "DELAY";
+                }
+            });
+        }
+        renderTray();
+    });
+
     db.ref("tray").on("value", snap => {
         const temp = [];
         snap.forEach(c => { temp.push({ key: c.key, type: "TRAY", ...c.val() }); });
@@ -669,7 +723,14 @@ function renderTray(){
         
     mySortedTrays.forEach(d => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td><td>${d.location}</td><td>${d.user} (${d.userId || 'N/A'})</td>`;
+        const customStatus = activeDelayStatusMap[d.barcode.toUpperCase()];
+        
+        // RED HIGHLIGHT WITH ZERO POPUPS/WARNINGS
+        const delayBadge = customStatus 
+            ? `<td style="color:#ffffff; font-weight:bold; background:#e60000; border-radius:4px; padding: 2px 8px; box-shadow: 0 0 8px rgba(230,0,0,0.5);">⚠️ ${customStatus.toUpperCase()}</td>`
+            : `<td style="color:#00ff88; font-weight:normal;">Normal</td>`;
+
+        tr.innerHTML = `<td>${d.date}</td><td>${d.time}</td><td>${d.barcode}</td><td>${d.location}</td>${delayBadge}<td>${d.user} (${d.userId || 'N/A'})</td>`;
         fragment.appendChild(tr);
     });
     trayTable.appendChild(fragment);
@@ -704,13 +765,15 @@ setInterval(() => {
     }
 }, 250);
 
-/* TRANSACTION WRITERS */
+/* TRANSACTION WRITERS (SILENT & FAST - POPUPS REMOVED) */
 document.getElementById("trayInput").addEventListener("keydown", e => {
     if(e.key !== "Enter") return;
     const val = e.target.value.trim().toUpperCase();
     if(val.length !== 7) { e.target.value = ""; return; }
 
     const now = Date.now();
+    
+    // Process save directly to database node smoothly without any alarm/popup
     db.ref("tray").push({
         barcode: val,
         location: document.getElementById("trayLocation").value,
@@ -910,14 +973,12 @@ function exportHistory(){
     a.click();
 }
 
-/* SUPER ADMIN VERIFICATION ROUTINE */
+/* MASTER ROUTINES AUTHORIZATION */
+const masterPasswordGlobal = "Guddu@123";
+
 function verifyAdminPassword() {
     const inputPass = document.getElementById("adminPasswordInput").value;
-    
-    // UPDATED MASTER PASSWORD TO: Guddu@123
-    const masterPassword = "Guddu@123"; 
-
-    if (inputPass === masterPassword) {
+    if (inputPass === masterPasswordGlobal) {
         document.getElementById("adminAuthBox").style.display = "none";
         document.getElementById("adminSuccessMsg").style.display = "block";
         document.getElementById("secureAdminPanels").style.display = "block";
@@ -925,6 +986,82 @@ function verifyAdminPassword() {
         alert("Incorrect Admin Password! Access Denied.");
         document.getElementById("adminPasswordInput").value = "";
     }
+}
+
+function verifyCvvPassword() {
+    const inputPass = document.getElementById("cvvPasswordInput").value;
+    if (inputPass === masterPasswordGlobal) {
+        document.getElementById("cvvAuthBox").style.display = "none";
+        document.getElementById("cvvSuccessMsg").style.display = "block";
+        document.getElementById("secureCvvPanel").style.display = "block";
+    } else {
+        alert("Incorrect Admin Password! Access Denied.");
+        document.getElementById("cvvPasswordInput").value = "";
+    }
+}
+
+/* EXCEL PARSER FOR CVV UPDATE */
+function processExcelUpload() {
+    const fileInput = document.getElementById("excelFileInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Please choose a valid Excel file (.xlsx or .xls) first.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            const sheetRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            let datasetPayload = [];
+            
+            for (let i = 0; i < sheetRows.length; i++) {
+                const row = sheetRows[i];
+                if (row && row[0]) {
+                    const barcodeVal = String(row[0]).trim().toUpperCase();
+                    const statusVal = row[1] ? String(row[1]).trim() : "DELAY";
+                    
+                    if (barcodeVal === "TRAY ID" || barcodeVal === "BARCODE") continue;
+
+                    if (barcodeVal.length === 7) {
+                        datasetPayload.push({
+                            barcode: barcodeVal,
+                            status: statusVal
+                        });
+                    }
+                }
+            }
+
+            if (datasetPayload.length === 0) {
+                alert("No valid 7-character Tray Barcodes detected in the Excel sheet.");
+                return;
+            }
+
+            // Clean overwrite mechanism active
+            db.ref("DelayLedger").set(null).then(() => {
+                let writePromises = [];
+                datasetPayload.forEach(item => {
+                    writePromises.push(db.ref("DelayLedger").push(item));
+                });
+                return Promise.all(writePromises);
+            })
+            .then(() => {
+                alert(`Excellent! Loaded ${datasetPayload.length} custom mapped tray statuses into live memory registry.`);
+                fileInput.value = "";
+                openTab('tray', document.querySelector('.nav-btn'));
+            });
+
+        } catch (err) {
+            alert("Excel Processing Error: Failed to parse raw sheet. Details: " + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
 }
 
 /* NEW USER REGISTRATION */
@@ -946,7 +1083,7 @@ function register(){
     });
 }
 
-/* SECURE LOCK DATA DELETION WITH RANGE BOUNDARIES + AUDIT TRAIL LOGGING */
+/* SECURE LOCK DATA DELETION WITH AUDIT TRAIL LOGGING */
 function secureDeleteHistoryByRange() {
     const fromDateVal = document.getElementById("delFromDate").value;
     const toDateVal = document.getElementById("delToDate").value;
@@ -971,7 +1108,6 @@ function secureDeleteHistoryByRange() {
 
     const now = Date.now();
     
-    // AUDIT TRAIL DATA PAYLOAD
     const logPayload = {
         deletedBy_Name: currentUser.name || "Unknown",
         deletedBy_ID: currentUser.id || "N/A",
@@ -983,7 +1119,6 @@ function secureDeleteHistoryByRange() {
         timestamp: now
     };
 
-    // First, push into ActivityLogs, then wipe selected ranges
     db.ref("ActivityLogs").push(logPayload)
         .then(() => {
             let deletePromises = [];
