@@ -488,7 +488,7 @@ th{
                             <label style="font-size:12px; color:#00d4ff; display:block; margin-bottom:5px;">To Date:</label>
                             <input type="date" id="delToDate" style="width:100%;">
                         </div>
-                        <button onclick="secureDeleteHistoryByRange()" style="background:#ff4d4d; color:#fff; font-size:15px; margin-top:10px; height:50px;">
+                        <button id="delBtn" onclick="secureDeleteHistoryByRange()" style="background:#ff4d4d; color:#fff; font-size:15px; margin-top:10px; height:50px;">
                             ⚠️ CRITICAL EXECUTE: Delete Range Data
                         </button>
                     </div>
@@ -1080,34 +1080,36 @@ function register(){
     });
 }
 
-/* FIXED & RE-ENGINEERED STRIP DELETION logic (PERFECT SYNC WITH DD/MM/YYYY) */
+/* ULTRA PERFORMANCE BATCH DELETION ENGINE (FREEZE PROOF Fix) */
 function secureDeleteHistoryByRange() {
     const fromDateVal = document.getElementById("delFromDate").value;
     const toDateVal = document.getElementById("delToDate").value;
+    const btn = document.getElementById("delBtn");
 
     if (!fromDateVal || !toDateVal) {
         alert("Please select both 'From Date' and 'To Date' first.");
         return;
     }
 
-    // Convert HTML Date Picker (YYYY-MM-DD) into Timestamps for exact checking
     const startTimestamp = new Date(fromDateVal + 'T00:00:00').getTime();
     const endTimestamp = new Date(toDateVal + 'T23:59:59.999').getTime();
 
-    const confirmMsg = `⚠️ CRITICAL SECURE WIPEOUT REQUEST!\n\nAre you absolutely sure you want to delete data between:\n📅 ${fromDateVal} and ${toDateVal}?\n\nThis action cannot be undone. All operations will be logged!`;
-    if (!confirm(confirmMsg)) return;
-
-    // Filter items using exact numeric timestamp logic to avoid date-string failures
     const itemsToDelete = allData.filter(d => d.timestamp >= startTimestamp && d.timestamp <= endTimestamp);
 
     if (itemsToDelete.length === 0) {
-        alert("No records found within this selected date range inside local app data memory. Please make sure data is loaded in History/Dashboard tab first.");
+        alert("Wipeout Range Empty: No records found locally matching these dates. Go to History tab first to ensure all records are fully synchronized.");
         return;
     }
 
+    const confirmMsg = `⚠️ CRITICAL EXTRA SECURITY WARNING!\n\nAre you 100% sure you want to delete ${itemsToDelete.length} records?\n📅 Range: ${fromDateVal} to ${toDateVal}\n\nThis will process via asynchronous chunks to avoid browser lag. Press OK to execute.`;
+    if (!confirm(confirmMsg)) return;
+
+    // UI State Locking
+    btn.disabled = true;
+    btn.style.background = "#555";
+    btn.textContent = `⏳ Processing: 0 / ${itemsToDelete.length}...`;
+
     const now = Date.now();
-    
-    // Audit Trail configuration
     const logPayload = {
         deletedBy_Name: currentUser.name || "Unknown",
         deletedBy_ID: currentUser.id || "N/A",
@@ -1119,27 +1121,53 @@ function secureDeleteHistoryByRange() {
         timestamp: now
     };
 
-    // 1. Push Audit log -> 2. Delete matched items via Firebase keys
-    db.ref("ActivityLogs").push(logPayload)
-        .then(() => {
-            let deletePromises = [];
-            itemsToDelete.forEach(item => {
+    // Step 1: Write Activity Log first
+    db.ref("ActivityLogs").push(logPayload).then(() => {
+        
+        // Step 2: Smart Asynchronous Batch Deletion Loop (Chunks of 200)
+        let index = 0;
+        const batchSize = 200;
+
+        function nextBatch() {
+            if (index >= itemsToDelete.length) {
+                // Done Wiping Successfully
+                alert(`Wipeout Success! Permanently deleted ${itemsToDelete.length} heavy logs from Firebase. Page remains completely stable.`);
+                btn.disabled = false;
+                btn.style.background = "#ff4d4d";
+                btn.textContent = "⚠️ CRITICAL EXECUTE: Delete Range Data";
+                document.getElementById("delFromDate").value = todayString;
+                document.getElementById("delToDate").value = todayString;
+                openTab('tray', document.querySelector('.nav-btn'));
+                return;
+            }
+
+            const currentBatch = itemsToDelete.slice(index, index + batchSize);
+            let batchPromises = currentBatch.map(item => {
                 const nodePath = item.type === "TRAY" ? "tray" : "shipment";
-                deletePromises.push(db.ref(`${nodePath}/${item.key}`).remove());
+                return db.ref(`${nodePath}/${item.key}`).remove();
             });
 
-            return Promise.all(deletePromises);
-        })
-        .then(() => {
-            alert(`Wipeout Success! Deleted ${itemsToDelete.length} logs from the system database. Activity has been logged securely.`);
-            // Clean range inputs
-            document.getElementById("delFromDate").value = todayString;
-            document.getElementById("delToDate").value = todayString;
-            openTab('tray', document.querySelector('.nav-btn'));
-        })
-        .catch(err => {
-            alert("Security Error trying to safely remove logs: " + err.message);
-        });
+            Promise.all(batchPromises).then(() => {
+                index += batchSize;
+                btn.textContent = `⏳ Processing: ${Math.min(index, itemsToDelete.length)} / ${itemsToDelete.length}...`;
+                // 50ms short breathing pause for DOM/Browser to keep tab alive
+                setTimeout(nextBatch, 50);
+            }).catch(err => {
+                alert("Batch processing met an error: " + err.message);
+                btn.disabled = false;
+                btn.style.background = "#ff4d4d";
+                btn.textContent = "⚠️ CRITICAL EXECUTE: Delete Range Data";
+            });
+        }
+
+        // Start processing the first chunk
+        nextBatch();
+
+    }).catch(err => {
+        alert("Failed to write secure logs: " + err.message);
+        btn.disabled = false;
+        btn.style.background = "#ff4d4d";
+    });
 }
 </script>
 </body>
