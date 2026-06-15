@@ -534,11 +534,11 @@ const locations = [
     "FRAME QC FAIL SEND TO MAIN LINE", "SEND TO MEI FOR REVIEW", "CS LOCATION",
     "SMALL DIA LOCATION", "LO QC FAIL LOCATION (JIT)", "OMT RACK 01", "OMT RACK 02",
     "OMT RACK 03", "OMT RACK 04", "OMT RACK 05", "OMT RACK 06", "OMT RACK 07",
-    "OMT RACK 08", "OMT RACK 09", "OMT RACK 00", "ICU TROLLEY 1", "ICU TROLLEY 2",
-    "ICU TROLLEY 3", "ICU TROLLEY 4", "ICU TROLLEY 5", "ICU TROLLEY 6", "MEI SCANING",
-    "FITTING SCANING", "QC SCANING", "ICU ESC", "OMT TROLLEY 1", "OMT TROLLEY 2",
+    "OMT RACK 08", "OMT RACK 09", "OMT RACK 10", "ICU TROLLEY 1", "ICU TROLLEY 2",
+    "ICU TROLLEY 3", "ICU TROLLEY 4", "ICU TROLLEY 5", "ICU TROLLEY 6", "ICU TROLLEY 7",
+    "ICU TROLLEY 8", "ICU TROLLEY 9", "ICU TROLLEY 10", "OMT TROLLEY 1", "OMT TROLLEY 2",
     "OMT TROLLEY 3", "OMT TROLLEY 4", "OMT TROLLEY 5", "OMT TROLLEY 6", "OMT TROLLEY 7",
-    "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT LO RACK"
+    "OMT TROLLEY 8", "OMT TROLLEY 9", "OMT TROLLEY 10"
 ];
 
 const hoursGlobal = [
@@ -725,7 +725,6 @@ function renderTray(){
         const tr = document.createElement("tr");
         const customStatus = activeDelayStatusMap[d.barcode.toUpperCase()];
         
-        // RED HIGHLIGHT WITH ZERO POPUPS/WARNINGS
         const delayBadge = customStatus 
             ? `<td style="color:#ffffff; font-weight:bold; background:#e60000; border-radius:4px; padding: 2px 8px; box-shadow: 0 0 8px rgba(230,0,0,0.5);">⚠️ ${customStatus.toUpperCase()}</td>`
             : `<td style="color:#00ff88; font-weight:normal;">Normal</td>`;
@@ -765,7 +764,7 @@ setInterval(() => {
     }
 }, 250);
 
-/* TRANSACTION WRITERS (SILENT & FAST - POPUPS REMOVED) */
+/* TRANSACTION WRITERS */
 document.getElementById("trayInput").addEventListener("keydown", e => {
     if(e.key !== "Enter") return;
     const val = e.target.value.trim().toUpperCase();
@@ -773,7 +772,6 @@ document.getElementById("trayInput").addEventListener("keydown", e => {
 
     const now = Date.now();
     
-    // Process save directly to database node smoothly without any alarm/popup
     db.ref("tray").push({
         barcode: val,
         location: document.getElementById("trayLocation").value,
@@ -1043,7 +1041,6 @@ function processExcelUpload() {
                 return;
             }
 
-            // Clean overwrite mechanism active
             db.ref("DelayLedger").set(null).then(() => {
                 let writePromises = [];
                 datasetPayload.forEach(item => {
@@ -1083,7 +1080,7 @@ function register(){
     });
 }
 
-/* SECURE LOCK DATA DELETION WITH AUDIT TRAIL LOGGING */
+/* FIXED & RE-ENGINEERED STRIP DELETION logic (PERFECT SYNC WITH DD/MM/YYYY) */
 function secureDeleteHistoryByRange() {
     const fromDateVal = document.getElementById("delFromDate").value;
     const toDateVal = document.getElementById("delToDate").value;
@@ -1093,21 +1090,24 @@ function secureDeleteHistoryByRange() {
         return;
     }
 
+    // Convert HTML Date Picker (YYYY-MM-DD) into Timestamps for exact checking
     const startTimestamp = new Date(fromDateVal + 'T00:00:00').getTime();
     const endTimestamp = new Date(toDateVal + 'T23:59:59.999').getTime();
 
-    const confirmMsg = `⚠️ CRITICAL SECURE WIPEOUT REQUEST!\n\nAre you absolutely sure you want to delete data between:\n📅 ${fromDateVal} and ${toDateVal}?\n\nThis will permanently wipe entries from Firebase. THIS ACTION IS REVERSIBLE IN NO WAY!`;
+    const confirmMsg = `⚠️ CRITICAL SECURE WIPEOUT REQUEST!\n\nAre you absolutely sure you want to delete data between:\n📅 ${fromDateVal} and ${toDateVal}?\n\nThis action cannot be undone. All operations will be logged!`;
     if (!confirm(confirmMsg)) return;
 
+    // Filter items using exact numeric timestamp logic to avoid date-string failures
     const itemsToDelete = allData.filter(d => d.timestamp >= startTimestamp && d.timestamp <= endTimestamp);
 
     if (itemsToDelete.length === 0) {
-        alert("No records found within this selected date range.");
+        alert("No records found within this selected date range inside local app data memory. Please make sure data is loaded in History/Dashboard tab first.");
         return;
     }
 
     const now = Date.now();
     
+    // Audit Trail configuration
     const logPayload = {
         deletedBy_Name: currentUser.name || "Unknown",
         deletedBy_ID: currentUser.id || "N/A",
@@ -1119,6 +1119,7 @@ function secureDeleteHistoryByRange() {
         timestamp: now
     };
 
+    // 1. Push Audit log -> 2. Delete matched items via Firebase keys
     db.ref("ActivityLogs").push(logPayload)
         .then(() => {
             let deletePromises = [];
@@ -1131,6 +1132,9 @@ function secureDeleteHistoryByRange() {
         })
         .then(() => {
             alert(`Wipeout Success! Deleted ${itemsToDelete.length} logs from the system database. Activity has been logged securely.`);
+            // Clean range inputs
+            document.getElementById("delFromDate").value = todayString;
+            document.getElementById("delToDate").value = todayString;
             openTab('tray', document.querySelector('.nav-btn'));
         })
         .catch(err => {
